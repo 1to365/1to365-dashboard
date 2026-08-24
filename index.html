@@ -180,27 +180,27 @@
       <div class="value" id="sensex-zone">—</div>
     </div>
   </div>
-  <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:8px;">Based on Supertrend(7,3) 5-min — price above line = CE zone, below = PE zone</p>
+  <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:8px;">Supertrend(7,3) 5-min · Strong = trend held 3+ candles (15+ min) · Bias = trend just flipped</p>
 </div>
 
 <!-- ST SIGNAL -->
 <div class="card">
   <h2>⚡ Supertrend Signal Check</h2>
-  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-    <select id="st-index" style="flex:1; min-width:120px; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:0.9rem;">
-      <option value="nifty-zone">NIFTY</option>
-      <option value="banknifty-zone">BANKNIFTY</option>
-      <option value="sensex-zone">SENSEX</option>
-    </select>
-    <select id="st-code" style="flex:1; min-width:120px; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:0.9rem;">
-      <option value="CE">CE signal (TNG / TSG / TBG)</option>
-      <option value="PE">PE signal (TNR / TSR / TBR)</option>
-    </select>
+  <div id="st-auto-results" style="display:flex; flex-direction:column; gap:8px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border:1px solid var(--border); border-radius:8px;">
+      <span style="font-weight:600; font-size:0.85rem;">NIFTY</span>
+      <span id="st-nifty-badge" class="badge bias">Loading...</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border:1px solid var(--border); border-radius:8px;">
+      <span style="font-weight:600; font-size:0.85rem;">BANKNIFTY</span>
+      <span id="st-banknifty-badge" class="badge bias">Loading...</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border:1px solid var(--border); border-radius:8px;">
+      <span style="font-weight:600; font-size:0.85rem;">SENSEX</span>
+      <span id="st-sensex-badge" class="badge bias">Loading...</span>
+    </div>
   </div>
-  <button id="st-check-btn" style="width:100%; padding:10px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.9rem; font-weight:600; cursor:pointer;">Check Signal</button>
-  <div id="st-result" style="margin-top:12px; text-align:center;">
-    <span class="placeholder" style="display:inline-block;">Select index + signal, then tap Check</span>
-  </div>
+  <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:10px;">Auto-calculated live from Supertrend(5m, 7, 3) — no manual input needed</p>
 </div>
 
 <!-- TIME FILTER -->
@@ -213,7 +213,7 @@
 <div class="card">
   <h2>✅ Rules Checklist</h2>
   <ul class="checklist">
-    <li>Only Tuesday (Nifty) / Thursday (Sensex) real trades</li>
+    <li>Real trades allowed any trading day (Mon–Fri)</li>
     <li>Max ₹10–15K capital per trade</li>
     <li>Daily stop: +₹10K profit or -₹5K loss</li>
     <li>Same day exit only — no overnight positions</li>
@@ -360,9 +360,14 @@
     }
 
     const last = n - 1;
+    // count how many consecutive candles have held the current trend
+    let duration = 0;
+    for (let i = last; i >= 0 && trend[i] === trend[last]; i--) duration++;
+
     return {
       trend: trend[last],
-      line: trend[last] === 1 ? finalLower[last] : finalUpper[last]
+      line: trend[last] === 1 ? finalLower[last] : finalUpper[last],
+      duration
     };
   }
 
@@ -395,26 +400,36 @@
     "banknifty-zone": "^NSEBANK",
     "sensex-zone": "^BSESN"
   };
-
-  const currentZone = {}; // elId -> "CE" | "PE" | null
+  const badgeIds = {
+    "nifty-zone": "st-nifty-badge",
+    "banknifty-zone": "st-banknifty-badge",
+    "sensex-zone": "st-sensex-badge"
+  };
+  const STRONG_THRESHOLD = 3; // consecutive 5-min candles to call it "Strong"
 
   async function updateZones() {
     for (const [elId, symbol] of Object.entries(zoneIds)) {
       try {
         const candles = await fetchCandles(symbol);
-        const { trend } = computeSupertrend(candles);
-        const el = document.getElementById(elId);
-        if (trend === 1) {
-          el.textContent = "CE ZONE";
-          el.style.color = "var(--green)";
-          currentZone[elId] = "CE";
-        } else {
-          el.textContent = "PE ZONE";
-          el.style.color = "var(--red)";
-          currentZone[elId] = "PE";
-        }
+        const { trend, duration } = computeSupertrend(candles);
+        const direction = trend === 1 ? "CE" : "PE";
+        const strength = duration >= STRONG_THRESHOLD ? "Strong" : "Bias";
+        const isCE = direction === "CE";
+        const badgeClass = strength === "Strong" ? (isCE ? "strong" : "weak") : "bias";
+        const label = `${direction} ${strength}`;
+        const icon = strength === "Strong" ? (isCE ? "✅" : "🔻") : "⚠️";
+
+        // Zone card
+        const zoneEl = document.getElementById(elId);
+        zoneEl.textContent = label;
+        zoneEl.style.color = isCE ? "var(--green)" : "var(--red)";
+
+        // Signal check card
+        const badgeEl = document.getElementById(badgeIds[elId]);
+        badgeEl.className = "badge " + badgeClass;
+        badgeEl.textContent = `${label}${icon}`;
       } catch (err) {
-        // keep last known zone value on transient failure
+        // keep last known values on transient failure
       }
       await sleep(600); // stagger requests to avoid proxy rate limits
     }
@@ -422,32 +437,6 @@
 
   updateZones();
   setInterval(updateZones, 30000);
-
-  // ---- ST SIGNAL CHECK ----
-  document.getElementById('st-check-btn').addEventListener('click', () => {
-    const indexEl = document.getElementById('st-index').value;
-    const userSignal = document.getElementById('st-code').value; // "CE" or "PE"
-    const resultEl = document.getElementById('st-result');
-    const liveZone = currentZone[indexEl];
-
-    let badgeClass, badgeText, note;
-    if (!liveZone) {
-      badgeClass = "bias";
-      badgeText = "BIAS⚠️";
-      note = "Live zone data not available yet — trade with caution.";
-    } else if (liveZone === userSignal) {
-      badgeClass = "strong";
-      badgeText = "STRONG✅";
-      note = "Your signal matches the live Supertrend zone.";
-    } else {
-      badgeClass = "weak";
-      badgeText = "WEAK❌";
-      note = "Your signal disagrees with the live Supertrend zone — skip or wait for confirmation.";
-    }
-
-    resultEl.innerHTML = `<span class="badge ${badgeClass}" style="font-size:1rem; padding:6px 16px;">${badgeText}</span>
-      <p style="color:var(--muted); font-size:0.8rem; margin-top:8px;">${note}</p>`;
-  });
 </script>
 
 </body>
