@@ -508,7 +508,8 @@
 
 <!-- LIVE PRICES -->
 <div class="card theme-blue">
-  <h2>📈 Live Prices</h2>
+  <h2>📈 Live Prices <button class="info-icon-btn" data-info="info-prices">i</button></h2>
+  <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Type your broker's actual spot below to override instantly — it stays in effect until you tap "Resume Live".</div>
   <div class="price-grid">
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
@@ -523,7 +524,19 @@
       <div class="value" id="sensex-price">—</div>
     </div>
   </div>
-  <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:8px;">Loading prices...</p>
+  <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.7rem; margin-top:5px;">Loading prices...</p>
+
+  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:5px;">
+    <select id="spot-index" style="flex:1 1 90px; min-width:78px; padding:4px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.62rem;">
+      <option value="nifty">NIFTY (±150)</option>
+      <option value="banknifty">BANKNIFTY (±500)</option>
+      <option value="sensex">SENSEX (±300)</option>
+    </select>
+    <input id="spot-input" type="number" inputmode="decimal" placeholder="Spot" style="flex:1 1 70px; min-width:60px; padding:4px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.62rem;">
+    <button id="spot-set-btn" style="flex:0 0 auto; padding:4px 12px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.62rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
+    <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--muted); font-size:0.6rem; cursor:pointer; white-space:nowrap;">↩ Live</button>
+  </div>
+  <div id="spot-result" style="margin-top:4px; font-size:0.64rem; line-height:1.35; font-family:ui-monospace, monospace;"></div>
 </div>
 
 <!-- CE/PE ZONES -->
@@ -692,10 +705,14 @@
     throw lastErr;
   }
 
+  const manualOverride = {}; // priceElId -> true when manually set, paused from auto-refresh
+
   async function updatePrices() {
     const statusEl = document.getElementById('price-status');
     let anyError = false;
+    let anyManual = false;
     for (const [elId, symbol] of Object.entries(symbols)) {
+      if (manualOverride[elId]) { anyManual = true; continue; } // skip — manual spot in effect
       try {
         const { price, change } = await fetchPrice(symbol);
         const el = document.getElementById(elId);
@@ -707,7 +724,9 @@
       }
       await sleep(500); // stagger requests to avoid proxy rate limits
     }
-    statusEl.textContent = anyError
+    statusEl.textContent = anyManual
+      ? "Manual spot active for one or more indices"
+      : anyError
       ? "Some prices failed to load — will retry in 30s"
       : "Last updated: " + new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
   }
@@ -1365,6 +1384,70 @@
         if (!p.contains(e.target)) p.classList.add('hidden');
       });
     }
+  });
+
+  // ---- MANUAL SPOT OVERRIDE (fixes the Yahoo delay for the price you actually trade on) ----
+  const spotIndexMeta = {
+    nifty:     { priceEl: "nifty-price",     zoneEl: "nifty-zone",     label: "NIFTY",     offset: 150 },
+    banknifty: { priceEl: "banknifty-price", zoneEl: "banknifty-zone", label: "BANKNIFTY", offset: 500 },
+    sensex:    { priceEl: "sensex-price",    zoneEl: "sensex-zone",    label: "SENSEX",    offset: 300 }
+  };
+
+  function renderSpotResult(key, spot) {
+    const meta = spotIndexMeta[key];
+    const ceLevel = spot + meta.offset;
+    const peLevel = spot - meta.offset;
+    const strength = currentStrength[meta.zoneEl];
+    const direction = currentDirection[meta.zoneEl];
+    let statusText;
+    if (!strength) {
+      statusText = "NEUTRAL➡️";
+    } else if (strength === "Strong") {
+      statusText = "STRONG✅";
+    } else {
+      statusText = "BIAS⚠️";
+    }
+    const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const resultEl = document.getElementById('spot-result');
+    resultEl.innerHTML =
+      `⏰ ${timeStr} IST<br>` +
+      `📍 ${meta.label}: ${spot.toLocaleString('en-IN')}<br>` +
+      `<span style="color:var(--green);">🟢 CE STRONG above: ${ceLevel.toLocaleString('en-IN')}</span><br>` +
+      `<span style="color:var(--red);">🔴 PE STRONG below: ${peLevel.toLocaleString('en-IN')}</span><br>` +
+      `Status: ${statusText}`;
+  }
+
+  document.getElementById('spot-set-btn').addEventListener('click', () => {
+    const key = document.getElementById('spot-index').value;
+    const spot = parseFloat(document.getElementById('spot-input').value);
+    if (!spot) {
+      alert("Enter a valid spot value.");
+      return;
+    }
+    const meta = spotIndexMeta[key];
+
+    // Override the live price feed for this index — persists until "Resume Live" is tapped
+    manualOverride[meta.priceEl] = true;
+    currentPrice[meta.priceEl] = spot;
+    const priceEl = document.getElementById(meta.priceEl);
+    priceEl.textContent = spot.toLocaleString('en-IN') + " ✋";
+    priceEl.style.color = "var(--accent)";
+
+    updateStrike(meta.zoneEl); // refresh Strike & Expiry Leads with the fresh spot
+    renderSpotResult(key, spot);
+    document.getElementById('spot-resume-btn').classList.remove('hidden');
+  });
+
+  document.getElementById('spot-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('spot-set-btn').click();
+  });
+
+  document.getElementById('spot-resume-btn').addEventListener('click', () => {
+    Object.values(spotIndexMeta).forEach(meta => { manualOverride[meta.priceEl] = false; });
+    document.getElementById('spot-resume-btn').classList.add('hidden');
+    document.getElementById('spot-result').innerHTML = '';
+    updatePrices(); // immediately re-fetch live feed instead of waiting for next 30s cycle
   });
 </script>
 
