@@ -525,8 +525,15 @@
 </div>
 
 <!-- P&L TRACKER -->
-<div class="card theme-lavender" style="justify-content:center;">
-  <h2>💰 Daily P&L</h2>
+<div class="card theme-lavender" style="justify-content:center; position:relative;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h2 style="margin-bottom:0;">💰 Daily P&L</h2>
+    <button id="monthly-toggle" style="background:rgba(124,58,237,0.12); border:1px solid var(--card-lavender-border); color:#7c3aed; font-size:0.62rem; font-weight:700; padding:3px 8px; border-radius:14px; cursor:pointer;">📅 Monthly ▾</button>
+  </div>
+  <div id="monthly-panel" class="hidden" style="position:absolute; top:38px; right:8px; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.15); padding:10px 12px; width:200px; z-index:200; max-height:220px; overflow-y:auto;">
+    <p style="font-size:0.65rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">Monthly Totals</p>
+    <div id="monthly-list"></div>
+  </div>
   <div style="text-align:center;">
     <div id="pnl-amount" style="font-size:1.6rem; font-weight:800;">₹0</div>
     <div id="pnl-status" style="font-size:0.65rem; color:var(--muted); margin-top:2px;">No trades today</div>
@@ -1154,6 +1161,47 @@
   document.addEventListener('click', (e) => {
     if (!rulesPanelEl.classList.contains('hidden') && !rulesPanelEl.contains(e.target) && e.target !== rulesToggleBtn) {
       rulesPanelEl.classList.add('hidden');
+    }
+  });
+
+  // ---- MONTHLY SUMMARY (aggregated from same trade storage as Daily P&L) ----
+  const monthlyToggleBtn = document.getElementById('monthly-toggle');
+  const monthlyPanelEl = document.getElementById('monthly-panel');
+  const monthlyListEl = document.getElementById('monthly-list');
+
+  function renderMonthlySummary() {
+    const trades = tjLoad();
+    if (trades.length === 0) {
+      monthlyListEl.innerHTML = '<p style="font-size:0.68rem; color:var(--muted); font-style:italic;">No logs yet</p>';
+      return;
+    }
+    const totals = {}; // "Aug 2026" -> sum
+    trades.forEach(t => {
+      const key = new Date(t.ts).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', year: 'numeric' });
+      totals[key] = (totals[key] || 0) + t.pnl;
+    });
+    // Sort by actual date descending, not alphabetically
+    const sorted = Object.entries(totals).sort((a, b) => {
+      const da = new Date(a[0]), db = new Date(b[0]);
+      return db - da;
+    });
+    monthlyListEl.innerHTML = sorted.map(([month, total]) => {
+      const color = total >= 0 ? 'var(--green)' : 'var(--red)';
+      return `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--border); font-size:0.7rem;">
+        <span>${month}</span>
+        <strong style="color:${color};">₹${total >= 0 ? '+' : ''}${total.toFixed(0)}</strong>
+      </div>`;
+    }).join('');
+  }
+
+  monthlyToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    renderMonthlySummary();
+    monthlyPanelEl.classList.toggle('hidden');
+  });
+  document.addEventListener('click', (e) => {
+    if (!monthlyPanelEl.classList.contains('hidden') && !monthlyPanelEl.contains(e.target) && e.target !== monthlyToggleBtn) {
+      monthlyPanelEl.classList.add('hidden');
     }
   });
 </script>
