@@ -386,28 +386,12 @@
   <p id="lead-result" style="text-align:center; color:var(--muted); font-size:0.65rem; margin-top:4px;">Enter live premium from your broker · caps at ₹15K/trade</p>
 </div>
 
-<!-- TRADE JOURNAL -->
+<!-- ALERTS -->
 <div class="card">
-  <h2>📓 Trade Journal</h2>
-  <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-bottom:6px;">
-    <select id="tj-index" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
-      <option value="NIFTY">NIFTY</option>
-      <option value="BANKNIFTY">BANKNIFTY</option>
-      <option value="SENSEX">SENSEX</option>
-    </select>
-    <select id="tj-type" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
-      <option value="CE">CE</option>
-      <option value="PE">PE</option>
-    </select>
-    <input id="tj-qty" type="number" placeholder="Qty" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; width:100%;">
-  </div>
-  <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:6px; margin-bottom:6px;">
-    <input id="tj-entry" type="number" placeholder="Entry ₹" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; width:100%;">
-    <input id="tj-exit" type="number" placeholder="Exit ₹" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; width:100%;">
-    <button id="tj-add-btn" style="padding:6px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer; white-space:nowrap;">+ Add</button>
-  </div>
-  <div id="tj-list" style="flex:1; overflow-y:auto; min-height:0; margin-top:4px;">
-    <p class="placeholder" style="font-size:0.72rem;">No trades logged yet</p>
+  <h2>🔔 Strong Signal Alerts</h2>
+  <button id="sound-enable-btn" style="padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.65rem; font-weight:700; cursor:pointer; margin-bottom:6px;">🔊 Enable Sound</button>
+  <div id="alerts-list" style="flex:1; overflow-y:auto; min-height:0;">
+    <p class="placeholder" style="font-size:0.72rem;">Waiting for a Strong signal…</p>
   </div>
 </div>
 
@@ -716,6 +700,7 @@
         currentDirection[elId] = direction;
         currentStrength[elId] = strength;
         updateStrike(elId);
+        checkAlertTrigger(elId, direction, strength);
       } catch (err) {
         // keep last known values on transient failure
       }
@@ -726,7 +711,7 @@
   updateZones();
   setInterval(updateZones, 30000);
 
-  // ---- TRADE JOURNAL (localStorage) ----
+  // ---- TRADE STORAGE (localStorage) — backs Daily P&L and Quick Log ----
   const TJ_KEY = "signa365_trades";
 
   function tjLoad() {
@@ -738,43 +723,6 @@
   }
   function tjSave(trades) {
     localStorage.setItem(TJ_KEY, JSON.stringify(trades));
-  }
-
-  function tjRender() {
-    const trades = tjLoad();
-    const listEl = document.getElementById('tj-list');
-    if (trades.length === 0) {
-      listEl.innerHTML = '<p class="placeholder" style="font-size:0.72rem;">No trades logged yet</p>';
-      updatePnL();
-      return;
-    }
-    const rows = trades.slice().reverse().map((t) => {
-      const pnlColor = t.pnl >= 0 ? 'var(--green)' : 'var(--red)';
-      const dateStr = new Date(t.ts).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-      const isQuick = t.index === "QUICK";
-      const titleLine = isQuick ? "Quick log" : `<strong>${t.index} ${t.type}</strong>`;
-      const detailLine = isQuick ? "" : `<br><span style="color:var(--muted);">Entry ₹${t.entry} → Exit ₹${t.exit} × ${t.qty}</span>`;
-      return `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid var(--border); font-size:0.72rem;">
-        <div>
-          ${titleLine}
-          <span style="color:var(--muted);"> · ${dateStr}</span>${detailLine}
-        </div>
-        <div style="text-align:right;">
-          <div style="color:${pnlColor}; font-weight:700;">₹${t.pnl >= 0 ? '+' : ''}${t.pnl.toFixed(0)}</div>
-          <button data-id="${t.id}" class="tj-delete" style="border:none; background:none; color:var(--muted); font-size:0.65rem; cursor:pointer; text-decoration:underline;">remove</button>
-        </div>
-      </div>`;
-    }).join('');
-    listEl.innerHTML = rows;
-    listEl.querySelectorAll('.tj-delete').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        const remaining = tjLoad().filter(t => String(t.id) !== id);
-        tjSave(remaining);
-        tjRender();
-      });
-    });
-    updatePnL();
   }
 
   // ---- DAILY P&L TRACKER ----
@@ -816,31 +764,7 @@
     barEl.style.background = total >= DAILY_TARGET ? 'var(--green)' : total <= DAILY_STOP ? 'var(--red)' : 'var(--orange)';
   }
 
-  document.getElementById('tj-add-btn').addEventListener('click', () => {
-    const index = document.getElementById('tj-index').value;
-    const type = document.getElementById('tj-type').value;
-    const qty = parseFloat(document.getElementById('tj-qty').value);
-    const entry = parseFloat(document.getElementById('tj-entry').value);
-    const exit = parseFloat(document.getElementById('tj-exit').value);
-
-    if (!qty || !entry || !exit) {
-      alert("Please fill Qty, Entry, and Exit prices.");
-      return;
-    }
-
-    const pnl = (exit - entry) * qty;
-    const trades = tjLoad();
-    trades.push({ id: Date.now(), index, type, qty, entry, exit, pnl, ts: Date.now() });
-    tjSave(trades);
-    tjRender();
-
-    // clear inputs
-    document.getElementById('tj-qty').value = '';
-    document.getElementById('tj-entry').value = '';
-    document.getElementById('tj-exit').value = '';
-  });
-
-  tjRender();
+  updatePnL();
 
   // ---- EXPIRY LEAD: QTY CALCULATOR ----
   const leadLotSize = { nifty: 65, banknifty: 30, sensex: 20 };
@@ -883,9 +807,80 @@
     const trades = tjLoad();
     trades.push({ id: Date.now(), index: "QUICK", type: "", qty: null, entry: null, exit: null, pnl: amount, ts: Date.now() });
     tjSave(trades);
-    tjRender();
+    updatePnL();
     input.value = '';
   });
+
+  // ---- STRONG SIGNAL ALERTS (sound + visual) ----
+  let audioCtx = null;
+  let soundEnabled = false;
+  const previousStrength = {}; // elId -> last known strength, to detect NEW triggers only
+  const alertHistory = [];
+  const MAX_ALERTS = 25;
+
+  document.getElementById('sound-enable-btn').addEventListener('click', () => {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    soundEnabled = true;
+    const btn = document.getElementById('sound-enable-btn');
+    btn.textContent = "🔊 Sound On";
+    btn.style.background = "var(--green-soft)";
+    btn.style.color = "var(--green)";
+    playBeep(660); // confirmation tone
+  });
+
+  function playBeep(freq) {
+    if (!soundEnabled || !audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.4);
+  }
+
+  const alertIndexNames = {
+    "nifty-zone": "NIFTY",
+    "banknifty-zone": "BANKNIFTY",
+    "sensex-zone": "SENSEX"
+  };
+
+  function renderAlerts() {
+    const listEl = document.getElementById('alerts-list');
+    if (alertHistory.length === 0) {
+      listEl.innerHTML = '<p class="placeholder" style="font-size:0.72rem;">Waiting for a Strong signal…</p>';
+      return;
+    }
+    listEl.innerHTML = alertHistory.map(a => {
+      const isCE = a.direction === "CE";
+      const arrow = isCE ? "▲" : "▼";
+      const color = isCE ? "var(--green)" : "var(--red)";
+      const timeStr = new Date(a.ts).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      return `<div style="display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); font-size:0.72rem;">
+        <span style="color:${color}; font-size:1rem; font-weight:800;">${arrow}</span>
+        <div style="flex:1;">
+          <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">${a.direction} STRONG</span>
+        </div>
+        <span style="color:var(--muted); font-size:0.62rem;">${timeStr}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function checkAlertTrigger(elId, direction, strength) {
+    const prev = previousStrength[elId];
+    if (strength === "Strong" && prev !== "Strong") {
+      alertHistory.unshift({ index: alertIndexNames[elId], direction, ts: Date.now() });
+      if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
+      renderAlerts();
+      playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
+    }
+    previousStrength[elId] = strength;
+  }
 </script>
 
 </body>
