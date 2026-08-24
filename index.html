@@ -115,7 +115,40 @@
     display: flex;
     flex-direction: column;
     border-top: 3px solid #d5d8dd;
+    position: relative;
   }
+  .info-icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    font-size: 0.6rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .info-popover {
+    position: absolute;
+    top: 32px;
+    left: 8px;
+    right: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+    padding: 8px 10px;
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 1.35;
+    z-index: 150;
+  }
+  .info-popover.hidden { display: none; }
   .card.theme-blue, .card.theme-mint, .card.theme-amber,
   .card.theme-teal, .card.theme-rose, .card.theme-lavender {
     background: #f3f4f6;
@@ -468,7 +501,8 @@
 
 <!-- CE/PE ZONES -->
 <div class="card theme-mint">
-  <h2>🎯 CE/PE Strong Zones</h2>
+  <h2>🎯 CE/PE Strong Zones <button class="info-icon-btn" data-info="info-zones">i</button></h2>
+  <div id="info-zones" class="info-popover hidden">Supertrend(7,3) 5-min · Strong = trend held 3+ candles (15+ min) · Bias = trend just flipped</div>
   <div class="price-grid">
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
@@ -483,12 +517,12 @@
       <div class="value" id="sensex-zone">—</div>
     </div>
   </div>
-  <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:8px;">Supertrend(7,3) 5-min · Strong = trend held 3+ candles (15+ min) · Bias = trend just flipped</p>
 </div>
 
 <!-- ST SIGNAL -->
 <div class="card theme-amber">
-  <h2>⚡ ST Signals</h2>
+  <h2>⚡ ST Signals <button class="info-icon-btn" data-info="info-st">i</button></h2>
+  <div id="info-st" class="info-popover hidden">Shows your T-code (TNG/TNR = Nifty, TBG/TBR = BankNifty, TSG/TSR = Sensex) · G = CE, R = PE · Auto-calculated live from Supertrend(5m, 7, 3), updates automatically on flip — no manual input needed</div>
   <div class="price-grid">
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
@@ -503,12 +537,12 @@
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
     </div>
   </div>
-  <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:10px;">Auto-calculated live from Supertrend(5m, 7, 3) — no manual input needed</p>
 </div>
 
 <!-- STRIKE SELECTION -->
 <div class="card theme-teal">
-  <h2>🎯 Strike & Expiry Leads</h2>
+  <h2>🎯 Strike & Expiry Leads <button class="info-icon-btn" data-info="info-strike">i</button></h2>
+  <div id="info-strike" class="info-popover hidden">ATM ± 3 strikes normally, direction follows live CE/PE signal · On expiry day with a Strong signal, shows a further ATM ± 6 strike as the low-premium "Expiry Lead" · Qty calculator caps at ₹15K/trade</div>
   <div class="price-grid">
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
@@ -848,6 +882,12 @@
   updateTimeWindow();
   setInterval(updateTimeWindow, 1000);
 
+  const stCodeMap = {
+    "nifty-zone":     { CE: "TNG", PE: "TNR" },
+    "banknifty-zone": { CE: "TBG", PE: "TBR" },
+    "sensex-zone":    { CE: "TSG", PE: "TSR" }
+  };
+
   async function updateZones() {
     for (const [elId, symbol] of Object.entries(zoneIds)) {
       try {
@@ -859,16 +899,17 @@
         const badgeClass = strength === "Strong" ? (isCE ? "strong" : "weak") : "bias";
         const label = `${direction} ${strength}`;
         const icon = strength === "Strong" ? (isCE ? "✅" : "🔻") : "⚠️";
+        const stCode = stCodeMap[elId][direction];
 
         // Zone card
         const zoneEl = document.getElementById(elId);
         zoneEl.textContent = label;
         zoneEl.style.color = isCE ? "var(--green)" : "var(--red)";
 
-        // Signal check card
+        // Signal check card — shows your own T-code (TNG/TNR/TSG/TSR/TBG/TBR), updates automatically on flip
         const badgeEl = document.getElementById(badgeIds[elId]);
         badgeEl.className = "badge " + badgeClass;
-        badgeEl.textContent = `${label}${icon}`;
+        badgeEl.textContent = `${stCode} ${strength}${icon}`;
 
         currentDirection[elId] = direction;
         currentStrength[elId] = strength;
@@ -1228,6 +1269,24 @@
   document.addEventListener('click', (e) => {
     if (!monthlyPanelEl.classList.contains('hidden') && !monthlyPanelEl.contains(e.target) && e.target !== monthlyToggleBtn) {
       monthlyPanelEl.classList.add('hidden');
+    }
+  });
+
+  // ---- INFO ICON POPOVERS (CE/PE Zones, ST Signals, Strike & Expiry Leads) ----
+  document.querySelectorAll('.info-icon-btn').forEach(btn => {
+    const popover = document.getElementById(btn.getAttribute('data-info'));
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasHidden = popover.classList.contains('hidden');
+      document.querySelectorAll('.info-popover').forEach(p => p.classList.add('hidden'));
+      if (wasHidden) popover.classList.remove('hidden');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('info-icon-btn')) {
+      document.querySelectorAll('.info-popover').forEach(p => {
+        if (!p.contains(e.target)) p.classList.add('hidden');
+      });
     }
   });
 </script>
