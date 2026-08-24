@@ -178,20 +178,20 @@
 
   /* DESKTOP: fit everything on one screen, no page scroll */
   @media (min-width: 900px) {
-    body { height: 100vh; overflow: hidden; padding: 12px; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; }
+    body { height: 100vh; overflow: hidden; padding: 12px; max-width: 1300px; margin: 0 auto; display: flex; flex-direction: column; }
     header { margin-bottom: 8px; flex-shrink: 0; }
     .dashboard {
       flex: 1;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(2, 1fr);
-      gap: 10px;
+      gap: 12px;
       min-height: 0;
     }
     .card { min-height: 0; overflow: hidden; }
-    .card h2 { font-size: 0.72rem; margin-bottom: 7px; }
-    .price-box .value { font-size: 1.1rem; }
-    .card .card-note { font-size: 0.65rem; }
+    .card h2 { font-size: 0.76rem; margin-bottom: 8px; }
+    .price-box .value { font-size: 1.25rem; }
+    .card .card-note { font-size: 0.68rem; }
     footer { flex-shrink: 0; padding-top: 6px; }
   }
 
@@ -272,6 +272,7 @@
     padding: 20px;
   }
   #lock-screen.hidden { display: none; }
+  .hidden { display: none !important; }
   #lock-brand {
     color: #fff;
     font-size: 1.4rem;
@@ -377,7 +378,20 @@
     <h1>Signa365</h1>
     <span class="tagline">Live Mining</span>
   </div>
-  <p id="clock">Loading time...</p>
+  <div style="display:flex; align-items:center; gap:10px; position:relative;">
+    <button id="rules-toggle" style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:0.68rem; font-weight:700; padding:5px 10px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:4px;">📋 Rules ▾</button>
+    <div id="rules-panel" class="hidden" style="position:absolute; top:calc(100% + 8px); right:0; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.15); padding:10px 12px; width:230px; z-index:200;">
+      <ul class="checklist" style="margin:0;">
+        <li>Real trades allowed any trading day (Mon–Fri)</li>
+        <li>Max ₹10–15K capital per trade</li>
+        <li>Daily stop: +₹10K profit or -₹5K loss</li>
+        <li>Same day exit only — no overnight positions</li>
+        <li>No averaging, no revenge trading</li>
+      </ul>
+    </div>
+    <span id="time-window-badge" class="badge bias" style="background:rgba(255,255,255,0.18); color:#fff;">Checking...</span>
+    <p id="clock">Loading time...</p>
+  </div>
 </header>
 
 <div class="dashboard">
@@ -440,27 +454,6 @@
     </div>
   </div>
   <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:10px;">Auto-calculated live from Supertrend(5m, 7, 3) — no manual input needed</p>
-</div>
-
-<!-- TIME FILTER -->
-<div class="card">
-  <h2>🕐 Trade Window</h2>
-  <div style="text-align:center;">
-    <span id="time-window-badge" class="badge bias" style="font-size:0.95rem; padding:6px 18px;">Checking...</span>
-    <p id="time-window-note" style="color:var(--muted); font-size:0.78rem; margin-top:8px;">Window: 9:20 AM – 3:35 PM IST</p>
-  </div>
-</div>
-
-<!-- RULES CHECKLIST -->
-<div class="card">
-  <h2>✅ Rules Checklist</h2>
-  <ul class="checklist">
-    <li>Real trades allowed any trading day (Mon–Fri)</li>
-    <li>Max ₹10–15K capital per trade</li>
-    <li>Daily stop: +₹10K profit or -₹5K loss</li>
-    <li>Same day exit only — no overnight positions</li>
-    <li>No averaging, no revenge trading</li>
-  </ul>
 </div>
 
 <!-- STRIKE SELECTION -->
@@ -1088,6 +1081,19 @@
       lockErrorEl.textContent = "";
       renderLockSubtitle();
       updateDots();
+    }
+  });
+
+  // ---- RULES DROPDOWN (in header) ----
+  const rulesToggleBtn = document.getElementById('rules-toggle');
+  const rulesPanelEl = document.getElementById('rules-panel');
+  rulesToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    rulesPanelEl.classList.toggle('hidden');
+  });
+  document.addEventListener('click', (e) => {
+    if (!rulesPanelEl.classList.contains('hidden') && !rulesPanelEl.contains(e.target) && e.target !== rulesToggleBtn) {
+      rulesPanelEl.classList.add('hidden');
     }
   });
 </script>
