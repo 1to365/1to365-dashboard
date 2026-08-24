@@ -6,53 +6,112 @@
 <title>Signa365 — Trading Dashboard</title>
 <style>
   :root {
-    --bg: #f6f8fa;
+    --bg: #eef1f5;
     --panel: #ffffff;
-    --border: #d0d7de;
-    --text: #1f2328;
-    --muted: #57606a;
-    --green: #1a7f37;
-    --red: #cf222e;
-    --amber: #9a6700;
-    --accent: #0969da;
+    --panel-alt: #f7f9fb;
+    --border: #dde3ea;
+    --text: #101828;
+    --muted: #667085;
+    --green: #0f7a3d;
+    --green-soft: rgba(15,122,61,0.10);
+    --red: #c81e3a;
+    --red-soft: rgba(200,30,58,0.10);
+    --amber: #a15c00;
+    --amber-soft: rgba(161,92,0,0.10);
+    --accent: #1a3a6e;
+    --accent-soft: rgba(26,58,110,0.08);
+    --gold: #b8862e;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
   }
   html { -webkit-text-size-adjust: 100%; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
-    padding: 16px;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 12px;
     width: 100%;
-    max-width: 900px;
     margin: 0 auto;
     overflow-x: hidden;
   }
-  header {
-    text-align: center;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
+  .value, .price-box .value, #st-nifty-badge, #st-banknifty-badge, #st-sensex-badge {
+    font-variant-numeric: tabular-nums;
   }
-  header h1 { font-size: 1.5rem; color: var(--accent); }
-  header p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 10px;
+  }
+  header .brand { display: flex; align-items: center; gap: 8px; }
+  header .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 0 rgba(15,122,61,0.5);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(15,122,61,0.45); }
+    70% { box-shadow: 0 0 0 6px rgba(15,122,61,0); }
+    100% { box-shadow: 0 0 0 0 rgba(15,122,61,0); }
+  }
+  header h1 {
+    font-size: 1.15rem;
+    color: var(--accent);
+    letter-spacing: 0.01em;
+  }
+  header .tagline {
+    color: var(--muted);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-left: 8px;
+    padding-left: 8px;
+    border-left: 1px solid var(--border);
+  }
+  header p#clock { color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
   .card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 14px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 12px 14px;
     width: 100%;
+    display: flex;
+    flex-direction: column;
   }
   .card h2 {
-    font-size: 1rem;
+    font-size: 0.78rem;
+    font-weight: 700;
     color: var(--accent);
-    margin-bottom: 10px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
+  }
+  .card .card-note {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.68rem;
+    margin-top: 6px;
+    line-height: 1.3;
   }
 
   .price-grid {
@@ -61,87 +120,122 @@
     gap: 8px;
   }
   .price-box {
-    background: #f6f8fa;
+    background: var(--panel-alt);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 8px 4px;
     text-align: center;
     min-width: 0;
   }
-  .price-box .label { color: var(--muted); font-size: 0.7rem; white-space: nowrap; }
+  .price-box .label {
+    color: var(--muted);
+    font-size: 0.64rem;
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+  }
   .price-box .value {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-top: 4px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 3px;
     word-break: break-word;
   }
 
-  /* Tablet and up: roomier price boxes */
-  @media (min-width: 600px) {
-    .price-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .price-box { padding: 12px; }
-    .price-box .label { font-size: 0.75rem; }
-    .price-box .value { font-size: 1.3rem; }
+  /* DESKTOP: fit everything on one screen, no page scroll */
+  @media (min-width: 900px) {
+    body { height: 100vh; overflow: hidden; padding: 14px; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; }
+    header { margin-bottom: 10px; flex-shrink: 0; }
+    .dashboard {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 12px;
+      min-height: 0;
+    }
+    .card { min-height: 0; overflow: hidden; }
+    .card h2 { font-size: 0.72rem; margin-bottom: 10px; }
+    .price-box .value { font-size: 1.15rem; }
+    .card .card-note { font-size: 0.65rem; }
+    footer { flex-shrink: 0; padding-top: 8px; }
   }
 
-  /* Small phones: shrink further, allow 2-up wrap if needed */
+  /* Small phones: shrink further */
   @media (max-width: 380px) {
-    body { padding: 10px; }
-    header h1 { font-size: 1.25rem; }
+    body { padding: 8px; }
+    header h1 { font-size: 1rem; }
+    header .tagline { display: none; }
     .card { padding: 10px; }
-    .price-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .price-grid { gap: 6px; }
     .price-box { padding: 6px 2px; }
-    .price-box .label { font-size: 0.62rem; }
-    .price-box .value { font-size: 0.9rem; }
-    .checklist li { font-size: 0.82rem; }
+    .price-box .label { font-size: 0.6rem; }
+    .price-box .value { font-size: 0.88rem; }
+    .checklist li { font-size: 0.8rem; }
   }
 
   .badge {
     display: inline-block;
     padding: 3px 10px;
     border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
   }
-  .badge.strong { background: rgba(26,127,55,0.12); color: var(--green); }
-  .badge.bias   { background: rgba(154,103,0,0.12); color: var(--amber); }
-  .badge.weak   { background: rgba(207,34,46,0.12); color: var(--red); }
+  .badge.strong { background: var(--green-soft); color: var(--green); }
+  .badge.bias   { background: var(--amber-soft); color: var(--amber); }
+  .badge.weak   { background: var(--red-soft); color: var(--red); }
 
-  .checklist { list-style: none; }
+  .checklist { list-style: none; overflow-y: auto; }
   .checklist li {
-    padding: 8px 0;
+    padding: 6px 0;
     border-bottom: 1px solid var(--border);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+  .checklist li::before {
+    content: "";
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex-shrink: 0;
   }
   .checklist li:last-child { border-bottom: none; }
 
   .placeholder {
     color: var(--muted);
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     font-style: italic;
     padding: 10px;
     text-align: center;
     border: 1px dashed var(--border);
     border-radius: 8px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   footer {
     text-align: center;
     color: var(--muted);
-    font-size: 0.75rem;
-    padding: 20px 0 10px;
+    font-size: 0.7rem;
+    padding: 14px 0 6px;
   }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Signa365</h1>
+  <div class="brand">
+    <span class="live-dot"></span>
+    <h1>Signa365</h1>
+    <span class="tagline">Live Trading Dashboard</span>
+  </div>
   <p id="clock">Loading time...</p>
 </header>
+
+<div class="dashboard">
 
 <!-- LIVE PRICES -->
 <div class="card">
@@ -206,7 +300,10 @@
 <!-- TIME FILTER -->
 <div class="card">
   <h2>🕐 Trade Window</h2>
-  <div class="placeholder">Auto IST time filter will be added in Step 6</div>
+  <div style="text-align:center;">
+    <span id="time-window-badge" class="badge bias" style="font-size:0.95rem; padding:6px 18px;">Checking...</span>
+    <p id="time-window-note" style="color:var(--muted); font-size:0.78rem; margin-top:8px;">Windows: 9:30–11:00 AM · 2:00–3:15 PM IST</p>
+  </div>
 </div>
 
 <!-- RULES CHECKLIST -->
@@ -223,8 +320,22 @@
 
 <!-- STRIKE SELECTION -->
 <div class="card">
-  <h2>🎯 Strike Selection</h2>
-  <div class="placeholder">3-lines-OTM helper will be added in Step 6</div>
+  <h2>🎯 Strike Selection (3 OTM)</h2>
+  <div class="price-grid">
+    <div class="price-box">
+      <div class="label">NIFTY</div>
+      <div class="value" id="nifty-strike">—</div>
+    </div>
+    <div class="price-box">
+      <div class="label">BANKNIFTY</div>
+      <div class="value" id="banknifty-strike">—</div>
+    </div>
+    <div class="price-box">
+      <div class="label">SENSEX</div>
+      <div class="value" id="sensex-strike">—</div>
+    </div>
+  </div>
+  <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:8px;">ATM ± 3 strikes, direction follows live CE/PE zone</p>
 </div>
 
 <!-- TRADE JOURNAL -->
@@ -237,6 +348,8 @@
 <div class="card">
   <h2>💰 Daily P&L</h2>
   <div class="placeholder">P&L tracker will be added in Step 9</div>
+</div>
+
 </div>
 
 <footer>Signa365 · Personal Trading System · Not financial advice</footer>
@@ -257,6 +370,7 @@
     "banknifty-price": "^NSEBANK",
     "sensex-price": "^BSESN"
   };
+  const currentPrice = {}; // elId -> latest price
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -300,6 +414,7 @@
         const el = document.getElementById(elId);
         el.textContent = price.toLocaleString('en-IN', { maximumFractionDigits: 2 });
         el.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
+        currentPrice[elId] = price;
       } catch (err) {
         anyError = true;
       }
@@ -406,6 +521,58 @@
     "sensex-zone": "st-sensex-badge"
   };
   const STRONG_THRESHOLD = 3; // consecutive 5-min candles to call it "Strong"
+  const currentDirection = {}; // elId -> "CE" | "PE"
+
+  const strikeInterval = {
+    "nifty-zone": 50,
+    "banknifty-zone": 100,
+    "sensex-zone": 100
+  };
+  const strikeElIds = {
+    "nifty-zone": "nifty-strike",
+    "banknifty-zone": "banknifty-strike",
+    "sensex-zone": "sensex-strike"
+  };
+  const priceElIds = {
+    "nifty-zone": "nifty-price",
+    "banknifty-zone": "banknifty-price",
+    "sensex-zone": "sensex-price"
+  };
+
+  function updateStrike(zoneElId) {
+    const strikeEl = document.getElementById(strikeElIds[zoneElId]);
+    const spot = currentPrice[priceElIds[zoneElId]];
+    const direction = currentDirection[zoneElId];
+    if (spot == null || direction == null) return;
+    const interval = strikeInterval[zoneElId];
+    const atm = Math.round(spot / interval) * interval;
+    const strike = direction === "CE" ? atm + 3 * interval : atm - 3 * interval;
+    strikeEl.textContent = strike.toLocaleString('en-IN') + " " + direction;
+    strikeEl.style.color = direction === "CE" ? "var(--green)" : "var(--red)";
+  }
+
+  function updateTimeWindow() {
+    const now = new Date();
+    const istStr = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour12: false });
+    const istDate = new Date(istStr);
+    const mins = istDate.getHours() * 60 + istDate.getMinutes();
+    const morningStart = 9 * 60 + 30, morningEnd = 11 * 60;
+    const afternoonStart = 14 * 60, afternoonEnd = 15 * 60 + 15;
+
+    const badge = document.getElementById('time-window-badge');
+    if (mins >= morningStart && mins <= morningEnd) {
+      badge.className = "badge strong";
+      badge.textContent = "TRADE WINDOW OPEN ✅ (Morning)";
+    } else if (mins >= afternoonStart && mins <= afternoonEnd) {
+      badge.className = "badge strong";
+      badge.textContent = "TRADE WINDOW OPEN ✅ (Afternoon)";
+    } else {
+      badge.className = "badge weak";
+      badge.textContent = "OUTSIDE TRADE WINDOW ❌";
+    }
+  }
+  updateTimeWindow();
+  setInterval(updateTimeWindow, 1000);
 
   async function updateZones() {
     for (const [elId, symbol] of Object.entries(zoneIds)) {
@@ -428,6 +595,9 @@
         const badgeEl = document.getElementById(badgeIds[elId]);
         badgeEl.className = "badge " + badgeClass;
         badgeEl.textContent = `${label}${icon}`;
+
+        currentDirection[elId] = direction;
+        updateStrike(elId);
       } catch (err) {
         // keep last known values on transient failure
       }
