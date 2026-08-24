@@ -192,23 +192,44 @@
   updateClock();
   setInterval(updateClock, 1000);
 
-  // ---- LIVE PRICES (Yahoo Finance via CORS proxy) ----
+  // ---- LIVE PRICES (Yahoo Finance via CORS proxy, with retry + backup proxy) ----
   const symbols = {
     "nifty-price": "^NSEI",
     "banknifty-price": "^NSEBANK",
     "sensex-price": "^BSESN"
   };
 
-  async function fetchPrice(symbol) {
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`;
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
-    const res = await fetch(proxyUrl);
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function fetchViaProxy(proxyBuilder, yahooUrl) {
+    const res = await fetch(proxyBuilder(yahooUrl));
     if (!res.ok) throw new Error("Network error");
     const data = await res.json();
     const result = data.chart.result[0];
     const price = result.meta.regularMarketPrice;
     const prevClose = result.meta.chartPreviousClose;
     return { price, change: price - prevClose };
+  }
+
+  const proxies = [
+    (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+  ];
+
+  async function fetchPrice(symbol) {
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`;
+    let lastErr;
+    for (const proxy of proxies) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          return await fetchViaProxy(proxy, yahooUrl);
+        } catch (err) {
+          lastErr = err;
+          await sleep(400);
+        }
+      }
+    }
+    throw lastErr;
   }
 
   async function updatePrices() {
