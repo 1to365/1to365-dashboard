@@ -353,6 +353,28 @@
   }
   #lock-screen.hidden { display: none; }
   .hidden { display: none !important; }
+  .lock-deco {
+    position: absolute;
+    opacity: 0.16;
+    pointer-events: none;
+    user-select: none;
+    filter: grayscale(15%);
+  }
+  #lock-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--orange) 0%, var(--accent) 100%);
+    color: #fff;
+    font-size: 1.6rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(151,41,30,0.25);
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
   #lock-brand {
     color: var(--accent);
     font-size: 1.4rem;
@@ -427,7 +449,15 @@
 <body>
 
 <div id="lock-screen">
-  <div id="lock-brand">🔒 Signa365</div>
+  <div class="lock-deco" style="top:8%; left:10%; font-size:1.6rem; transform:rotate(-15deg);">📈</div>
+  <div class="lock-deco" style="top:14%; right:12%; font-size:1.3rem; transform:rotate(12deg);">₹</div>
+  <div class="lock-deco" style="bottom:16%; left:8%; font-size:1.4rem; transform:rotate(10deg);">📊</div>
+  <div class="lock-deco" style="bottom:10%; right:9%; font-size:1.5rem; transform:rotate(-10deg);">🕯️</div>
+  <div class="lock-deco" style="top:38%; left:5%; font-size:1.1rem; transform:rotate(-8deg);">▲</div>
+  <div class="lock-deco" style="top:42%; right:6%; font-size:1.1rem; transform:rotate(8deg);">▼</div>
+
+  <div id="lock-logo">S</div>
+  <div id="lock-brand">Signa365</div>
   <div id="lock-subtitle">Enter PIN</div>
   <div id="lock-dots">
     <div class="lock-dot"></div>
@@ -907,8 +937,11 @@
         zoneEl.style.color = isCE ? "var(--green)" : "var(--red)";
 
         // Signal check card — shows your own T-code (TNG/TNR/TSG/TSR/TBG/TBR), updates automatically on flip
+        // Color rule: G-codes (CE) always green, R-codes (PE) always red — independent of Strong/Bias
         const badgeEl = document.getElementById(badgeIds[elId]);
-        badgeEl.className = "badge " + badgeClass;
+        badgeEl.className = "badge";
+        badgeEl.style.background = isCE ? "var(--green-soft)" : "var(--red-soft)";
+        badgeEl.style.color = isCE ? "var(--green)" : "var(--red)";
         badgeEl.textContent = `${stCode} ${strength}${icon}`;
 
         currentDirection[elId] = direction;
@@ -916,6 +949,7 @@
         updateStrike(elId);
         if (isWithinTradeWindow()) {
           checkAlertTrigger(elId, direction, strength);
+          checkFlipAlert(elId, direction, stCode);
         }
       } catch (err) {
         // keep last known values on transient failure
@@ -1074,9 +1108,18 @@
     }
     listEl.innerHTML = alertHistory.map(a => {
       const isCE = a.direction === "CE";
-      const arrow = isCE ? "▲" : "▼";
       const color = isCE ? "var(--green)" : "var(--red)";
       const timeStr = new Date(a.ts).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      if (a.isFlip) {
+        return `<div style="display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); font-size:0.72rem;">
+          <span style="font-size:1rem;">🔄</span>
+          <div style="flex:1;">
+            <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">FLIP: ${a.fromCode} → ${a.toCode}</span>
+          </div>
+          <span style="color:var(--muted); font-size:0.62rem;">${timeStr}</span>
+        </div>`;
+      }
+      const arrow = isCE ? "▲" : "▼";
       return `<div style="display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); font-size:0.72rem;">
         <span style="color:${color}; font-size:1rem; font-weight:800;">${arrow}</span>
         <div style="flex:1;">
@@ -1116,6 +1159,43 @@
     } catch (err) {
       // silent fail — in-app sound/visual alert already fired regardless
     }
+  }
+
+  async function sendTelegramText(text) {
+    try {
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: text })
+      });
+    } catch (err) {
+      // silent fail — in-app alert already fired regardless
+    }
+  }
+
+  // ---- ST CODE FLIP ALERT (separate from the Strong-signal alert above) ----
+  // Fires whenever a T-code flips direction (e.g. TSG -> TSR), regardless of Strong/Bias.
+  const previousStCode = {}; // elId -> last T-code shown
+
+  function checkFlipAlert(elId, direction, stCode) {
+    const prevCode = previousStCode[elId];
+    if (prevCode && prevCode !== stCode) {
+      const isCE = direction === "CE";
+      const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      // On-screen alert list (reuses the same Alerts card, marked as a flip)
+      alertHistory.unshift({ index: alertIndexNames[elId], direction, ts: Date.now(), isFlip: true, fromCode: prevCode, toCode: stCode });
+      if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
+      renderAlerts();
+
+      // Distinct two-tone beep so a flip doesn't sound identical to a Strong trigger
+      playBeep(isCE ? 700 : 350);
+      setTimeout(() => playBeep(isCE ? 900 : 300), 160);
+
+      // Telegram
+      sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP: ${prevCode} → ${stCode}\n${timeStr} IST`);
+    }
+    previousStCode[elId] = stCode;
   }
 
   // ---- PIN LOCK SCREEN ----
