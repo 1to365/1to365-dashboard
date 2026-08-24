@@ -23,6 +23,12 @@
     --gold: #b8862e;
     --radius: 12px;
     --shadow: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
+    --nifty: #2f5fed;
+    --nifty-soft: rgba(47,95,237,0.08);
+    --banknifty: #8b3fd8;
+    --banknifty-soft: rgba(139,63,216,0.08);
+    --sensex: #c9860f;
+    --sensex-soft: rgba(201,134,15,0.08);
   }
   html { -webkit-text-size-adjust: 100%; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -122,16 +128,43 @@
   .price-box {
     background: var(--panel-alt);
     border: 1px solid var(--border);
+    border-top: 3px solid var(--border);
     border-radius: 8px;
     padding: 8px 4px;
     text-align: center;
     min-width: 0;
+    transition: transform 0.15s ease;
   }
+  .price-box.idx-nifty     { background: var(--nifty-soft);     border-top-color: var(--nifty); }
+  .price-box.idx-banknifty { background: var(--banknifty-soft); border-top-color: var(--banknifty); }
+  .price-box.idx-sensex    { background: var(--sensex-soft);    border-top-color: var(--sensex); }
+
+  .idx-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: #fff;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .idx-icon.nifty     { background: var(--nifty); }
+  .idx-icon.banknifty { background: var(--banknifty); }
+  .idx-icon.sensex    { background: var(--sensex); }
+
   .price-box .label {
     color: var(--muted);
     font-size: 0.64rem;
     white-space: nowrap;
     letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
   }
   .price-box .value {
     font-size: 1rem;
@@ -241,16 +274,16 @@
 <div class="card">
   <h2>📈 Live Prices</h2>
   <div class="price-grid">
-    <div class="price-box">
-      <div class="label">NIFTY</div>
+    <div class="price-box idx-nifty">
+      <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-price">—</div>
     </div>
-    <div class="price-box">
-      <div class="label">BANKNIFTY</div>
+    <div class="price-box idx-banknifty">
+      <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-price">—</div>
     </div>
-    <div class="price-box">
-      <div class="label">SENSEX</div>
+    <div class="price-box idx-sensex">
+      <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-price">—</div>
     </div>
   </div>
@@ -261,16 +294,16 @@
 <div class="card">
   <h2>🎯 CE/PE Strong Zones</h2>
   <div class="price-grid">
-    <div class="price-box">
-      <div class="label">NIFTY</div>
+    <div class="price-box idx-nifty">
+      <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-zone">—</div>
     </div>
-    <div class="price-box">
-      <div class="label">BANKNIFTY</div>
+    <div class="price-box idx-banknifty">
+      <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-zone">—</div>
     </div>
-    <div class="price-box">
-      <div class="label">SENSEX</div>
+    <div class="price-box idx-sensex">
+      <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-zone">—</div>
     </div>
   </div>
@@ -281,16 +314,16 @@
 <div class="card">
   <h2>⚡ Supertrend Signal Check</h2>
   <div class="price-grid">
-    <div class="price-box">
-      <div class="label">NIFTY</div>
+    <div class="price-box idx-nifty">
+      <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
     </div>
-    <div class="price-box">
-      <div class="label">BANKNIFTY</div>
+    <div class="price-box idx-banknifty">
+      <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
     </div>
-    <div class="price-box">
-      <div class="label">SENSEX</div>
+    <div class="price-box idx-sensex">
+      <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
     </div>
   </div>
@@ -322,16 +355,16 @@
 <div class="card">
   <h2>🎯 Strike Selection (3 OTM)</h2>
   <div class="price-grid">
-    <div class="price-box">
-      <div class="label">NIFTY</div>
+    <div class="price-box idx-nifty">
+      <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-strike">—</div>
     </div>
-    <div class="price-box">
-      <div class="label">BANKNIFTY</div>
+    <div class="price-box idx-banknifty">
+      <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-strike">—</div>
     </div>
-    <div class="price-box">
-      <div class="label">SENSEX</div>
+    <div class="price-box idx-sensex">
+      <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-strike">—</div>
     </div>
   </div>
@@ -341,7 +374,26 @@
 <!-- TRADE JOURNAL -->
 <div class="card">
   <h2>📓 Trade Journal</h2>
-  <div class="placeholder">Auto-save journal will be added in Step 8</div>
+  <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-bottom:6px;">
+    <select id="tj-index" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
+      <option value="NIFTY">NIFTY</option>
+      <option value="BANKNIFTY">BANKNIFTY</option>
+      <option value="SENSEX">SENSEX</option>
+    </select>
+    <select id="tj-type" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
+      <option value="CE">CE</option>
+      <option value="PE">PE</option>
+    </select>
+    <input id="tj-qty" type="number" placeholder="Qty" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; width:100%;">
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:6px; margin-bottom:6px;">
+    <input id="tj-entry" type="number" placeholder="Entry ₹" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; width:100%;">
+    <input id="tj-exit" type="number" placeholder="Exit ₹" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; width:100%;">
+    <button id="tj-add-btn" style="padding:6px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer; white-space:nowrap;">+ Add</button>
+  </div>
+  <div id="tj-list" style="flex:1; overflow-y:auto; min-height:0; margin-top:4px;">
+    <p class="placeholder" style="font-size:0.72rem;">No trades logged yet</p>
+  </div>
 </div>
 
 <!-- P&L TRACKER -->
@@ -607,6 +659,79 @@
 
   updateZones();
   setInterval(updateZones, 30000);
+
+  // ---- TRADE JOURNAL (localStorage) ----
+  const TJ_KEY = "signa365_trades";
+
+  function tjLoad() {
+    try {
+      return JSON.parse(localStorage.getItem(TJ_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function tjSave(trades) {
+    localStorage.setItem(TJ_KEY, JSON.stringify(trades));
+  }
+
+  function tjRender() {
+    const trades = tjLoad();
+    const listEl = document.getElementById('tj-list');
+    if (trades.length === 0) {
+      listEl.innerHTML = '<p class="placeholder" style="font-size:0.72rem;">No trades logged yet</p>';
+      return;
+    }
+    const rows = trades.slice().reverse().map((t) => {
+      const pnlColor = t.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+      const dateStr = new Date(t.ts).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+      return `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid var(--border); font-size:0.72rem;">
+        <div>
+          <strong>${t.index} ${t.type}</strong>
+          <span style="color:var(--muted);"> · ${dateStr}</span><br>
+          <span style="color:var(--muted);">Entry ₹${t.entry} → Exit ₹${t.exit} × ${t.qty}</span>
+        </div>
+        <div style="text-align:right;">
+          <div style="color:${pnlColor}; font-weight:700;">₹${t.pnl >= 0 ? '+' : ''}${t.pnl.toFixed(0)}</div>
+          <button data-id="${t.id}" class="tj-delete" style="border:none; background:none; color:var(--muted); font-size:0.65rem; cursor:pointer; text-decoration:underline;">remove</button>
+        </div>
+      </div>`;
+    }).join('');
+    listEl.innerHTML = rows;
+    listEl.querySelectorAll('.tj-delete').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const remaining = tjLoad().filter(t => String(t.id) !== id);
+        tjSave(remaining);
+        tjRender();
+      });
+    });
+  }
+
+  document.getElementById('tj-add-btn').addEventListener('click', () => {
+    const index = document.getElementById('tj-index').value;
+    const type = document.getElementById('tj-type').value;
+    const qty = parseFloat(document.getElementById('tj-qty').value);
+    const entry = parseFloat(document.getElementById('tj-entry').value);
+    const exit = parseFloat(document.getElementById('tj-exit').value);
+
+    if (!qty || !entry || !exit) {
+      alert("Please fill Qty, Entry, and Exit prices.");
+      return;
+    }
+
+    const pnl = (exit - entry) * qty;
+    const trades = tjLoad();
+    trades.push({ id: Date.now(), index, type, qty, entry, exit, pnl, ts: Date.now() });
+    tjSave(trades);
+    tjRender();
+
+    // clear inputs
+    document.getElementById('tj-qty').value = '';
+    document.getElementById('tj-entry').value = '';
+    document.getElementById('tj-exit').value = '';
+  });
+
+  tjRender();
 </script>
 
 </body>
