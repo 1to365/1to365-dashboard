@@ -1007,8 +1007,28 @@
       if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
       renderAlerts();
       playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
+      sendTelegramAlert(alertIndexNames[elId], direction);
     }
     previousStrength[elId] = strength;
+  }
+
+  // ---- TELEGRAM ALERTS ----
+  const TELEGRAM_BOT_TOKEN = "8915036957:AAGY92_1yG9pgAYw0BOJ-C_U_KxYeC6trzs";
+  const TELEGRAM_CHAT_ID = "5802877879";
+
+  async function sendTelegramAlert(indexName, direction) {
+    const emoji = direction === "CE" ? "🟢▲" : "🔴▼";
+    const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const text = `${emoji} ${indexName} ${direction} STRONG\n${timeStr} IST`;
+    try {
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: text })
+      });
+    } catch (err) {
+      // silent fail — in-app sound/visual alert already fired regardless
+    }
   }
 
   // ---- PIN LOCK SCREEN ----
