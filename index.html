@@ -185,8 +185,22 @@
 
 <!-- ST SIGNAL -->
 <div class="card">
-  <h2>⚡ Supertrend Signal</h2>
-  <div class="placeholder">Signal input → STRONG/BIAS/WEAK logic will be added in Step 5</div>
+  <h2>⚡ Supertrend Signal Check</h2>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+    <select id="st-index" style="flex:1; min-width:120px; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:0.9rem;">
+      <option value="nifty-zone">NIFTY</option>
+      <option value="banknifty-zone">BANKNIFTY</option>
+      <option value="sensex-zone">SENSEX</option>
+    </select>
+    <select id="st-code" style="flex:1; min-width:120px; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:0.9rem;">
+      <option value="CE">CE signal (TNG / TSG / TBG)</option>
+      <option value="PE">PE signal (TNR / TSR / TBR)</option>
+    </select>
+  </div>
+  <button id="st-check-btn" style="width:100%; padding:10px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.9rem; font-weight:600; cursor:pointer;">Check Signal</button>
+  <div id="st-result" style="margin-top:12px; text-align:center;">
+    <span class="placeholder" style="display:inline-block;">Select index + signal, then tap Check</span>
+  </div>
 </div>
 
 <!-- TIME FILTER -->
@@ -382,21 +396,25 @@
     "sensex-zone": "^BSESN"
   };
 
+  const currentZone = {}; // elId -> "CE" | "PE" | null
+
   async function updateZones() {
     for (const [elId, symbol] of Object.entries(zoneIds)) {
       try {
         const candles = await fetchCandles(symbol);
-        const { trend, line } = computeSupertrend(candles);
+        const { trend } = computeSupertrend(candles);
         const el = document.getElementById(elId);
         if (trend === 1) {
           el.textContent = "CE ZONE";
           el.style.color = "var(--green)";
+          currentZone[elId] = "CE";
         } else {
           el.textContent = "PE ZONE";
           el.style.color = "var(--red)";
+          currentZone[elId] = "PE";
         }
       } catch (err) {
-        // keep last known value instead of blanking on a transient failure
+        // keep last known zone value on transient failure
       }
       await sleep(600); // stagger requests to avoid proxy rate limits
     }
@@ -404,6 +422,32 @@
 
   updateZones();
   setInterval(updateZones, 30000);
+
+  // ---- ST SIGNAL CHECK ----
+  document.getElementById('st-check-btn').addEventListener('click', () => {
+    const indexEl = document.getElementById('st-index').value;
+    const userSignal = document.getElementById('st-code').value; // "CE" or "PE"
+    const resultEl = document.getElementById('st-result');
+    const liveZone = currentZone[indexEl];
+
+    let badgeClass, badgeText, note;
+    if (!liveZone) {
+      badgeClass = "bias";
+      badgeText = "BIAS⚠️";
+      note = "Live zone data not available yet — trade with caution.";
+    } else if (liveZone === userSignal) {
+      badgeClass = "strong";
+      badgeText = "STRONG✅";
+      note = "Your signal matches the live Supertrend zone.";
+    } else {
+      badgeClass = "weak";
+      badgeText = "WEAK❌";
+      note = "Your signal disagrees with the live Supertrend zone — skip or wait for confirmation.";
+    }
+
+    resultEl.innerHTML = `<span class="badge ${badgeClass}" style="font-size:1rem; padding:6px 16px;">${badgeText}</span>
+      <p style="color:var(--muted); font-size:0.8rem; margin-top:8px;">${note}</p>`;
+  });
 </script>
 
 </body>
