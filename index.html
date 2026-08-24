@@ -550,17 +550,17 @@
 <!-- LIVE PRICES -->
 <div class="card theme-blue">
   <h2>📈 Live Prices <button class="info-icon-btn" data-info="info-prices">i</button></h2>
-  <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Type your broker's actual spot below — index is auto-detected from the leading digit (2xxxx=Nifty, 5xxxx=BankNifty, 7xxxx=Sensex). Stays in effect until you tap "Resume Live".</div>
+  <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Tap any index tile to instantly check its zones using the currently shown price — or type your broker's exact spot below to override it. Manual override stays in effect until you tap "Resume Live".</div>
   <div class="price-grid">
-    <div class="price-box idx-nifty">
+    <div class="price-box idx-nifty" id="tile-nifty" style="cursor:pointer;">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-price">—</div>
     </div>
-    <div class="price-box idx-banknifty">
+    <div class="price-box idx-banknifty" id="tile-banknifty" style="cursor:pointer;">
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-price">—</div>
     </div>
-    <div class="price-box idx-sensex">
+    <div class="price-box idx-sensex" id="tile-sensex" style="cursor:pointer;">
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-price">—</div>
     </div>
@@ -568,7 +568,7 @@
   <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.7rem; margin-top:5px;">Loading prices...</p>
 
   <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:5px;">
-    <input id="spot-input" type="number" inputmode="decimal" placeholder="Type spot (auto-detects index)" style="flex:1 1 140px; min-width:120px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.62rem;">
+    <input id="spot-input" type="number" inputmode="decimal" placeholder="Or type spot to override" style="flex:1 1 140px; min-width:120px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.62rem;">
     <button id="spot-set-btn" style="flex:0 0 auto; padding:4px 12px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.62rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
     <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--muted); font-size:0.6rem; cursor:pointer; white-space:nowrap;">↩ Live</button>
   </div>
@@ -603,14 +603,17 @@
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
+      <div id="st-nifty-zone-label" style="font-size:0.58rem; margin-top:3px; font-weight:700;"></div>
     </div>
     <div class="price-box idx-banknifty">
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
+      <div id="st-banknifty-zone-label" style="font-size:0.58rem; margin-top:3px; font-weight:700;"></div>
     </div>
     <div class="price-box idx-sensex">
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
+      <div id="st-sensex-zone-label" style="font-size:0.58rem; margin-top:3px; font-weight:700;"></div>
     </div>
   </div>
   <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px; margin-bottom:4px;">
@@ -827,6 +830,11 @@
     "banknifty-zone": "st-banknifty-badge",
     "sensex-zone": "st-sensex-badge"
   };
+  const zoneLabelIds = {
+    "nifty-zone": "st-nifty-zone-label",
+    "banknifty-zone": "st-banknifty-zone-label",
+    "sensex-zone": "st-sensex-zone-label"
+  };
   const STRONG_THRESHOLD = 3; // consecutive 5-min candles to call it "Strong"
   const currentDirection = {}; // elId -> "CE" | "PE"
   const currentStrength = {}; // elId -> "Strong" | "Bias"
@@ -917,7 +925,12 @@
         badgeEl.className = "badge";
         badgeEl.style.background = isCE ? "var(--green-soft)" : "var(--red-soft)";
         badgeEl.style.color = isCE ? "var(--green)" : "var(--red)";
-        badgeEl.textContent = `${stCode} ${strength}${icon}`;
+        badgeEl.textContent = `${stCode}${icon}`;
+
+        // Secondary line: same CE/PE Bias/Strong wording shown in CE/PE Strong Zones card
+        const zoneLabelEl = document.getElementById(zoneLabelIds[elId]);
+        zoneLabelEl.textContent = label;
+        zoneLabelEl.style.color = isCE ? "var(--green)" : "var(--red)";
 
         currentDirection[elId] = direction;
         currentStrength[elId] = strength;
@@ -1013,14 +1026,21 @@
   const MAX_ALERTS = 25;
 
   document.getElementById('sound-enable-btn').addEventListener('click', () => {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    soundEnabled = true;
     const btn = document.getElementById('sound-enable-btn');
-    btn.textContent = "🔊 Sound On";
-    btn.style.background = "var(--green-soft)";
-    btn.style.color = "var(--green)";
-    playBeep(660); // confirmation tone
+    if (!soundEnabled) {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      soundEnabled = true;
+      btn.textContent = "🔊 Sound On";
+      btn.style.background = "var(--green-soft)";
+      btn.style.color = "var(--green)";
+      playBeep(660); // confirmation tone
+    } else {
+      soundEnabled = false;
+      btn.textContent = "🔇 Sound Off";
+      btn.style.background = "var(--panel-alt)";
+      btn.style.color = "var(--muted)";
+    }
   });
 
   function playBeep(freq) {
@@ -1411,6 +1431,20 @@
     document.getElementById('spot-result').innerHTML = '';
     lastSpotKey = null;
     updatePrices(); // immediately re-fetch live feed instead of waiting for next 30s cycle
+  });
+
+  // ---- TAP-TO-CHECK: click a price tile to instantly zone-check its current displayed price ----
+  Object.keys(spotIndexMeta).forEach(key => {
+    document.getElementById('tile-' + key).addEventListener('click', () => {
+      const meta = spotIndexMeta[key];
+      const price = currentPrice[meta.priceEl];
+      if (price == null) {
+        alert("Price hasn't loaded yet — wait a moment and try again.");
+        return;
+      }
+      lastSpotKey = key;
+      renderSpotResult(key, price);
+    });
   });
 </script>
 
