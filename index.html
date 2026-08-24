@@ -412,9 +412,20 @@
 </div>
 
 <!-- P&L TRACKER -->
-<div class="card">
+<div class="card" style="justify-content:center;">
   <h2>💰 Daily P&L</h2>
-  <div class="placeholder">P&L tracker will be added in Step 9</div>
+  <div style="text-align:center;">
+    <div id="pnl-amount" style="font-size:1.6rem; font-weight:800;">₹0</div>
+    <div id="pnl-status" style="font-size:0.65rem; color:var(--muted); margin-top:2px;">No trades today</div>
+  </div>
+  <div style="margin-top:10px;">
+    <div style="display:flex; justify-content:space-between; font-size:0.58rem; color:var(--muted); margin-bottom:2px;">
+      <span>-₹5K</span><span>Stop Loss / Target</span><span>+₹10K</span>
+    </div>
+    <div style="height:6px; background:var(--panel-alt); border:1px solid var(--border); border-radius:4px; overflow:hidden; position:relative;">
+      <div id="pnl-bar" style="height:100%; width:50%; background:var(--muted); transition: width 0.3s ease, background 0.3s ease;"></div>
+    </div>
+  </div>
 </div>
 
 </div>
@@ -729,6 +740,7 @@
     const listEl = document.getElementById('tj-list');
     if (trades.length === 0) {
       listEl.innerHTML = '<p class="placeholder" style="font-size:0.72rem;">No trades logged yet</p>';
+      updatePnL();
       return;
     }
     const rows = trades.slice().reverse().map((t) => {
@@ -755,6 +767,46 @@
         tjRender();
       });
     });
+    updatePnL();
+  }
+
+  // ---- DAILY P&L TRACKER ----
+  const DAILY_TARGET = 10000, DAILY_STOP = -5000;
+
+  function updatePnL() {
+    const trades = tjLoad();
+    const todayStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+    const todaysTrades = trades.filter(t =>
+      new Date(t.ts).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) === todayStr
+    );
+    const total = todaysTrades.reduce((sum, t) => sum + t.pnl, 0);
+
+    const amountEl = document.getElementById('pnl-amount');
+    const statusEl = document.getElementById('pnl-status');
+    const barEl = document.getElementById('pnl-bar');
+
+    amountEl.textContent = `₹${total >= 0 ? '+' : ''}${total.toFixed(0)}`;
+    amountEl.style.color = total > 0 ? 'var(--green)' : total < 0 ? 'var(--red)' : 'var(--text)';
+
+    if (todaysTrades.length === 0) {
+      statusEl.textContent = "No trades today";
+    } else if (total >= DAILY_TARGET) {
+      statusEl.textContent = "🎯 TARGET HIT — stop trading for today";
+      statusEl.style.color = 'var(--green)';
+    } else if (total <= DAILY_STOP) {
+      statusEl.textContent = "🛑 LOSS LIMIT HIT — stop trading for today";
+      statusEl.style.color = 'var(--red)';
+    } else {
+      statusEl.textContent = `${todaysTrades.length} trade${todaysTrades.length > 1 ? 's' : ''} today`;
+      statusEl.style.color = 'var(--muted)';
+    }
+
+    // Bar: maps -5000..+10000 onto 0%..100%, clamped
+    const range = DAILY_TARGET - DAILY_STOP; // 15000
+    let pct = ((total - DAILY_STOP) / range) * 100;
+    pct = Math.max(0, Math.min(100, pct));
+    barEl.style.width = pct + "%";
+    barEl.style.background = total >= DAILY_TARGET ? 'var(--green)' : total <= DAILY_STOP ? 'var(--red)' : 'var(--orange)';
   }
 
   document.getElementById('tj-add-btn').addEventListener('click', () => {
