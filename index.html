@@ -6,10 +6,10 @@
 <title>Signa365 — Trading Dashboard</title>
 <style>
   :root {
-    --bg: #eef1f5;
+    --bg: #f5f1ec;
     --panel: #ffffff;
-    --panel-alt: #f7f9fb;
-    --border: #dde3ea;
+    --panel-alt: #fbf7f3;
+    --border: #e8ddd0;
     --text: #101828;
     --muted: #667085;
     --green: #0f7a3d;
@@ -18,8 +18,10 @@
     --red-soft: rgba(200,30,58,0.10);
     --amber: #a15c00;
     --amber-soft: rgba(161,92,0,0.10);
-    --accent: #1a3a6e;
-    --accent-soft: rgba(26,58,110,0.08);
+    --accent: #97291e;
+    --accent-soft: rgba(151,41,30,0.08);
+    --orange: #e6631b;
+    --orange-soft: rgba(230,99,27,0.08);
     --gold: #b8862e;
     --radius: 12px;
     --shadow: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
@@ -49,9 +51,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 14px;
-    background: var(--panel);
-    border: 1px solid var(--border);
+    padding: 10px 16px;
+    background: linear-gradient(90deg, var(--orange) 0%, var(--accent) 100%);
+    border: none;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     margin-bottom: 8px;
@@ -59,30 +61,31 @@
   header .brand { display: flex; align-items: center; gap: 8px; }
   header .live-dot {
     width: 8px; height: 8px; border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 0 0 rgba(15,122,61,0.5);
+    background: #ffffff;
+    box-shadow: 0 0 0 0 rgba(255,255,255,0.6);
     animation: pulse 2s infinite;
   }
   @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(15,122,61,0.45); }
-    70% { box-shadow: 0 0 0 6px rgba(15,122,61,0); }
-    100% { box-shadow: 0 0 0 0 rgba(15,122,61,0); }
+    0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.5); }
+    70% { box-shadow: 0 0 0 6px rgba(255,255,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
   }
   header h1 {
     font-size: 1.15rem;
-    color: var(--accent);
+    color: #ffffff;
     letter-spacing: 0.01em;
+    font-weight: 800;
   }
   header .tagline {
-    color: var(--muted);
+    color: rgba(255,255,255,0.85);
     font-size: 0.68rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     margin-left: 8px;
     padding-left: 8px;
-    border-left: 1px solid var(--border);
+    border-left: 1px solid rgba(255,255,255,0.35);
   }
-  header p#clock { color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+  header p#clock { color: rgba(255,255,255,0.9); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
 
   .dashboard {
     display: flex;
@@ -353,22 +356,34 @@
 
 <!-- STRIKE SELECTION -->
 <div class="card">
-  <h2>🎯 Strike Selection (3 OTM)</h2>
+  <h2>🎯 Strike & Expiry Leads</h2>
   <div class="price-grid">
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-strike">—</div>
+      <div id="nifty-expiry-tag" style="font-size:0.55rem; margin-top:2px; font-weight:700;"></div>
     </div>
     <div class="price-box idx-banknifty">
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-strike">—</div>
+      <div id="banknifty-expiry-tag" style="font-size:0.55rem; margin-top:2px; font-weight:700;"></div>
     </div>
     <div class="price-box idx-sensex">
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-strike">—</div>
+      <div id="sensex-expiry-tag" style="font-size:0.55rem; margin-top:2px; font-weight:700;"></div>
     </div>
   </div>
-  <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:8px;">ATM ± 3 strikes, direction follows live CE/PE zone</p>
+  <div style="display:flex; gap:4px; margin-top:6px;">
+    <select id="lead-index" style="flex:1; padding:4px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.65rem;">
+      <option value="nifty">NIFTY (lot 65)</option>
+      <option value="banknifty">BANKNIFTY (lot 30)</option>
+      <option value="sensex">SENSEX (lot 20)</option>
+    </select>
+    <input id="lead-premium" type="number" placeholder="Premium ₹" style="flex:1; padding:4px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.65rem; width:0;">
+    <button id="lead-calc-btn" style="padding:4px 8px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.65rem; font-weight:700; cursor:pointer; white-space:nowrap;">Qty</button>
+  </div>
+  <p id="lead-result" style="text-align:center; color:var(--muted); font-size:0.65rem; margin-top:4px;">Enter live premium from your broker · caps at ₹15K/trade</p>
 </div>
 
 <!-- TRADE JOURNAL -->
@@ -590,17 +605,55 @@
     "banknifty-zone": "banknifty-price",
     "sensex-zone": "sensex-price"
   };
+  const expiryTagElIds = {
+    "nifty-zone": "nifty-expiry-tag",
+    "banknifty-zone": "banknifty-expiry-tag",
+    "sensex-zone": "sensex-expiry-tag"
+  };
+  const currentStrength = {}; // elId -> "Strong" | "Bias"
+
+  // Weekly/monthly expiry rules (2026): Nifty=Tue weekly, Sensex=Thu weekly, BankNifty=monthly only, last Tue
+  function isExpiryDay(zoneElId) {
+    const istStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    const istDate = new Date(istStr);
+    const day = istDate.getDay(); // 0=Sun ... 2=Tue, 4=Thu
+    if (zoneElId === "nifty-zone") return day === 2;
+    if (zoneElId === "sensex-zone") return day === 4;
+    if (zoneElId === "banknifty-zone") {
+      if (day !== 2) return false;
+      // check if this Tuesday is the LAST Tuesday of the month
+      const test = new Date(istDate);
+      test.setDate(test.getDate() + 7);
+      return test.getMonth() !== istDate.getMonth();
+    }
+    return false;
+  }
 
   function updateStrike(zoneElId) {
     const strikeEl = document.getElementById(strikeElIds[zoneElId]);
+    const tagEl = document.getElementById(expiryTagElIds[zoneElId]);
     const spot = currentPrice[priceElIds[zoneElId]];
     const direction = currentDirection[zoneElId];
+    const strength = currentStrength[zoneElId];
     if (spot == null || direction == null) return;
     const interval = strikeInterval[zoneElId];
     const atm = Math.round(spot / interval) * interval;
     const strike = direction === "CE" ? atm + 3 * interval : atm - 3 * interval;
     strikeEl.textContent = strike.toLocaleString('en-IN') + " " + direction;
     strikeEl.style.color = direction === "CE" ? "var(--green)" : "var(--red)";
+
+    if (isExpiryDay(zoneElId)) {
+      if (strength === "Strong") {
+        const expiryStrike = direction === "CE" ? atm + 6 * interval : atm - 6 * interval;
+        tagEl.textContent = `🔥 Expiry: ${expiryStrike.toLocaleString('en-IN')} ${direction}`;
+        tagEl.style.color = direction === "CE" ? "var(--green)" : "var(--red)";
+      } else {
+        tagEl.textContent = "Expiry day · wait for Strong";
+        tagEl.style.color = "var(--muted)";
+      }
+    } else {
+      tagEl.textContent = "";
+    }
   }
 
   function updateTimeWindow() {
@@ -645,6 +698,7 @@
         badgeEl.textContent = `${label}${icon}`;
 
         currentDirection[elId] = direction;
+        currentStrength[elId] = strength;
         updateStrike(elId);
       } catch (err) {
         // keep last known values on transient failure
@@ -728,6 +782,36 @@
   });
 
   tjRender();
+
+  // ---- EXPIRY LEAD: QTY CALCULATOR ----
+  const leadLotSize = { nifty: 65, banknifty: 30, sensex: 20 };
+  const MAX_CAPITAL = 15000;
+
+  document.getElementById('lead-calc-btn').addEventListener('click', () => {
+    const idx = document.getElementById('lead-index').value;
+    const premium = parseFloat(document.getElementById('lead-premium').value);
+    const resultEl = document.getElementById('lead-result');
+    const lotSize = leadLotSize[idx];
+
+    if (!premium || premium <= 0) {
+      resultEl.textContent = "Enter a valid premium.";
+      resultEl.style.color = "var(--red)";
+      return;
+    }
+
+    const costPerLot = premium * lotSize;
+    const lots = Math.floor(MAX_CAPITAL / costPerLot);
+
+    if (lots < 1) {
+      resultEl.textContent = `1 lot costs ₹${costPerLot.toLocaleString('en-IN')} — exceeds ₹15K cap.`;
+      resultEl.style.color = "var(--red)";
+      return;
+    }
+
+    const qty = lots * lotSize;
+    resultEl.innerHTML = `<strong style="color:var(--accent);">${lots} lot${lots > 1 ? 's' : ''} (${qty} qty)</strong> · uses ₹${(lots * costPerLot).toLocaleString('en-IN')} of ₹15K`;
+    resultEl.style.color = "";
+  });
 </script>
 
 </body>
