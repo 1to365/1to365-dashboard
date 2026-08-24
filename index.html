@@ -263,7 +263,7 @@
   #lock-screen {
     position: fixed;
     inset: 0;
-    background: linear-gradient(160deg, var(--orange) 0%, var(--accent) 100%);
+    background: radial-gradient(ellipse 900px 500px at 50% -10%, #ffd8a8 0%, #fff1e0 45%, var(--bg) 75%);
     z-index: 9999;
     display: flex;
     flex-direction: column;
@@ -274,14 +274,14 @@
   #lock-screen.hidden { display: none; }
   .hidden { display: none !important; }
   #lock-brand {
-    color: #fff;
+    color: var(--accent);
     font-size: 1.4rem;
     font-weight: 800;
     letter-spacing: 0.01em;
     margin-bottom: 4px;
   }
   #lock-subtitle {
-    color: rgba(255,255,255,0.85);
+    color: var(--muted);
     font-size: 0.8rem;
     margin-bottom: 22px;
     text-align: center;
@@ -295,11 +295,11 @@
   .lock-dot {
     width: 14px; height: 14px;
     border-radius: 50%;
-    border: 2px solid #fff;
+    border: 2px solid var(--orange);
     background: transparent;
     transition: background 0.15s ease;
   }
-  .lock-dot.filled { background: #fff; }
+  .lock-dot.filled { background: var(--orange); }
   #lock-dots.shake { animation: shakeErr 0.4s; }
   @keyframes shakeErr {
     0%, 100% { transform: translateX(0); }
@@ -307,7 +307,7 @@
     40%, 80% { transform: translateX(8px); }
   }
   #lock-error {
-    color: #ffe1e1;
+    color: var(--red);
     font-size: 0.75rem;
     min-height: 1.2em;
     margin-bottom: 10px;
@@ -320,9 +320,10 @@
   .lock-key {
     width: 64px; height: 64px;
     border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.4);
-    background: rgba(255,255,255,0.12);
-    color: #fff;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    box-shadow: var(--shadow);
+    color: var(--accent);
     font-size: 1.3rem;
     font-weight: 700;
     cursor: pointer;
@@ -330,11 +331,11 @@
     align-items: center;
     justify-content: center;
   }
-  .lock-key:active { background: rgba(255,255,255,0.28); }
+  .lock-key:active { background: var(--orange-soft); }
   .lock-key.empty { visibility: hidden; }
   #lock-forgot {
     margin-top: 24px;
-    color: rgba(255,255,255,0.8);
+    color: var(--muted);
     font-size: 0.72rem;
     text-decoration: underline;
     cursor: pointer;
