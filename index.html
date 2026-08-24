@@ -47,7 +47,7 @@
   html { -webkit-text-size-adjust: 100%; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background: var(--bg);
+    background: linear-gradient(150deg, #fdf1e6 0%, #f6f0ec 35%, #eef3f9 70%, #eef6f2 100%);
     color: var(--text);
     font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
     padding: 12px;
@@ -106,7 +106,7 @@
   }
 
   .card {
-    background: var(--panel);
+    background: #f3f4f6;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -114,20 +114,17 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    border-top: 3px solid var(--border);
+    border-top: 3px solid #d5d8dd;
   }
-  .card.theme-blue     { background: var(--card-blue);     border-top-color: var(--card-blue-border); }
-  .card.theme-mint     { background: var(--card-mint);     border-top-color: var(--card-mint-border); }
-  .card.theme-amber    { background: var(--card-amber);    border-top-color: var(--card-amber-border); }
-  .card.theme-teal     { background: var(--card-teal);     border-top-color: var(--card-teal-border); }
-  .card.theme-rose     { background: var(--card-rose);     border-top-color: var(--card-rose-border); }
-  .card.theme-lavender { background: var(--card-lavender); border-top-color: var(--card-lavender-border); }
-  .card.theme-blue h2     { color: #2555c7; }
-  .card.theme-mint h2     { color: #1f8a4c; }
-  .card.theme-amber h2    { color: #b45309; }
-  .card.theme-teal h2     { color: #0f766e; }
-  .card.theme-rose h2     { color: #b91c1c; }
-  .card.theme-lavender h2 { color: #7c3aed; }
+  .card.theme-blue, .card.theme-mint, .card.theme-amber,
+  .card.theme-teal, .card.theme-rose, .card.theme-lavender {
+    background: #f3f4f6;
+    border-top-color: #d5d8dd;
+  }
+  .card.theme-blue h2, .card.theme-mint h2, .card.theme-amber h2,
+  .card.theme-teal h2, .card.theme-rose h2, .card.theme-lavender h2 {
+    color: var(--accent);
+  }
   .card .price-box { background: var(--panel); }
   .card h2 {
     font-size: 0.78rem;
@@ -285,6 +282,30 @@
     padding: 14px 0 6px;
   }
 
+  /* ---- MARKET CLOSED WATERMARK ---- */
+  #market-closed-overlay {
+    position: fixed;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-28deg);
+    font-size: 3.2rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    color: rgba(151,41,30,0.13);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    z-index: 500;
+    text-transform: uppercase;
+  }
+  #market-closed-overlay.hidden { display: none; }
+  @media (max-width: 600px) {
+    #market-closed-overlay { font-size: 1.6rem; }
+  }
+  @media (min-width: 900px) {
+    #market-closed-overlay { font-size: 4.2rem; }
+  }
+
   /* ---- PIN LOCK SCREEN ---- */
   #lock-screen {
     position: fixed;
@@ -420,6 +441,8 @@
     <p id="clock">Loading time...</p>
   </div>
 </header>
+
+<div id="market-closed-overlay" class="hidden">Market Closed</div>
 
 <div class="dashboard">
 
@@ -811,12 +834,15 @@
 
   function updateTimeWindow() {
     const badge = document.getElementById('time-window-badge');
+    const overlay = document.getElementById('market-closed-overlay');
     if (isWithinTradeWindow()) {
       badge.className = "badge strong";
       badge.textContent = "TRADE WINDOW OPEN ✅";
+      overlay.classList.add('hidden');
     } else {
       badge.className = "badge weak";
       badge.textContent = "OUTSIDE TRADE WINDOW ❌";
+      overlay.classList.remove('hidden');
     }
   }
   updateTimeWindow();
