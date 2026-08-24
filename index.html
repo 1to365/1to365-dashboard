@@ -129,7 +129,7 @@
       <div class="value" id="sensex-price">—</div>
     </div>
   </div>
-  <div class="placeholder" style="margin-top:10px;">Live price feed will be added in Step 3</div>
+  <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:8px;">Loading prices...</p>
 </div>
 
 <!-- CE/PE ZONES -->
@@ -191,6 +191,46 @@
   }
   updateClock();
   setInterval(updateClock, 1000);
+
+  // ---- LIVE PRICES (Yahoo Finance via CORS proxy) ----
+  const symbols = {
+    "nifty-price": "^NSEI",
+    "banknifty-price": "^NSEBANK",
+    "sensex-price": "^BSESN"
+  };
+
+  async function fetchPrice(symbol) {
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`;
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error("Network error");
+    const data = await res.json();
+    const result = data.chart.result[0];
+    const price = result.meta.regularMarketPrice;
+    const prevClose = result.meta.chartPreviousClose;
+    return { price, change: price - prevClose };
+  }
+
+  async function updatePrices() {
+    const statusEl = document.getElementById('price-status');
+    let anyError = false;
+    for (const [elId, symbol] of Object.entries(symbols)) {
+      try {
+        const { price, change } = await fetchPrice(symbol);
+        const el = document.getElementById(elId);
+        el.textContent = price.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+        el.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
+      } catch (err) {
+        anyError = true;
+      }
+    }
+    statusEl.textContent = anyError
+      ? "Some prices failed to load — will retry in 30s"
+      : "Last updated: " + new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+  }
+
+  updatePrices();
+  setInterval(updatePrices, 30000);
 </script>
 
 </body>
