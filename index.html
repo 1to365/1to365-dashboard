@@ -275,20 +275,20 @@
 
   /* DESKTOP: fit everything on one screen, no page scroll */
   @media (min-width: 900px) {
-    body { height: 100vh; overflow: hidden; padding: 12px; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; }
+    body { height: 100vh; overflow: hidden; padding: 12px; max-width: 950px; margin: 0 auto; display: flex; flex-direction: column; }
     header { margin-bottom: 8px; flex-shrink: 0; }
     .dashboard {
       flex: 1;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: repeat(2, 1fr);
-      gap: 14px;
+      grid-template-rows: 1fr;
+      gap: 16px;
       min-height: 0;
     }
     .card { min-height: 0; overflow: hidden; }
-    .card h2 { font-size: 0.82rem; margin-bottom: 9px; }
-    .price-box .value { font-size: 1.4rem; }
-    .card .card-note { font-size: 0.7rem; }
+    .card h2 { font-size: 0.9rem; margin-bottom: 10px; }
+    .price-box .value { font-size: 1.6rem; }
+    .card .card-note { font-size: 0.72rem; }
     footer { flex-shrink: 0; padding-top: 6px; }
   }
 
@@ -538,6 +538,30 @@
         <li>No averaging, no revenge trading</li>
       </ul>
     </div>
+
+    <button id="pnl-toggle" style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:0.68rem; font-weight:700; padding:5px 10px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:4px;">💰 P&L ▾</button>
+    <div id="pnl-panel" class="hidden" style="position:absolute; top:calc(100% + 8px); right:0; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.15); padding:12px; width:230px; z-index:200; color:var(--text);">
+      <div style="text-align:center;">
+        <div id="pnl-amount" style="font-size:1.5rem; font-weight:800;">₹0</div>
+        <div id="pnl-status" style="font-size:0.65rem; color:var(--muted); margin-top:2px;">No trades today</div>
+      </div>
+      <div style="margin-top:8px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.56rem; color:var(--muted); margin-bottom:2px;">
+          <span>-₹5K</span><span>Stop Loss / Target</span><span>+₹10K</span>
+        </div>
+        <div style="height:6px; background:var(--panel-alt); border:1px solid var(--border); border-radius:4px; overflow:hidden;">
+          <div id="pnl-bar" style="height:100%; width:50%; background:var(--muted); transition: width 0.3s ease, background 0.3s ease;"></div>
+        </div>
+      </div>
+      <div style="display:flex; gap:4px; margin-top:8px;">
+        <input id="quick-pnl-amount" type="number" placeholder="e.g. 1200 or -800" style="flex:1; min-width:0; padding:5px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.65rem;">
+        <button id="quick-pnl-btn" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.65rem; font-weight:700; cursor:pointer;">+ Log</button>
+      </div>
+      <hr style="border:none; border-top:1px solid var(--border); margin:10px 0 6px;">
+      <p style="font-size:0.6rem; font-weight:700; color:var(--muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.03em;">📅 Monthly Totals</p>
+      <div id="monthly-list"></div>
+    </div>
+
     <span id="time-window-badge" class="badge bias" style="background:rgba(255,255,255,0.18); color:#fff;">Checking...</span>
     <p id="clock">Loading time...</p>
   </div>
@@ -575,27 +599,7 @@
   <div id="spot-result" style="margin-top:4px; font-size:0.64rem; line-height:1.35; font-family:ui-monospace, monospace;"></div>
 </div>
 
-<!-- CE/PE ZONES -->
-<div class="card theme-mint">
-  <h2>🎯 CE/PE Strong Zones <button class="info-icon-btn" data-info="info-zones">i</button></h2>
-  <div id="info-zones" class="info-popover hidden">Supertrend(7,3) 5-min · Strong = trend held 3+ candles (15+ min) · Bias = trend just flipped</div>
-  <div class="price-grid">
-    <div class="price-box idx-nifty">
-      <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
-      <div class="value" id="nifty-zone">—</div>
-    </div>
-    <div class="price-box idx-banknifty">
-      <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
-      <div class="value" id="banknifty-zone">—</div>
-    </div>
-    <div class="price-box idx-sensex">
-      <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
-      <div class="value" id="sensex-zone">—</div>
-    </div>
-  </div>
-</div>
-
-<!-- ST SIGNAL (now includes Strong Signal Alerts) -->
+<!-- ST SIGNAL (now includes Strong Signal Alerts + CE/PE Zone wording) -->
 <div class="card theme-amber">
   <h2>⚡ ST Signals <button class="info-icon-btn" data-info="info-st">i</button></h2>
   <div id="info-st" class="info-popover hidden">Shows your T-code (TNG/TNR = Nifty, TBG/TBR = BankNifty, TSG/TSR = Sensex) · G = CE, R = PE · Auto-calculated live from Supertrend(5m, 7, 3), updates automatically on flip — no manual input needed</div>
@@ -623,35 +627,6 @@
   <div id="alerts-list" style="flex:1; overflow-y:auto; min-height:0;">
     <p class="placeholder" style="font-size:0.68rem;">Waiting for a Strong signal…</p>
   </div>
-</div>
-
-<!-- P&L TRACKER -->
-<div class="card theme-lavender" style="justify-content:center; position:relative;">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <h2 style="margin-bottom:0;">💰 Daily P&L</h2>
-    <button id="monthly-toggle" style="background:rgba(124,58,237,0.12); border:1px solid var(--card-lavender-border); color:#7c3aed; font-size:0.62rem; font-weight:700; padding:3px 8px; border-radius:14px; cursor:pointer;">📅 Monthly ▾</button>
-  </div>
-  <div id="monthly-panel" class="hidden" style="position:absolute; top:38px; right:8px; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.15); padding:10px 12px; width:200px; z-index:200; max-height:220px; overflow-y:auto;">
-    <p style="font-size:0.65rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">Monthly Totals</p>
-    <div id="monthly-list"></div>
-  </div>
-  <div style="text-align:center;">
-    <div id="pnl-amount" style="font-size:1.6rem; font-weight:800;">₹0</div>
-    <div id="pnl-status" style="font-size:0.65rem; color:var(--muted); margin-top:2px;">No trades today</div>
-  </div>
-  <div style="margin-top:10px;">
-    <div style="display:flex; justify-content:space-between; font-size:0.58rem; color:var(--muted); margin-bottom:2px;">
-      <span>-₹5K</span><span>Stop Loss / Target</span><span>+₹10K</span>
-    </div>
-    <div style="height:6px; background:var(--panel-alt); border:1px solid var(--border); border-radius:4px; overflow:hidden; position:relative;">
-      <div id="pnl-bar" style="height:100%; width:50%; background:var(--muted); transition: width 0.3s ease, background 0.3s ease;"></div>
-    </div>
-  </div>
-  <div style="display:flex; gap:4px; margin-top:10px;">
-    <input id="quick-pnl-amount" type="number" placeholder="e.g. 1200 or -800" style="flex:1; padding:5px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.68rem; width:0;">
-    <button id="quick-pnl-btn" style="padding:5px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.68rem; font-weight:700; cursor:pointer; white-space:nowrap;">+ Log</button>
-  </div>
-  <p style="text-align:center; color:var(--muted); font-size:0.58rem; margin-top:3px;">Quick log — just type profit or loss, no other details needed</p>
 </div>
 
 </div>
@@ -909,15 +884,9 @@
         const direction = trend === 1 ? "CE" : "PE";
         const strength = duration >= STRONG_THRESHOLD ? "Strong" : "Bias";
         const isCE = direction === "CE";
-        const badgeClass = strength === "Strong" ? (isCE ? "strong" : "weak") : "bias";
         const label = `${direction} ${strength}`;
         const icon = strength === "Strong" ? (isCE ? "✅" : "🔻") : "⚠️";
         const stCode = stCodeMap[elId][direction];
-
-        // Zone card
-        const zoneEl = document.getElementById(elId);
-        zoneEl.textContent = label;
-        zoneEl.style.color = isCE ? "var(--green)" : "var(--red)";
 
         // Signal check card — shows your own T-code (TNG/TNR/TSG/TSR/TBG/TBR), updates automatically on flip
         // Color rule: G-codes (CE) always green, R-codes (PE) always red — independent of Strong/Bias
@@ -1283,9 +1252,9 @@
     }
   });
 
-  // ---- MONTHLY SUMMARY (aggregated from same trade storage as Daily P&L) ----
-  const monthlyToggleBtn = document.getElementById('monthly-toggle');
-  const monthlyPanelEl = document.getElementById('monthly-panel');
+  // ---- P&L PANEL (in header) — daily status + quick log + monthly totals, all in one ----
+  const pnlToggleBtn = document.getElementById('pnl-toggle');
+  const pnlPanelEl = document.getElementById('pnl-panel');
   const monthlyListEl = document.getElementById('monthly-list');
 
   function renderMonthlySummary() {
@@ -1313,14 +1282,14 @@
     }).join('');
   }
 
-  monthlyToggleBtn.addEventListener('click', (e) => {
+  pnlToggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     renderMonthlySummary();
-    monthlyPanelEl.classList.toggle('hidden');
+    pnlPanelEl.classList.toggle('hidden');
   });
   document.addEventListener('click', (e) => {
-    if (!monthlyPanelEl.classList.contains('hidden') && !monthlyPanelEl.contains(e.target) && e.target !== monthlyToggleBtn) {
-      monthlyPanelEl.classList.add('hidden');
+    if (!pnlPanelEl.classList.contains('hidden') && !pnlPanelEl.contains(e.target) && e.target !== pnlToggleBtn) {
+      pnlPanelEl.classList.add('hidden');
     }
   });
 
