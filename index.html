@@ -50,8 +50,9 @@
     background: linear-gradient(150deg, #fdf1e6 0%, #f6f0ec 35%, #eef3f9 70%, #eef6f2 100%);
     color: var(--text);
     font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-    padding: 12px;
+    padding: 14px;
     width: 100%;
+    max-width: 720px;
     margin: 0 auto;
     overflow-x: hidden;
   }
@@ -63,16 +64,18 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
     background: linear-gradient(90deg, var(--orange) 0%, var(--accent) 100%);
     border: none;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
   header .brand { display: flex; align-items: center; gap: 8px; }
   header .live-dot {
-    width: 8px; height: 8px; border-radius: 50%;
+    width: 9px; height: 9px; border-radius: 50%;
     background: #ffffff;
     box-shadow: 0 0 0 0 rgba(255,255,255,0.6);
     animation: pulse 2s infinite;
@@ -111,12 +114,13 @@
   .flip-badge {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     background: var(--orange-soft);
     color: var(--orange);
     font-weight: 800;
-    padding: 2px 7px;
+    padding: 3px 9px;
     border-radius: 20px;
+    font-size: 0.85rem;
     animation: flipPulseBg 1s ease-in-out infinite;
   }
   .flip-badge .flip-icon {
@@ -124,26 +128,26 @@
     animation: flipSpin 0.9s linear infinite;
   }
   header h1 {
-    font-size: 1.15rem;
+    font-size: 1.4rem;
     color: #ffffff;
     letter-spacing: 0.01em;
     font-weight: 800;
   }
   header .tagline {
     color: rgba(255,255,255,0.85);
-    font-size: 0.68rem;
+    font-size: 0.78rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     margin-left: 8px;
     padding-left: 8px;
     border-left: 1px solid rgba(255,255,255,0.35);
   }
-  header p#clock { color: rgba(255,255,255,0.9); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+  header p#clock { color: rgba(255,255,255,0.9); font-size: 0.92rem; font-variant-numeric: tabular-nums; }
 
   .dashboard {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 16px;
   }
 
   .card {
@@ -151,21 +155,21 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    padding: 10px 12px;
+    padding: 18px 20px;
     width: 100%;
     display: flex;
     flex-direction: column;
-    border-top: 3px solid #d5d8dd;
+    border-top: 4px solid #d5d8dd;
     position: relative;
   }
   .info-icon-btn {
     background: none;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     color: var(--muted);
-    width: 15px;
-    height: 15px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    font-size: 0.6rem;
+    font-size: 0.75rem;
     line-height: 1;
     cursor: pointer;
     display: inline-flex;
@@ -176,20 +180,31 @@
   }
   .info-popover {
     position: absolute;
-    top: 32px;
+    top: 40px;
     left: 8px;
     right: 8px;
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.14);
-    padding: 8px 10px;
-    font-size: 0.68rem;
+    padding: 12px 14px;
+    font-size: 0.85rem;
     color: var(--muted);
-    line-height: 1.35;
+    line-height: 1.5;
     z-index: 150;
   }
   .info-popover.hidden { display: none; }
+  .ribbon-panel {
+    position: fixed;
+    top: 78px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(300px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
   .card.theme-blue, .card.theme-mint, .card.theme-amber,
   .card.theme-teal, .card.theme-rose, .card.theme-lavender {
     background: #f3f4f6;
@@ -201,36 +216,36 @@
   }
   .card .price-box { background: var(--panel); }
   .card h2 {
-    font-size: 0.78rem;
-    font-weight: 700;
+    font-size: 1.1rem;
+    font-weight: 800;
     color: var(--accent);
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
   }
   .card .card-note {
     text-align: center;
     color: var(--muted);
-    font-size: 0.68rem;
-    margin-top: 4px;
-    line-height: 1.25;
+    font-size: 0.85rem;
+    margin-top: 6px;
+    line-height: 1.4;
   }
 
   .price-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    gap: 10px;
   }
   .price-box {
     background: var(--panel-alt);
     border: 1px solid var(--border);
-    border-top: 3px solid var(--border);
-    border-radius: 7px;
-    padding: 5px 3px;
+    border-top: 4px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 6px;
     text-align: center;
     min-width: 0;
     transition: transform 0.15s ease;
@@ -243,13 +258,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
-    height: 16px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
-    font-size: 0.52rem;
+    font-size: 0.85rem;
     font-weight: 800;
     color: #fff;
-    margin-right: 3px;
+    margin-right: 6px;
     vertical-align: middle;
   }
   .idx-icon.nifty     { background: var(--nifty); }
@@ -258,59 +273,56 @@
 
   .price-box .label {
     color: var(--muted);
-    font-size: 0.6rem;
+    font-size: 0.95rem;
+    font-weight: 700;
     white-space: nowrap;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 3px;
   }
   .price-box .value {
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-top: 2px;
+    font-size: 1.85rem;
+    font-weight: 800;
+    margin-top: 8px;
     word-break: break-word;
   }
 
-  /* DESKTOP: fit everything on one screen, no page scroll */
+  /* DESKTOP: 2 cards side by side, sized to their own content — no forced full-height stretch */
   @media (min-width: 900px) {
-    body { height: 100vh; overflow: hidden; padding: 12px; max-width: 950px; margin: 0 auto; display: flex; flex-direction: column; }
-    header { margin-bottom: 8px; flex-shrink: 0; }
+    body { padding: 28px; }
     .dashboard {
-      flex: 1;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: 1fr;
-      gap: 16px;
-      min-height: 0;
+      align-items: start;
+      gap: 22px;
+      max-width: 1000px;
+      margin: 0 auto;
     }
-    .card { min-height: 0; overflow: hidden; }
-    .card h2 { font-size: 0.9rem; margin-bottom: 10px; }
-    .price-box .value { font-size: 1.6rem; }
-    .card .card-note { font-size: 0.72rem; }
-    footer { flex-shrink: 0; padding-top: 6px; }
+    header, footer { max-width: 1000px; margin-left: auto; margin-right: auto; }
+    .card h2 { font-size: 1.3rem; }
+    .price-box .value { font-size: 2rem; }
+    .card .card-note { font-size: 0.9rem; }
   }
 
-  /* Small phones: shrink further */
+  /* Small phones: trim padding only, keep text large and readable */
   @media (max-width: 380px) {
-    body { padding: 8px; }
-    header h1 { font-size: 1rem; }
+    body { padding: 12px; }
     header .tagline { display: none; }
-    .card { padding: 10px; }
-    .price-grid { gap: 6px; }
-    .price-box { padding: 6px 2px; }
-    .price-box .label { font-size: 0.6rem; }
-    .price-box .value { font-size: 0.88rem; }
-    .checklist li { font-size: 0.8rem; }
+    .card { padding: 16px 14px; }
+    .price-grid { gap: 8px; }
+    .price-box { padding: 12px 4px; }
+    .price-box .value { font-size: 1.5rem; }
+    .price-box .label { font-size: 0.82rem; }
   }
 
   .badge {
     display: inline-block;
-    padding: 3px 10px;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 700;
+    font-size: 1.05rem;
+    font-weight: 800;
     letter-spacing: 0.01em;
   }
   .badge.strong { background: var(--green-soft); color: var(--green); }
@@ -319,16 +331,16 @@
 
   .checklist { list-style: none; overflow-y: auto; }
   .checklist li {
-    padding: 6px 0;
+    padding: 9px 0;
     border-bottom: 1px solid var(--border);
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
   .checklist li::before {
     content: "";
-    width: 5px; height: 5px;
+    width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--gold);
     flex-shrink: 0;
@@ -337,12 +349,12 @@
 
   .placeholder {
     color: var(--muted);
-    font-size: 0.78rem;
+    font-size: 0.92rem;
     font-style: italic;
-    padding: 10px;
+    padding: 14px;
     text-align: center;
     border: 1px dashed var(--border);
-    border-radius: 8px;
+    border-radius: 10px;
     flex: 1;
     display: flex;
     align-items: center;
@@ -527,9 +539,9 @@
     <h1>Signa365</h1>
     <span class="tagline">Live Mining</span>
   </div>
-  <div style="display:flex; align-items:center; gap:10px; position:relative;">
-    <button id="rules-toggle" style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:0.68rem; font-weight:700; padding:5px 10px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:4px;">📋 Rules ▾</button>
-    <div id="rules-panel" class="hidden" style="position:absolute; top:calc(100% + 8px); right:0; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.15); padding:10px 12px; width:230px; z-index:200;">
+  <div style="display:flex; align-items:center; gap:10px; position:relative; flex-wrap:wrap;">
+    <button id="rules-toggle" style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:0.85rem; font-weight:700; padding:7px 14px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:5px;">📋 Rules ▾</button>
+    <div id="rules-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:14px 16px; z-index:300;">
       <ul class="checklist" style="margin:0;">
         <li>Real trades allowed any trading day (Mon–Fri)</li>
         <li>Max ₹10–15K capital per trade</li>
@@ -539,26 +551,26 @@
       </ul>
     </div>
 
-    <button id="pnl-toggle" style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:0.68rem; font-weight:700; padding:5px 10px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:4px;">💰 P&L ▾</button>
-    <div id="pnl-panel" class="hidden" style="position:absolute; top:calc(100% + 8px); right:0; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.15); padding:12px; width:230px; z-index:200; color:var(--text);">
+    <button id="pnl-toggle" style="background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.35); color:#fff; font-size:0.85rem; font-weight:700; padding:7px 14px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:5px;">💰 P&L ▾</button>
+    <div id="pnl-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:16px; z-index:300; color:var(--text);">
       <div style="text-align:center;">
-        <div id="pnl-amount" style="font-size:1.5rem; font-weight:800;">₹0</div>
-        <div id="pnl-status" style="font-size:0.65rem; color:var(--muted); margin-top:2px;">No trades today</div>
+        <div id="pnl-amount" style="font-size:1.9rem; font-weight:800;">₹0</div>
+        <div id="pnl-status" style="font-size:0.82rem; color:var(--muted); margin-top:3px;">No trades today</div>
       </div>
-      <div style="margin-top:8px;">
-        <div style="display:flex; justify-content:space-between; font-size:0.56rem; color:var(--muted); margin-bottom:2px;">
+      <div style="margin-top:12px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--muted); margin-bottom:3px;">
           <span>-₹5K</span><span>Stop Loss / Target</span><span>+₹10K</span>
         </div>
-        <div style="height:6px; background:var(--panel-alt); border:1px solid var(--border); border-radius:4px; overflow:hidden;">
+        <div style="height:8px; background:var(--panel-alt); border:1px solid var(--border); border-radius:5px; overflow:hidden;">
           <div id="pnl-bar" style="height:100%; width:50%; background:var(--muted); transition: width 0.3s ease, background 0.3s ease;"></div>
         </div>
       </div>
-      <div style="display:flex; gap:4px; margin-top:8px;">
-        <input id="quick-pnl-amount" type="number" placeholder="e.g. 1200 or -800" style="flex:1; min-width:0; padding:5px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.65rem;">
-        <button id="quick-pnl-btn" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.65rem; font-weight:700; cursor:pointer;">+ Log</button>
+      <div style="display:flex; gap:6px; margin-top:12px;">
+        <input id="quick-pnl-amount" type="number" placeholder="e.g. 1200 or -800" style="flex:1; min-width:0; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem;">
+        <button id="quick-pnl-btn" style="flex:0 0 auto; padding:8px 14px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer;">+ Log</button>
       </div>
-      <hr style="border:none; border-top:1px solid var(--border); margin:10px 0 6px;">
-      <p style="font-size:0.6rem; font-weight:700; color:var(--muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.03em;">📅 Monthly Totals</p>
+      <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
+      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">📅 Monthly Totals</p>
       <div id="monthly-list"></div>
     </div>
 
@@ -573,7 +585,7 @@
 
 <!-- LIVE PRICES -->
 <div class="card theme-blue">
-  <h2>📈 Live Prices <button class="info-icon-btn" data-info="info-prices">i</button></h2>
+  <h2>📈 Market Pulse <button class="info-icon-btn" data-info="info-prices">i</button></h2>
   <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Tap any index tile to instantly check its zones using the currently shown price — or type your broker's exact spot below to override it. Manual override stays in effect until you tap "Resume Live".</div>
   <div class="price-grid">
     <div class="price-box idx-nifty" id="tile-nifty" style="cursor:pointer;">
@@ -589,43 +601,43 @@
       <div class="value" id="sensex-price">—</div>
     </div>
   </div>
-  <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.7rem; margin-top:5px;">Loading prices...</p>
+  <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin-top:8px;">Loading prices...</p>
 
-  <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:5px;">
-    <input id="spot-input" type="number" inputmode="decimal" placeholder="Or type spot to override" style="flex:1 1 140px; min-width:120px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.62rem;">
-    <button id="spot-set-btn" style="flex:0 0 auto; padding:4px 12px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.62rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
-    <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--muted); font-size:0.6rem; cursor:pointer; white-space:nowrap;">↩ Live</button>
+  <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+    <input id="spot-input" type="number" inputmode="decimal" placeholder="Or type spot to override" style="flex:1 1 160px; min-width:140px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.95rem;">
+    <button id="spot-set-btn" style="flex:0 0 auto; padding:10px 20px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
+    <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:10px 16px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--muted); font-size:0.88rem; cursor:pointer; white-space:nowrap;">↩ Live</button>
   </div>
-  <div id="spot-result" style="margin-top:4px; font-size:0.64rem; line-height:1.35; font-family:ui-monospace, monospace;"></div>
+  <div id="spot-result" style="margin-top:12px; font-size:0.95rem; line-height:1.7; font-family:ui-monospace, monospace;"></div>
 </div>
 
 <!-- ST SIGNAL (now includes Strong Signal Alerts + CE/PE Zone wording) -->
 <div class="card theme-amber">
-  <h2>⚡ ST Signals <button class="info-icon-btn" data-info="info-st">i</button></h2>
+  <h2>⚡ Signal Command <button class="info-icon-btn" data-info="info-st">i</button></h2>
   <div id="info-st" class="info-popover hidden">Shows your T-code (TNG/TNR = Nifty, TBG/TBR = BankNifty, TSG/TSR = Sensex) · G = CE, R = PE · Auto-calculated live from Supertrend(5m, 7, 3), updates automatically on flip — no manual input needed</div>
   <div class="price-grid">
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
-      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
-      <div id="st-nifty-zone-label" style="font-size:0.58rem; margin-top:3px; font-weight:700;"></div>
+      <div class="value" style="font-size:1.05rem; margin-top:8px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
+      <div id="st-nifty-zone-label" style="font-size:0.82rem; margin-top:6px; font-weight:700;"></div>
     </div>
     <div class="price-box idx-banknifty">
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
-      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
-      <div id="st-banknifty-zone-label" style="font-size:0.58rem; margin-top:3px; font-weight:700;"></div>
+      <div class="value" style="font-size:1.05rem; margin-top:8px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
+      <div id="st-banknifty-zone-label" style="font-size:0.82rem; margin-top:6px; font-weight:700;"></div>
     </div>
     <div class="price-box idx-sensex">
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
-      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
-      <div id="st-sensex-zone-label" style="font-size:0.58rem; margin-top:3px; font-weight:700;"></div>
+      <div class="value" style="font-size:1.05rem; margin-top:8px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
+      <div id="st-sensex-zone-label" style="font-size:0.82rem; margin-top:6px; font-weight:700;"></div>
     </div>
   </div>
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px; margin-bottom:4px;">
-    <span style="font-size:0.65rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em;">🔔 Alerts</span>
-    <button id="sound-enable-btn" style="padding:3px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.6rem; font-weight:700; cursor:pointer;">🔊 Enable Sound</button>
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-top:16px; margin-bottom:8px;">
+    <span style="font-size:0.85rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em;">🔔 Alerts</span>
+    <button id="sound-enable-btn" style="padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem; font-weight:700; cursor:pointer;">🔊 Enable Sound</button>
   </div>
   <div id="alerts-list" style="flex:1; overflow-y:auto; min-height:0;">
-    <p class="placeholder" style="font-size:0.68rem;">Waiting for a Strong signal…</p>
+    <p class="placeholder" style="font-size:0.92rem;">Waiting for a Strong signal…</p>
   </div>
 </div>
 
@@ -858,11 +870,11 @@
       overlay.classList.remove('hidden');
     } else if (isWithinTradeWindow()) {
       badge.className = "badge strong";
-      badge.textContent = "TRADE WINDOW OPEN ✅";
+      badge.textContent = "SESSION LIVE ✅";
       overlay.classList.add('hidden');
     } else {
       badge.className = "badge weak";
-      badge.textContent = "OUTSIDE TRADE WINDOW ❌";
+      badge.textContent = "SESSION CLOSED ❌";
       overlay.textContent = "Market Closed";
       overlay.classList.remove('hidden');
     }
@@ -1036,7 +1048,7 @@
   function renderAlerts() {
     const listEl = document.getElementById('alerts-list');
     if (alertHistory.length === 0) {
-      listEl.innerHTML = '<p class="placeholder" style="font-size:0.72rem;">Waiting for a Strong signal…</p>';
+      listEl.innerHTML = '<p class="placeholder" style="font-size:0.92rem;">Waiting for a Strong signal…</p>';
       return;
     }
     listEl.innerHTML = alertHistory.map(a => {
@@ -1044,21 +1056,21 @@
       const color = isCE ? "var(--green)" : "var(--red)";
       const timeStr = new Date(a.ts).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
       if (a.isFlip) {
-        return `<div style="display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); font-size:0.72rem;">
-          <span style="font-size:1rem;">🔄</span>
+        return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
+          <span style="font-size:1.3rem;">🔄</span>
           <div style="flex:1;">
             <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">FLIP: ${a.fromCode} → ${a.toCode}</span>
           </div>
-          <span style="color:var(--muted); font-size:0.62rem;">${timeStr}</span>
+          <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
         </div>`;
       }
       const arrow = isCE ? "▲" : "▼";
-      return `<div style="display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); font-size:0.72rem;">
-        <span style="color:${color}; font-size:1rem; font-weight:800;">${arrow}</span>
+      return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
+        <span style="color:${color}; font-size:1.3rem; font-weight:800;">${arrow}</span>
         <div style="flex:1;">
           <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">${a.direction} STRONG</span>
         </div>
-        <span style="color:var(--muted); font-size:0.62rem;">${timeStr}</span>
+        <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
       </div>`;
     }).join('');
   }
@@ -1242,8 +1254,15 @@
   // ---- RULES DROPDOWN (in header) ----
   const rulesToggleBtn = document.getElementById('rules-toggle');
   const rulesPanelEl = document.getElementById('rules-panel');
+
+  function positionRibbonPanel(panel) {
+    const headerEl = document.querySelector('header');
+    panel.style.top = (headerEl.getBoundingClientRect().bottom + 10) + 'px';
+  }
+
   rulesToggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    positionRibbonPanel(rulesPanelEl);
     rulesPanelEl.classList.toggle('hidden');
   });
   document.addEventListener('click', (e) => {
@@ -1260,7 +1279,7 @@
   function renderMonthlySummary() {
     const trades = tjLoad();
     if (trades.length === 0) {
-      monthlyListEl.innerHTML = '<p style="font-size:0.68rem; color:var(--muted); font-style:italic;">No logs yet</p>';
+      monthlyListEl.innerHTML = '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No logs yet</p>';
       return;
     }
     const totals = {}; // "Aug 2026" -> sum
@@ -1275,7 +1294,7 @@
     });
     monthlyListEl.innerHTML = sorted.map(([month, total]) => {
       const color = total >= 0 ? 'var(--green)' : 'var(--red)';
-      return `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--border); font-size:0.7rem;">
+      return `<div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); font-size:0.88rem;">
         <span>${month}</span>
         <strong style="color:${color};">₹${total >= 0 ? '+' : ''}${total.toFixed(0)}</strong>
       </div>`;
@@ -1285,6 +1304,7 @@
   pnlToggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     renderMonthlySummary();
+    positionRibbonPanel(pnlPanelEl);
     pnlPanelEl.classList.toggle('hidden');
   });
   document.addEventListener('click', (e) => {
