@@ -82,6 +82,47 @@
     70% { box-shadow: 0 0 0 6px rgba(255,255,255,0); }
     100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
   }
+  @keyframes flipSpin {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.35); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+  .flip-icon-anim {
+    display: inline-block;
+    animation: flipSpin 0.9s ease-in-out 2;
+  }
+  @keyframes badgeFlash {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(230,99,27,0); }
+    25% { box-shadow: 0 0 0 6px rgba(230,99,27,0.35); }
+    50% { box-shadow: 0 0 0 0 rgba(230,99,27,0); }
+    75% { box-shadow: 0 0 0 6px rgba(230,99,27,0.35); }
+  }
+  .badge-flip-flash {
+    animation: badgeFlash 1.2s ease-in-out;
+  }
+  @keyframes flipSpin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes flipPulseBg {
+    0%, 100% { background: var(--orange-soft); }
+    50% { background: rgba(230,99,27,0.28); }
+  }
+  .flip-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--orange-soft);
+    color: var(--orange);
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 20px;
+    animation: flipPulseBg 1s ease-in-out infinite;
+  }
+  .flip-badge .flip-icon {
+    display: inline-block;
+    animation: flipSpin 0.9s linear infinite;
+  }
   header h1 {
     font-size: 1.15rem;
     color: #ffffff;
@@ -234,20 +275,20 @@
 
   /* DESKTOP: fit everything on one screen, no page scroll */
   @media (min-width: 900px) {
-    body { height: 100vh; overflow: hidden; padding: 12px; max-width: 1300px; margin: 0 auto; display: flex; flex-direction: column; }
+    body { height: 100vh; overflow: hidden; padding: 12px; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; }
     header { margin-bottom: 8px; flex-shrink: 0; }
     .dashboard {
       flex: 1;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       grid-template-rows: repeat(2, 1fr);
-      gap: 12px;
+      gap: 14px;
       min-height: 0;
     }
     .card { min-height: 0; overflow: hidden; }
-    .card h2 { font-size: 0.76rem; margin-bottom: 8px; }
-    .price-box .value { font-size: 1.25rem; }
-    .card .card-note { font-size: 0.68rem; }
+    .card h2 { font-size: 0.82rem; margin-bottom: 9px; }
+    .price-box .value { font-size: 1.4rem; }
+    .card .card-note { font-size: 0.7rem; }
     footer { flex-shrink: 0; padding-top: 6px; }
   }
 
@@ -509,7 +550,7 @@
 <!-- LIVE PRICES -->
 <div class="card theme-blue">
   <h2>📈 Live Prices <button class="info-icon-btn" data-info="info-prices">i</button></h2>
-  <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Type your broker's actual spot below to override instantly — it stays in effect until you tap "Resume Live".</div>
+  <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Type your broker's actual spot below — index is auto-detected from the leading digit (2xxxx=Nifty, 5xxxx=BankNifty, 7xxxx=Sensex). Stays in effect until you tap "Resume Live".</div>
   <div class="price-grid">
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
@@ -527,12 +568,7 @@
   <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.7rem; margin-top:5px;">Loading prices...</p>
 
   <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:5px;">
-    <select id="spot-index" style="flex:1 1 90px; min-width:78px; padding:4px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.62rem;">
-      <option value="nifty">NIFTY (±150)</option>
-      <option value="banknifty">BANKNIFTY (±500)</option>
-      <option value="sensex">SENSEX (±300)</option>
-    </select>
-    <input id="spot-input" type="number" inputmode="decimal" placeholder="Spot" style="flex:1 1 70px; min-width:60px; padding:4px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.62rem;">
+    <input id="spot-input" type="number" inputmode="decimal" placeholder="Type spot (auto-detects index)" style="flex:1 1 140px; min-width:120px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.62rem;">
     <button id="spot-set-btn" style="flex:0 0 auto; padding:4px 12px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.62rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
     <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--muted); font-size:0.6rem; cursor:pointer; white-space:nowrap;">↩ Live</button>
   </div>
@@ -559,7 +595,7 @@
   </div>
 </div>
 
-<!-- ST SIGNAL -->
+<!-- ST SIGNAL (now includes Strong Signal Alerts) -->
 <div class="card theme-amber">
   <h2>⚡ ST Signals <button class="info-icon-btn" data-info="info-st">i</button></h2>
   <div id="info-st" class="info-popover hidden">Shows your T-code (TNG/TNR = Nifty, TBG/TBR = BankNifty, TSG/TSR = Sensex) · G = CE, R = PE · Auto-calculated live from Supertrend(5m, 7, 3), updates automatically on flip — no manual input needed</div>
@@ -577,47 +613,12 @@
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
     </div>
   </div>
-</div>
-
-<!-- STRIKE SELECTION -->
-<div class="card theme-teal">
-  <h2>🎯 Strike & Expiry Leads <button class="info-icon-btn" data-info="info-strike">i</button></h2>
-  <div id="info-strike" class="info-popover hidden">ATM ± 3 strikes normally, direction follows live CE/PE signal · On expiry day with a Strong signal, shows a further ATM ± 6 strike as the low-premium "Expiry Lead" · Qty calculator caps at ₹15K/trade</div>
-  <div class="price-grid">
-    <div class="price-box idx-nifty">
-      <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
-      <div class="value" id="nifty-strike">—</div>
-      <div id="nifty-expiry-tag" style="font-size:0.55rem; margin-top:2px; font-weight:700;"></div>
-    </div>
-    <div class="price-box idx-banknifty">
-      <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
-      <div class="value" id="banknifty-strike">—</div>
-      <div id="banknifty-expiry-tag" style="font-size:0.55rem; margin-top:2px; font-weight:700;"></div>
-    </div>
-    <div class="price-box idx-sensex">
-      <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
-      <div class="value" id="sensex-strike">—</div>
-      <div id="sensex-expiry-tag" style="font-size:0.55rem; margin-top:2px; font-weight:700;"></div>
-    </div>
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px; margin-bottom:4px;">
+    <span style="font-size:0.65rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em;">🔔 Alerts</span>
+    <button id="sound-enable-btn" style="padding:3px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.6rem; font-weight:700; cursor:pointer;">🔊 Enable Sound</button>
   </div>
-  <div style="display:flex; gap:4px; margin-top:6px;">
-    <select id="lead-index" style="flex:1; padding:4px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.65rem;">
-      <option value="nifty">NIFTY (lot 65)</option>
-      <option value="banknifty">BANKNIFTY (lot 30)</option>
-      <option value="sensex">SENSEX (lot 20)</option>
-    </select>
-    <input id="lead-premium" type="number" placeholder="Premium ₹" style="flex:1; padding:4px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.65rem; width:0;">
-    <button id="lead-calc-btn" style="padding:4px 8px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.65rem; font-weight:700; cursor:pointer; white-space:nowrap;">Qty</button>
-  </div>
-  <p id="lead-result" style="text-align:center; color:var(--muted); font-size:0.65rem; margin-top:4px;">Enter live premium from your broker · caps at ₹15K/trade</p>
-</div>
-
-<!-- ALERTS -->
-<div class="card theme-rose">
-  <h2>🔔 Strong Signal Alerts</h2>
-  <button id="sound-enable-btn" style="padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.65rem; font-weight:700; cursor:pointer; margin-bottom:6px;">🔊 Enable Sound</button>
   <div id="alerts-list" style="flex:1; overflow-y:auto; min-height:0;">
-    <p class="placeholder" style="font-size:0.72rem;">Waiting for a Strong signal…</p>
+    <p class="placeholder" style="font-size:0.68rem;">Waiting for a Strong signal…</p>
   </div>
 </div>
 
@@ -828,85 +829,37 @@
   };
   const STRONG_THRESHOLD = 3; // consecutive 5-min candles to call it "Strong"
   const currentDirection = {}; // elId -> "CE" | "PE"
-
-  const strikeInterval = {
-    "nifty-zone": 50,
-    "banknifty-zone": 100,
-    "sensex-zone": 100
-  };
-  const strikeElIds = {
-    "nifty-zone": "nifty-strike",
-    "banknifty-zone": "banknifty-strike",
-    "sensex-zone": "sensex-strike"
-  };
-  const priceElIds = {
-    "nifty-zone": "nifty-price",
-    "banknifty-zone": "banknifty-price",
-    "sensex-zone": "sensex-price"
-  };
-  const expiryTagElIds = {
-    "nifty-zone": "nifty-expiry-tag",
-    "banknifty-zone": "banknifty-expiry-tag",
-    "sensex-zone": "sensex-expiry-tag"
-  };
   const currentStrength = {}; // elId -> "Strong" | "Bias"
 
-  // Weekly/monthly expiry rules (2026): Nifty=Tue weekly, Sensex=Thu weekly, BankNifty=monthly only, last Tue
-  function isExpiryDay(zoneElId) {
-    const istStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-    const istDate = new Date(istStr);
-    const day = istDate.getDay(); // 0=Sun ... 2=Tue, 4=Thu
-    if (zoneElId === "nifty-zone") return day === 2;
-    if (zoneElId === "sensex-zone") return day === 4;
-    if (zoneElId === "banknifty-zone") {
-      if (day !== 2) return false;
-      // check if this Tuesday is the LAST Tuesday of the month
-      const test = new Date(istDate);
-      test.setDate(test.getDate() + 7);
-      return test.getMonth() !== istDate.getMonth();
-    }
-    return false;
+  // Official NSE/BSE 2026 trading holidays (source: NSE circular / Zerodha holiday calendar)
+  const NSE_HOLIDAYS_2026 = [
+    "2026-01-15", "2026-01-26", "2026-03-03", "2026-03-26", "2026-03-31",
+    "2026-04-03", "2026-04-14", "2026-05-01", "2026-05-28", "2026-06-26",
+    "2026-09-14", "2026-10-02", "2026-10-20", "2026-11-10", "2026-11-24",
+    "2026-12-25"
+  ];
+
+  function getIstDate() {
+    const istStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour12: false });
+    return new Date(istStr);
   }
 
-  function updateStrike(zoneElId) {
-    const strikeEl = document.getElementById(strikeElIds[zoneElId]);
-    const tagEl = document.getElementById(expiryTagElIds[zoneElId]);
-    const spot = currentPrice[priceElIds[zoneElId]];
-    const direction = currentDirection[zoneElId];
-    const strength = currentStrength[zoneElId];
-    if (spot == null || direction == null) return;
+  function isTodayHoliday() {
+    const istDate = getIstDate();
+    const y = istDate.getFullYear();
+    const m = String(istDate.getMonth() + 1).padStart(2, '0');
+    const d = String(istDate.getDate()).padStart(2, '0');
+    return NSE_HOLIDAYS_2026.includes(`${y}-${m}-${d}`);
+  }
 
-    if (!isWithinTradeWindow()) {
-      strikeEl.textContent = "Market closed";
-      strikeEl.style.color = "var(--muted)";
-      tagEl.textContent = "";
-      return;
-    }
-
-    const interval = strikeInterval[zoneElId];
-    const atm = Math.round(spot / interval) * interval;
-    const strike = direction === "CE" ? atm + 3 * interval : atm - 3 * interval;
-    strikeEl.textContent = strike.toLocaleString('en-IN') + " " + direction;
-    strikeEl.style.color = direction === "CE" ? "var(--green)" : "var(--red)";
-
-    if (isExpiryDay(zoneElId)) {
-      if (strength === "Strong") {
-        const expiryStrike = direction === "CE" ? atm + 6 * interval : atm - 6 * interval;
-        tagEl.textContent = `🔥 Expiry: ${expiryStrike.toLocaleString('en-IN')} ${direction}`;
-        tagEl.style.color = direction === "CE" ? "var(--green)" : "var(--red)";
-      } else {
-        tagEl.textContent = "Expiry day · wait for Strong";
-        tagEl.style.color = "var(--muted)";
-      }
-    } else {
-      tagEl.textContent = "";
-    }
+  function isWeekend() {
+    const day = getIstDate().getDay();
+    return day === 0 || day === 6;
   }
 
   function isWithinTradeWindow() {
-    const now = new Date();
-    const istStr = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour12: false });
-    const istDate = new Date(istStr);
+    if (isTodayHoliday() || isWeekend()) return false;
+    const istDate = getIstDate();
     const mins = istDate.getHours() * 60 + istDate.getMinutes();
     const windowStart = 9 * 60 + 20, windowEnd = 15 * 60 + 35;
     return mins >= windowStart && mins <= windowEnd;
@@ -915,13 +868,19 @@
   function updateTimeWindow() {
     const badge = document.getElementById('time-window-badge');
     const overlay = document.getElementById('market-closed-overlay');
-    if (isWithinTradeWindow()) {
+    if (isTodayHoliday()) {
+      badge.className = "badge weak";
+      badge.textContent = "MARKET HOLIDAY ❌";
+      overlay.textContent = "Today Market Holiday";
+      overlay.classList.remove('hidden');
+    } else if (isWithinTradeWindow()) {
       badge.className = "badge strong";
       badge.textContent = "TRADE WINDOW OPEN ✅";
       overlay.classList.add('hidden');
     } else {
       badge.className = "badge weak";
       badge.textContent = "OUTSIDE TRADE WINDOW ❌";
+      overlay.textContent = "Market Closed";
       overlay.classList.remove('hidden');
     }
   }
@@ -962,7 +921,6 @@
 
         currentDirection[elId] = direction;
         currentStrength[elId] = strength;
-        updateStrike(elId);
         if (isWithinTradeWindow()) {
           checkAlertTrigger(elId, direction, strength);
           checkFlipAlert(elId, direction, stCode);
@@ -1031,36 +989,6 @@
   }
 
   updatePnL();
-
-  // ---- EXPIRY LEAD: QTY CALCULATOR ----
-  const leadLotSize = { nifty: 65, banknifty: 30, sensex: 20 };
-  const MAX_CAPITAL = 15000;
-
-  document.getElementById('lead-calc-btn').addEventListener('click', () => {
-    const idx = document.getElementById('lead-index').value;
-    const premium = parseFloat(document.getElementById('lead-premium').value);
-    const resultEl = document.getElementById('lead-result');
-    const lotSize = leadLotSize[idx];
-
-    if (!premium || premium <= 0) {
-      resultEl.textContent = "Enter a valid premium.";
-      resultEl.style.color = "var(--red)";
-      return;
-    }
-
-    const costPerLot = premium * lotSize;
-    const lots = Math.floor(MAX_CAPITAL / costPerLot);
-
-    if (lots < 1) {
-      resultEl.textContent = `1 lot costs ₹${costPerLot.toLocaleString('en-IN')} — exceeds ₹15K cap.`;
-      resultEl.style.color = "var(--red)";
-      return;
-    }
-
-    const qty = lots * lotSize;
-    resultEl.innerHTML = `<strong style="color:var(--accent);">${lots} lot${lots > 1 ? 's' : ''} (${qty} qty)</strong> · uses ₹${(lots * costPerLot).toLocaleString('en-IN')} of ₹15K`;
-    resultEl.style.color = "";
-  });
 
   // ---- QUICK P&L LOG ----
   document.getElementById('quick-pnl-btn').addEventListener('click', () => {
@@ -1153,7 +1081,7 @@
       if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
       renderAlerts();
       playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
-      sendTelegramAlert(alertIndexNames[elId], direction);
+      sendTelegramAlert(elId, direction);
     }
     previousStrength[elId] = strength;
   }
@@ -1161,20 +1089,17 @@
   // ---- TELEGRAM ALERTS ----
   const TELEGRAM_BOT_TOKEN = "8915036957:AAGY92_1yG9pgAYw0BOJ-C_U_KxYeC6trzs";
   const TELEGRAM_CHAT_ID = "5802877879";
+  const zoneToPriceEl = { "nifty-zone": "nifty-price", "banknifty-zone": "banknifty-price", "sensex-zone": "sensex-price" };
 
-  async function sendTelegramAlert(indexName, direction) {
+  async function sendTelegramAlert(elId, direction) {
+    const indexName = alertIndexNames[elId];
+    const stCode = stCodeMap[elId][direction];
     const emoji = direction === "CE" ? "🟢▲" : "🔴▼";
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const text = `${emoji} ${indexName} ${direction} STRONG\n${timeStr} IST`;
-    try {
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: text })
-      });
-    } catch (err) {
-      // silent fail — in-app sound/visual alert already fired regardless
-    }
+    const spot = currentPrice[zoneToPriceEl[elId]];
+    const spotLine = spot != null ? `Spot: ${spot.toLocaleString('en-IN')}${manualOverride[zoneToPriceEl[elId]] ? ' (manual)' : ''}\n` : '';
+    const text = `${emoji} ${indexName} ${direction} STRONG — ${stCode}\n${spotLine}Trend held 15+ min, high confidence\n${timeStr} IST`;
+    sendTelegramText(text);
   }
 
   async function sendTelegramText(text) {
@@ -1193,6 +1118,9 @@
   // Fires whenever a T-code flips direction (e.g. TSG -> TSR), regardless of Strong/Bias.
   const previousStCode = {}; // elId -> last T-code shown
 
+  const recentFlipTs = {}; // elId -> timestamp of last flip, drives the animated badge
+  let lastSpotKey = null;  // which index the spot-result box is currently showing
+
   function checkFlipAlert(elId, direction, stCode) {
     const prevCode = previousStCode[elId];
     if (prevCode && prevCode !== stCode) {
@@ -1209,7 +1137,15 @@
       setTimeout(() => playBeep(isCE ? 900 : 300), 160);
 
       // Telegram
-      sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP: ${prevCode} → ${stCode}\n${timeStr} IST`);
+      const spot = currentPrice[zoneToPriceEl[elId]];
+      const spotLine = spot != null ? `Spot: ${spot.toLocaleString('en-IN')}${manualOverride[zoneToPriceEl[elId]] ? ' (manual)' : ''}\n` : '';
+      sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP\n${prevCode} → ${stCode} (now ${direction})\n${spotLine}Direction just changed — wait for confirmation\n${timeStr} IST`);
+
+      // Animated flip badge in the Manual Spot result box, if it's showing this index
+      recentFlipTs[elId] = Date.now();
+      if (lastSpotKey && spotIndexMeta[lastSpotKey].zoneEl === elId) {
+        renderSpotResult(lastSpotKey, currentPrice[spotIndexMeta[lastSpotKey].priceEl]);
+      }
     }
     previousStCode[elId] = stCode;
   }
@@ -1393,36 +1329,62 @@
     sensex:    { priceEl: "sensex-price",    zoneEl: "sensex-zone",    label: "SENSEX",    offset: 300 }
   };
 
+  // Auto-detect index from the leading digit: 2xxxx=Nifty, 5xxxx=BankNifty, 7xxxx=Sensex
+  function detectIndexFromSpot(spot) {
+    const leadDigit = String(Math.trunc(Math.abs(spot)))[0];
+    if (leadDigit === "2") return "nifty";
+    if (leadDigit === "5") return "banknifty";
+    if (leadDigit === "7") return "sensex";
+    return null;
+  }
+
   function renderSpotResult(key, spot) {
     const meta = spotIndexMeta[key];
     const ceLevel = spot + meta.offset;
     const peLevel = spot - meta.offset;
     const strength = currentStrength[meta.zoneEl];
     const direction = currentDirection[meta.zoneEl];
-    let statusText;
-    if (!strength) {
-      statusText = "NEUTRAL➡️";
-    } else if (strength === "Strong") {
-      statusText = "STRONG✅";
-    } else {
-      statusText = "BIAS⚠️";
-    }
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    // Indicator 1: your T-code (TNG/TNR/TBG/TBR/TSG/TSR)
+    // Indicator 2: CE/PE Bias or Strong
+    let codeLine, biasLine;
+    if (!strength || !direction) {
+      codeLine = "—";
+      biasLine = "NEUTRAL➡️ (no live signal yet)";
+    } else {
+      const stCode = stCodeMap[meta.zoneEl][direction];
+      const codeColor = direction === "CE" ? "var(--green)" : "var(--red)";
+      codeLine = `<span style="color:${codeColor}; font-weight:700;">${stCode}</span>`;
+      const bColor = direction === "CE" ? "var(--green)" : "var(--red)";
+      const bIcon = strength === "Strong" ? "✅" : "⚠️";
+      biasLine = `<span style="color:${bColor}; font-weight:700;">${direction} ${strength}${bIcon}</span>`;
+    }
+
+    // Animated flip badge — shows for 60s after a flip on this index
+    const flipTs = recentFlipTs[meta.zoneEl];
+    const flipBadge = (flipTs && Date.now() - flipTs < 60000)
+      ? `<span class="flip-badge"><span class="flip-icon">🔄</span> FLIPPED!</span> `
+      : '';
 
     const resultEl = document.getElementById('spot-result');
     resultEl.innerHTML =
-      `⏰ ${timeStr} IST<br>` +
+      `${flipBadge}⏰ ${timeStr} IST<br>` +
       `📍 ${meta.label}: ${spot.toLocaleString('en-IN')}<br>` +
       `<span style="color:var(--green);">🟢 CE STRONG above: ${ceLevel.toLocaleString('en-IN')}</span><br>` +
       `<span style="color:var(--red);">🔴 PE STRONG below: ${peLevel.toLocaleString('en-IN')}</span><br>` +
-      `Status: ${statusText}`;
+      `Code: ${codeLine} &nbsp; Zone: ${biasLine}`;
   }
 
   document.getElementById('spot-set-btn').addEventListener('click', () => {
-    const key = document.getElementById('spot-index').value;
     const spot = parseFloat(document.getElementById('spot-input').value);
     if (!spot) {
       alert("Enter a valid spot value.");
+      return;
+    }
+    const key = detectIndexFromSpot(spot);
+    if (!key) {
+      alert("Couldn't detect index from that number — Nifty starts with 2, BankNifty with 5, Sensex with 7.");
       return;
     }
     const meta = spotIndexMeta[key];
@@ -1434,7 +1396,7 @@
     priceEl.textContent = spot.toLocaleString('en-IN') + " ✋";
     priceEl.style.color = "var(--accent)";
 
-    updateStrike(meta.zoneEl); // refresh Strike & Expiry Leads with the fresh spot
+    lastSpotKey = key;
     renderSpotResult(key, spot);
     document.getElementById('spot-resume-btn').classList.remove('hidden');
   });
@@ -1447,6 +1409,7 @@
     Object.values(spotIndexMeta).forEach(meta => { manualOverride[meta.priceEl] = false; });
     document.getElementById('spot-resume-btn').classList.add('hidden');
     document.getElementById('spot-result').innerHTML = '';
+    lastSpotKey = null;
     updatePrices(); // immediately re-fetch live feed instead of waiting for next 30s cycle
   });
 </script>
