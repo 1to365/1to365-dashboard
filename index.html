@@ -186,18 +186,18 @@
 <!-- ST SIGNAL -->
 <div class="card">
   <h2>⚡ Supertrend Signal Check</h2>
-  <div id="st-auto-results" style="display:flex; flex-direction:column; gap:8px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border:1px solid var(--border); border-radius:8px;">
-      <span style="font-weight:600; font-size:0.85rem;">NIFTY</span>
-      <span id="st-nifty-badge" class="badge bias">Loading...</span>
+  <div class="price-grid">
+    <div class="price-box">
+      <div class="label">NIFTY</div>
+      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
     </div>
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border:1px solid var(--border); border-radius:8px;">
-      <span style="font-weight:600; font-size:0.85rem;">BANKNIFTY</span>
-      <span id="st-banknifty-badge" class="badge bias">Loading...</span>
+    <div class="price-box">
+      <div class="label">BANKNIFTY</div>
+      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
     </div>
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border:1px solid var(--border); border-radius:8px;">
-      <span style="font-weight:600; font-size:0.85rem;">SENSEX</span>
-      <span id="st-sensex-badge" class="badge bias">Loading...</span>
+    <div class="price-box">
+      <div class="label">SENSEX</div>
+      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
     </div>
   </div>
   <p style="text-align:center; color:var(--muted); font-size:0.75rem; margin-top:10px;">Auto-calculated live from Supertrend(5m, 7, 3) — no manual input needed</p>
