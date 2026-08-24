@@ -258,9 +258,118 @@
     font-size: 0.7rem;
     padding: 14px 0 6px;
   }
+
+  /* ---- PIN LOCK SCREEN ---- */
+  #lock-screen {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(160deg, var(--orange) 0%, var(--accent) 100%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #lock-screen.hidden { display: none; }
+  #lock-brand {
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    margin-bottom: 4px;
+  }
+  #lock-subtitle {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.8rem;
+    margin-bottom: 22px;
+    text-align: center;
+    min-height: 1.2em;
+  }
+  #lock-dots {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+  .lock-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+  .lock-dot.filled { background: #fff; }
+  #lock-dots.shake { animation: shakeErr 0.4s; }
+  @keyframes shakeErr {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+  }
+  #lock-error {
+    color: #ffe1e1;
+    font-size: 0.75rem;
+    min-height: 1.2em;
+    margin-bottom: 10px;
+  }
+  #lock-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 64px);
+    gap: 12px;
+  }
+  .lock-key {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lock-key:active { background: rgba(255,255,255,0.28); }
+  .lock-key.empty { visibility: hidden; }
+  #lock-forgot {
+    margin-top: 24px;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.72rem;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
 </style>
 </head>
 <body>
+
+<div id="lock-screen">
+  <div id="lock-brand">🔒 Signa365</div>
+  <div id="lock-subtitle">Enter PIN</div>
+  <div id="lock-dots">
+    <div class="lock-dot"></div>
+    <div class="lock-dot"></div>
+    <div class="lock-dot"></div>
+    <div class="lock-dot"></div>
+  </div>
+  <div id="lock-error"></div>
+  <div id="lock-keypad">
+    <button class="lock-key" data-key="1">1</button>
+    <button class="lock-key" data-key="2">2</button>
+    <button class="lock-key" data-key="3">3</button>
+    <button class="lock-key" data-key="4">4</button>
+    <button class="lock-key" data-key="5">5</button>
+    <button class="lock-key" data-key="6">6</button>
+    <button class="lock-key" data-key="7">7</button>
+    <button class="lock-key" data-key="8">8</button>
+    <button class="lock-key" data-key="9">9</button>
+    <button class="lock-key empty"></button>
+    <button class="lock-key" data-key="0">0</button>
+    <button class="lock-key" data-key="back">⌫</button>
+  </div>
+  <button id="lock-forgot">Forgot PIN? Reset</button>
+</div>
 
 <header>
   <div class="brand">
@@ -881,6 +990,106 @@
     }
     previousStrength[elId] = strength;
   }
+
+  // ---- PIN LOCK SCREEN ----
+  // Note: client-side only screen lock, not real security — a deterrent, not a vault.
+  const PIN_KEY = "signa365_pin_hash";
+
+  function simpleHash(str) {
+    // Small, dependency-free hash (works over file:// too, unlike crypto.subtle which needs a secure context)
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) + hash) + str.charCodeAt(i);
+      hash = hash | 0;
+    }
+    return String(hash);
+  }
+
+  let lockMode = localStorage.getItem(PIN_KEY) ? "unlock" : "setup-new";
+  let enteredDigits = "";
+  let firstPinBuffer = "";
+
+  const lockSubtitleEl = document.getElementById('lock-subtitle');
+  const lockErrorEl = document.getElementById('lock-error');
+  const lockDotsEl = document.getElementById('lock-dots');
+  const lockScreenEl = document.getElementById('lock-screen');
+
+  function renderLockSubtitle() {
+    if (lockMode === "setup-new") lockSubtitleEl.textContent = "Set a 4-digit PIN";
+    else if (lockMode === "setup-confirm") lockSubtitleEl.textContent = "Confirm your PIN";
+    else lockSubtitleEl.textContent = "Enter PIN";
+  }
+  renderLockSubtitle();
+
+  function updateDots() {
+    const dots = lockDotsEl.querySelectorAll('.lock-dot');
+    dots.forEach((d, i) => d.classList.toggle('filled', i < enteredDigits.length));
+  }
+
+  function lockShakeError(msg) {
+    lockErrorEl.textContent = msg;
+    lockDotsEl.classList.add('shake');
+    setTimeout(() => lockDotsEl.classList.remove('shake'), 400);
+    setTimeout(() => { enteredDigits = ""; updateDots(); }, 300);
+  }
+
+  function handlePinComplete() {
+    if (lockMode === "setup-new") {
+      firstPinBuffer = enteredDigits;
+      enteredDigits = "";
+      lockMode = "setup-confirm";
+      renderLockSubtitle();
+      updateDots();
+    } else if (lockMode === "setup-confirm") {
+      if (enteredDigits === firstPinBuffer) {
+        localStorage.setItem(PIN_KEY, simpleHash(enteredDigits));
+        lockScreenEl.classList.add('hidden');
+      } else {
+        lockErrorEl.textContent = "";
+        firstPinBuffer = "";
+        lockMode = "setup-new";
+        renderLockSubtitle();
+        lockShakeError("PINs didn't match — start again");
+      }
+    } else { // unlock
+      const savedHash = localStorage.getItem(PIN_KEY);
+      if (simpleHash(enteredDigits) === savedHash) {
+        lockScreenEl.classList.add('hidden');
+      } else {
+        lockShakeError("Wrong PIN, try again");
+      }
+    }
+  }
+
+  document.querySelectorAll('.lock-key[data-key]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-key');
+      lockErrorEl.textContent = "";
+      if (key === "back") {
+        enteredDigits = enteredDigits.slice(0, -1);
+        updateDots();
+        return;
+      }
+      if (enteredDigits.length >= 4) return;
+      enteredDigits += key;
+      updateDots();
+      if (enteredDigits.length === 4) {
+        setTimeout(handlePinComplete, 150);
+      }
+    });
+  });
+
+  document.getElementById('lock-forgot').addEventListener('click', () => {
+    if (confirm("Reset your PIN? This clears the current PIN and lets you set a new one.")) {
+      localStorage.removeItem(PIN_KEY);
+      lockMode = "setup-new";
+      firstPinBuffer = "";
+      enteredDigits = "";
+      lockErrorEl.textContent = "";
+      renderLockSubtitle();
+      updateDots();
+    }
+  });
 </script>
 
 </body>
