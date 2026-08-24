@@ -785,15 +785,18 @@
     }
   }
 
-  function updateTimeWindow() {
+  function isWithinTradeWindow() {
     const now = new Date();
     const istStr = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour12: false });
     const istDate = new Date(istStr);
     const mins = istDate.getHours() * 60 + istDate.getMinutes();
     const windowStart = 9 * 60 + 20, windowEnd = 15 * 60 + 35;
+    return mins >= windowStart && mins <= windowEnd;
+  }
 
+  function updateTimeWindow() {
     const badge = document.getElementById('time-window-badge');
-    if (mins >= windowStart && mins <= windowEnd) {
+    if (isWithinTradeWindow()) {
       badge.className = "badge strong";
       badge.textContent = "TRADE WINDOW OPEN ✅";
     } else {
@@ -829,7 +832,9 @@
         currentDirection[elId] = direction;
         currentStrength[elId] = strength;
         updateStrike(elId);
-        checkAlertTrigger(elId, direction, strength);
+        if (isWithinTradeWindow()) {
+          checkAlertTrigger(elId, direction, strength);
+        }
       } catch (err) {
         // keep last known values on transient failure
       }
