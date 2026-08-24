@@ -765,6 +765,14 @@
     const direction = currentDirection[zoneElId];
     const strength = currentStrength[zoneElId];
     if (spot == null || direction == null) return;
+
+    if (!isWithinTradeWindow()) {
+      strikeEl.textContent = "Market closed";
+      strikeEl.style.color = "var(--muted)";
+      tagEl.textContent = "";
+      return;
+    }
+
     const interval = strikeInterval[zoneElId];
     const atm = Math.round(spot / interval) * interval;
     const strike = direction === "CE" ? atm + 3 * interval : atm - 3 * interval;
