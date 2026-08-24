@@ -27,10 +27,22 @@
     --shadow: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
     --nifty: #2f5fed;
     --nifty-soft: rgba(47,95,237,0.08);
-    --banknifty: #8b3fd8;
-    --banknifty-soft: rgba(139,63,216,0.08);
+    --banknifty: #52b969;
+    --banknifty-soft: rgba(82,185,105,0.10);
     --sensex: #c9860f;
     --sensex-soft: rgba(201,134,15,0.08);
+    --card-blue: #eef4fc;
+    --card-blue-border: #bcd6f5;
+    --card-mint: #eaf8f0;
+    --card-mint-border: #b9e5c8;
+    --card-amber: #fff6e6;
+    --card-amber-border: #f3dba3;
+    --card-teal: #e9f8f6;
+    --card-teal-border: #b4e0da;
+    --card-rose: #fdf0f0;
+    --card-rose-border: #f2c6c6;
+    --card-lavender: #f5f0fb;
+    --card-lavender-border: #d9c6ec;
   }
   html { -webkit-text-size-adjust: 100%; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -102,7 +114,21 @@
     width: 100%;
     display: flex;
     flex-direction: column;
+    border-top: 3px solid var(--border);
   }
+  .card.theme-blue     { background: var(--card-blue);     border-top-color: var(--card-blue-border); }
+  .card.theme-mint     { background: var(--card-mint);     border-top-color: var(--card-mint-border); }
+  .card.theme-amber    { background: var(--card-amber);    border-top-color: var(--card-amber-border); }
+  .card.theme-teal     { background: var(--card-teal);     border-top-color: var(--card-teal-border); }
+  .card.theme-rose     { background: var(--card-rose);     border-top-color: var(--card-rose-border); }
+  .card.theme-lavender { background: var(--card-lavender); border-top-color: var(--card-lavender-border); }
+  .card.theme-blue h2     { color: #2555c7; }
+  .card.theme-mint h2     { color: #1f8a4c; }
+  .card.theme-amber h2    { color: #b45309; }
+  .card.theme-teal h2     { color: #0f766e; }
+  .card.theme-rose h2     { color: #b91c1c; }
+  .card.theme-lavender h2 { color: #7c3aed; }
+  .card .price-box { background: var(--panel); }
   .card h2 {
     font-size: 0.78rem;
     font-weight: 700;
@@ -398,7 +424,7 @@
 <div class="dashboard">
 
 <!-- LIVE PRICES -->
-<div class="card">
+<div class="card theme-blue">
   <h2>📈 Live Prices</h2>
   <div class="price-grid">
     <div class="price-box idx-nifty">
@@ -418,7 +444,7 @@
 </div>
 
 <!-- CE/PE ZONES -->
-<div class="card">
+<div class="card theme-mint">
   <h2>🎯 CE/PE Strong Zones</h2>
   <div class="price-grid">
     <div class="price-box idx-nifty">
@@ -438,8 +464,8 @@
 </div>
 
 <!-- ST SIGNAL -->
-<div class="card">
-  <h2>⚡ Supertrend Signal Check</h2>
+<div class="card theme-amber">
+  <h2>⚡ ST Signals</h2>
   <div class="price-grid">
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
@@ -458,7 +484,7 @@
 </div>
 
 <!-- STRIKE SELECTION -->
-<div class="card">
+<div class="card theme-teal">
   <h2>🎯 Strike & Expiry Leads</h2>
   <div class="price-grid">
     <div class="price-box idx-nifty">
@@ -490,7 +516,7 @@
 </div>
 
 <!-- ALERTS -->
-<div class="card">
+<div class="card theme-rose">
   <h2>🔔 Strong Signal Alerts</h2>
   <button id="sound-enable-btn" style="padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.65rem; font-weight:700; cursor:pointer; margin-bottom:6px;">🔊 Enable Sound</button>
   <div id="alerts-list" style="flex:1; overflow-y:auto; min-height:0;">
@@ -499,7 +525,7 @@
 </div>
 
 <!-- P&L TRACKER -->
-<div class="card" style="justify-content:center;">
+<div class="card theme-lavender" style="justify-content:center;">
   <h2>💰 Daily P&L</h2>
   <div style="text-align:center;">
     <div id="pnl-amount" style="font-size:1.6rem; font-weight:800;">₹0</div>
