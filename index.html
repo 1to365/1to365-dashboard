@@ -1655,7 +1655,7 @@
     return { trend, line };
   }
 
-  async function fetchChartCandles(symbol) {
+  async function fetchIntradayCandles(symbol) {
     const cacheBust = `&_cb=${Date.now()}`;
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=1d${cacheBust}`;
     let lastErr;
@@ -1666,17 +1666,45 @@
         const data = await res.json();
         const result = data.chart.result[0];
         const q = result.indicators.quote[0];
-        const prevClose = result.meta.chartPreviousClose;
         const candles = result.timestamp.map((t, i) => ({
           time: t * 1000, high: q.high[i], low: q.low[i], close: q.close[i]
         })).filter(c => c.high != null && c.low != null && c.close != null);
-        return { candles, prevClose };
+        return { candles, fallbackPrevClose: result.meta.chartPreviousClose };
       } catch (err) {
         lastErr = err;
         await sleep(300);
       }
     }
     throw lastErr;
+  }
+
+  // Derives the true previous-day close from actual daily candles (second-to-last entry —
+  // today's own close is last). meta.chartPreviousClose was found unreliable (off by
+  // 30-240+ points vs the real previous close), so this is used instead when available.
+  async function fetchReliablePrevClose(symbol) {
+    const cacheBust = `&_cb=${Date.now()}`;
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d${cacheBust}`;
+    for (const proxy of proxies) {
+      try {
+        const res = await fetchWithTimeout(proxy.build(yahooUrl), { cache: 'no-store', headers: proxy.headers }, 4000);
+        if (!res.ok) continue;
+        const data = await res.json();
+        const closes = data.chart.result[0].indicators.quote[0].close.filter(c => c != null);
+        if (closes.length >= 2) return closes[closes.length - 2];
+      } catch (err) {
+        // try next proxy
+      }
+    }
+    return null; // caller falls back to meta.chartPreviousClose if this fully fails
+  }
+
+  async function fetchChartCandles(symbol) {
+    // Run both fetches in parallel — total wait is whichever is slower, not the sum of both.
+    const [{ candles, fallbackPrevClose }, reliablePrevClose] = await Promise.all([
+      fetchIntradayCandles(symbol),
+      fetchReliablePrevClose(symbol).catch(() => null)
+    ]);
+    return { candles, prevClose: reliablePrevClose != null ? reliablePrevClose : fallbackPrevClose };
   }
 
   let liveChart = null;
