@@ -1658,28 +1658,27 @@
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=1d${cacheBust}`;
     let lastErr;
     for (const proxy of proxies) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const res = await fetchWithTimeout(proxy(yahooUrl), { cache: 'no-store' });
-          if (!res.ok) throw new Error("Network error");
-          const data = await res.json();
-          const result = data.chart.result[0];
-          const q = result.indicators.quote[0];
-          const prevClose = result.meta.chartPreviousClose;
-          const candles = result.timestamp.map((t, i) => ({
-            time: t * 1000, high: q.high[i], low: q.low[i], close: q.close[i]
-          })).filter(c => c.high != null && c.low != null && c.close != null);
-          return { candles, prevClose };
-        } catch (err) {
-          lastErr = err;
-          await sleep(400);
-        }
+      try {
+        const res = await fetchWithTimeout(proxy(yahooUrl), { cache: 'no-store' }, 4000); // 4s timeout, 1 try per proxy — chart should fail fast, not leave you guessing for 20+s
+        if (!res.ok) throw new Error("Network error");
+        const data = await res.json();
+        const result = data.chart.result[0];
+        const q = result.indicators.quote[0];
+        const prevClose = result.meta.chartPreviousClose;
+        const candles = result.timestamp.map((t, i) => ({
+          time: t * 1000, high: q.high[i], low: q.low[i], close: q.close[i]
+        })).filter(c => c.high != null && c.low != null && c.close != null);
+        return { candles, prevClose };
+      } catch (err) {
+        lastErr = err;
+        await sleep(300);
       }
     }
     throw lastErr;
   }
 
   let liveChart = null;
+  let currentlyDisplayedKey = null; // which index's chart is actually on screen right now
 
   async function updateLiveChart() {
     const placeholderEl = document.getElementById('chart-placeholder');
@@ -1689,14 +1688,24 @@
     const requestedKey = lastSpotKey; // capture now — checked again after the fetch to detect a stale response
 
     if (!requestedKey) {
+      placeholderEl.textContent = 'Tap a tile above or set a spot to see its live chart here';
       placeholderEl.classList.remove('hidden');
       wrapEl.classList.add('hidden');
       labelEl.textContent = '';
+      currentlyDisplayedKey = null;
       return;
     }
 
     const meta = spotIndexMeta[requestedKey];
     const symbol = zoneIds[meta.zoneEl];
+
+    // Only show a loading state when actually switching to a different index — not on the
+    // routine 30s background refresh of the index already on screen.
+    if (requestedKey !== currentlyDisplayedKey) {
+      placeholderEl.textContent = `Loading ${meta.label}'s chart…`;
+      placeholderEl.classList.remove('hidden');
+      wrapEl.classList.add('hidden');
+    }
 
     try {
       const { candles, prevClose } = await fetchChartCandles(symbol);
@@ -1711,6 +1720,7 @@
       labelEl.textContent = `— ${meta.label}`;
       placeholderEl.classList.add('hidden');
       wrapEl.classList.remove('hidden');
+      currentlyDisplayedKey = requestedKey;
 
       const labels = candles.map(c => new Date(c.time).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit' }));
       const priceData = candles.map(c => c.close);
@@ -1775,7 +1785,13 @@
         }
       });
     } catch (err) {
-      // leave last known chart in place on a transient failure
+      // Only show an error if this failure is for the index still actually selected —
+      // a failed background refresh for an index you've since moved away from should stay silent.
+      if (requestedKey === lastSpotKey) {
+        placeholderEl.classList.remove('hidden');
+        wrapEl.classList.add('hidden');
+        placeholderEl.textContent = `Couldn't load ${meta.label}'s chart — will retry in 30s`;
+      }
     }
   }
 
