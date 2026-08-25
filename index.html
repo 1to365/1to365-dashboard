@@ -297,7 +297,15 @@
     text-align: center;
     min-width: 0;
     overflow: hidden;
+    position: relative;
     transition: transform 0.15s ease;
+  }
+  .hand-marker {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    font-size: 0.85rem;
+    line-height: 1;
   }
   .price-box.idx-nifty     { background: var(--nifty-soft);     border-top-color: var(--nifty); }
   .price-box.idx-banknifty { background: var(--banknifty-soft); border-top-color: var(--banknifty); }
@@ -658,16 +666,19 @@
   <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Tiles always show the real live price. Tap a tile, or type a spot below, to run the CE/PE zone calculator for that index — it never changes what's shown on the tile.</div>
   <div class="price-grid">
     <div class="price-box idx-nifty" id="tile-nifty" style="cursor:pointer;">
+      <span class="hand-marker" id="nifty-hand"></span>
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-price">—</div>
       <div id="nifty-expiry-tag" class="expiry-tag"></div>
     </div>
     <div class="price-box idx-banknifty" id="tile-banknifty" style="cursor:pointer;">
+      <span class="hand-marker" id="banknifty-hand"></span>
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-price">—</div>
       <div id="banknifty-expiry-tag" class="expiry-tag"></div>
     </div>
     <div class="price-box idx-sensex" id="tile-sensex" style="cursor:pointer;">
+      <span class="hand-marker" id="sensex-hand"></span>
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-price">—</div>
       <div id="sensex-expiry-tag" class="expiry-tag"></div>
@@ -1433,10 +1444,11 @@
   function refreshHandMarkers() {
     Object.entries(spotIndexMeta).forEach(([key, meta]) => {
       const price = currentPrice[meta.priceEl];
-      const el = document.getElementById(meta.priceEl);
+      const priceEl = document.getElementById(meta.priceEl);
+      const handEl = document.getElementById(key + '-hand');
       const isFocused = (key === lastSpotKey);
-      const priceText = price != null ? price.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : "—";
-      el.textContent = priceText + (isFocused ? ' ✋' : '');
+      priceEl.textContent = price != null ? price.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : "—";
+      if (handEl) handEl.textContent = isFocused ? '✋' : '';
     });
   }
 
