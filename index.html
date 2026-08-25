@@ -724,10 +724,21 @@
   </div>
 </div>
 
+<!-- LIVE INTRADAY CHART -->
+<div class="card" style="grid-column: 1 / -1;">
+  <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span></h2>
+  <div id="chart-placeholder" class="placeholder" style="font-size:0.9rem;">Tap a tile above or set a spot to see its live chart here</div>
+  <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
+    <canvas id="live-chart"></canvas>
+  </div>
+  <p style="text-align:center; color:var(--muted); font-size:0.72rem; margin-top:6px;">Blue = price · Green/Red = Supertrend(7,3) · Dotted = prev. close</p>
+</div>
+
 </div>
 
 <footer>Signa365 · Personal Trading System · Not financial advice</footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
   function updateClock() {
     const now = new Date();
@@ -748,13 +759,32 @@
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+  // A hung/slow proxy response could otherwise wait on the browser's own default timeout,
+  // which can be very long — this forces each attempt to fail fast (6s) and move on.
+  async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async function fetchViaProxy(proxyBuilder, yahooUrl) {
-    const res = await fetch(proxyBuilder(yahooUrl));
+    const res = await fetchWithTimeout(proxyBuilder(yahooUrl), { cache: 'no-store' });
     if (!res.ok) throw new Error("Network error");
     const data = await res.json();
     const result = data.chart.result[0];
-    const price = result.meta.regularMarketPrice;
     const prevClose = result.meta.chartPreviousClose;
+    // Derive price from the latest valid 5m candle close, NOT meta.regularMarketPrice —
+    // that field was found returning stale previous-close data during live market hours.
+    const closes = result.indicators.quote[0].close;
+    let price = null;
+    for (let i = closes.length - 1; i >= 0; i--) {
+      if (closes[i] != null) { price = closes[i]; break; }
+    }
+    if (price == null) price = result.meta.regularMarketPrice; // last-resort fallback
     return { price, change: price - prevClose };
   }
 
@@ -764,7 +794,8 @@
   ];
 
   async function fetchPrice(symbol) {
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`;
+    const cacheBust = `&_cb=${Date.now()}`; // forces proxies/browser to treat every request as unique
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=1d${cacheBust}`;
     let lastErr;
     for (const proxy of proxies) {
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -861,12 +892,13 @@
   }
 
   async function fetchCandles(symbol) {
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=5d`;
+    const cacheBust = `&_cb=${Date.now()}`; // forces proxies/browser to treat every request as unique, prevents serving a stale cached response
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=5d${cacheBust}`;
     let lastErr;
     for (const proxy of proxies) {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          const res = await fetch(proxy(yahooUrl));
+          const res = await fetchWithTimeout(proxy(yahooUrl), { cache: 'no-store' });
           if (!res.ok) throw new Error("Network error");
           const data = await res.json();
           const result = data.chart.result[0];
@@ -952,6 +984,16 @@
     return mins >= windowStart && mins <= windowEnd;
   }
 
+  // NSE cash market actual hours: 9:15 AM – 3:30 PM. Separate from your configured
+  // 9:20–3:35 trade window, so 9:15–9:20 correctly reads as "market open, outside your window"
+  // instead of the misleading "Market Closed".
+  function isMarketActuallyOpen() {
+    if (isTodayHoliday() || isWeekend()) return false;
+    const istDate = getIstDate();
+    const mins = istDate.getHours() * 60 + istDate.getMinutes();
+    return mins >= (9 * 60 + 15) && mins <= (15 * 60 + 30);
+  }
+
   function updateTimeWindow() {
     const dot = document.getElementById('time-window-dot');
     const overlay = document.getElementById('market-closed-overlay');
@@ -963,6 +1005,12 @@
     } else if (isWithinTradeWindow()) {
       dot.className = "status-dot live";
       dot.title = "Session Live";
+      overlay.classList.add('hidden');
+    } else if (isMarketActuallyOpen()) {
+      // Market is genuinely open (9:15-3:30) but outside your configured 9:20-3:35 window —
+      // this is NOT the same as the market being closed.
+      dot.className = "status-dot live";
+      dot.title = "Market Open — Outside Your Trade Window";
       overlay.classList.add('hidden');
     } else {
       dot.className = "status-dot closed";
@@ -1178,7 +1226,11 @@
   function checkAlertTrigger(elId, direction, strength) {
     const prev = previousStrength[elId];
     if (strength === "Strong" && prev !== "Strong") {
-      alertHistory.unshift({ index: alertIndexNames[elId], direction, ts: Date.now() });
+      const idxName = alertIndexNames[elId];
+      for (let i = alertHistory.length - 1; i >= 0; i--) {
+        if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
+      }
+      alertHistory.unshift({ index: idxName, direction, ts: Date.now() });
       if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
       renderAlerts();
       playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
@@ -1227,9 +1279,13 @@
     if (prevCode && prevCode !== stCode) {
       const isCE = direction === "CE";
       const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const idxName = alertIndexNames[elId];
 
       // On-screen alert list (reuses the same Alerts card, marked as a flip)
-      alertHistory.unshift({ index: alertIndexNames[elId], direction, ts: Date.now(), isFlip: true, fromCode: prevCode, toCode: stCode });
+      for (let i = alertHistory.length - 1; i >= 0; i--) {
+        if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
+      }
+      alertHistory.unshift({ index: idxName, direction, ts: Date.now(), isFlip: true, fromCode: prevCode, toCode: stCode });
       if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
       renderAlerts();
 
@@ -1500,7 +1556,8 @@
   }
 
   document.getElementById('spot-set-btn').addEventListener('click', () => {
-    const spot = parseFloat(document.getElementById('spot-input').value);
+    const rawInput = document.getElementById('spot-input').value;
+    const spot = parseFloat(rawInput.replace(/[^0-9.\-]/g, '')); // strips commas/spaces — "77,231.05" now parses fully, not just "77"
     if (!spot) {
       alert("Enter a valid spot value.");
       return;
@@ -1516,6 +1573,7 @@
     lastSpotKey = key;
     refreshHandMarkers(); // hand moves to this tile (still showing the real market price), clears from any other
     renderSpotResult(key, spot);
+    updateLiveChart();
     document.getElementById('spot-resume-btn').classList.remove('hidden');
   });
 
@@ -1529,6 +1587,7 @@
     document.getElementById('spot-input').value = '';
     lastSpotKey = null;
     refreshHandMarkers(); // clears the hand from every tile — price tiles were never touched, so nothing else to restore
+    updateLiveChart();
   });
 
   // ---- TAP-TO-CHECK: click a price tile to instantly zone-check its current displayed price ----
@@ -1543,8 +1602,177 @@
       lastSpotKey = key;
       refreshHandMarkers(); // hand moves to the tapped tile, clears from any previous one
       renderSpotResult(key, price);
+      updateLiveChart();
     });
   });
+
+  // ---- LIVE INTRADAY CHART ----
+  // Separate from the live signal engine's computeSupertrend — this returns the FULL trend/line
+  // history for plotting, rather than just the latest value. Kept isolated so the chart can never
+  // affect the already-verified signal logic above.
+  function computeSupertrendSeries(candles, period = 7, factor = 3) {
+    const n = candles.length;
+    const atr = new Array(n).fill(null);
+    const trs = candles.map((c, i) => {
+      if (i === 0) return c.high - c.low;
+      const prevClose = candles[i - 1].close;
+      return Math.max(c.high - c.low, Math.abs(c.high - prevClose), Math.abs(c.low - prevClose));
+    });
+    let sum = 0;
+    for (let i = 0; i < period && i < n; i++) sum += trs[i];
+    atr[period - 1] = sum / period;
+    for (let i = period; i < n; i++) {
+      atr[i] = (atr[i - 1] * (period - 1) + trs[i]) / period;
+    }
+    const upperBand = new Array(n).fill(null);
+    const lowerBand = new Array(n).fill(null);
+    const finalUpper = new Array(n).fill(null);
+    const finalLower = new Array(n).fill(null);
+    const trend = new Array(n).fill(null);
+    const line = new Array(n).fill(null);
+    for (let i = 0; i < n; i++) {
+      if (atr[i] == null) continue;
+      const mid = (candles[i].high + candles[i].low) / 2;
+      upperBand[i] = mid + factor * atr[i];
+      lowerBand[i] = mid - factor * atr[i];
+      const prevFinalUpper = finalUpper[i - 1];
+      const prevFinalLower = finalLower[i - 1];
+      finalUpper[i] = (prevFinalUpper != null && candles[i - 1].close <= prevFinalUpper)
+        ? Math.min(upperBand[i], prevFinalUpper) : upperBand[i];
+      finalLower[i] = (prevFinalLower != null && candles[i - 1].close >= prevFinalLower)
+        ? Math.max(lowerBand[i], prevFinalLower) : lowerBand[i];
+      if (trend[i - 1] == null) {
+        trend[i] = candles[i].close <= finalUpper[i] ? -1 : 1;
+      } else if (trend[i - 1] === 1) {
+        trend[i] = candles[i].close < finalLower[i] ? -1 : 1;
+      } else {
+        trend[i] = candles[i].close > finalUpper[i] ? 1 : -1;
+      }
+      line[i] = trend[i] === 1 ? finalLower[i] : finalUpper[i];
+    }
+    return { trend, line };
+  }
+
+  async function fetchChartCandles(symbol) {
+    const cacheBust = `&_cb=${Date.now()}`;
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=1d${cacheBust}`;
+    let lastErr;
+    for (const proxy of proxies) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetchWithTimeout(proxy(yahooUrl), { cache: 'no-store' });
+          if (!res.ok) throw new Error("Network error");
+          const data = await res.json();
+          const result = data.chart.result[0];
+          const q = result.indicators.quote[0];
+          const prevClose = result.meta.chartPreviousClose;
+          const candles = result.timestamp.map((t, i) => ({
+            time: t * 1000, high: q.high[i], low: q.low[i], close: q.close[i]
+          })).filter(c => c.high != null && c.low != null && c.close != null);
+          return { candles, prevClose };
+        } catch (err) {
+          lastErr = err;
+          await sleep(400);
+        }
+      }
+    }
+    throw lastErr;
+  }
+
+  let liveChart = null;
+
+  async function updateLiveChart() {
+    const placeholderEl = document.getElementById('chart-placeholder');
+    const wrapEl = document.getElementById('chart-wrap');
+    const labelEl = document.getElementById('chart-index-label');
+
+    if (!lastSpotKey) {
+      placeholderEl.classList.remove('hidden');
+      wrapEl.classList.add('hidden');
+      labelEl.textContent = '';
+      return;
+    }
+
+    const meta = spotIndexMeta[lastSpotKey];
+    const symbol = zoneIds[meta.zoneEl];
+    labelEl.textContent = `— ${meta.label}`;
+
+    try {
+      const { candles, prevClose } = await fetchChartCandles(symbol);
+      if (candles.length === 0 || lastSpotKey == null) return;
+      const { trend, line } = computeSupertrendSeries(candles);
+
+      placeholderEl.classList.add('hidden');
+      wrapEl.classList.remove('hidden');
+
+      const labels = candles.map(c => new Date(c.time).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit' }));
+      const priceData = candles.map(c => c.close);
+      const prevCloseData = candles.map(() => prevClose);
+
+      const ctx = document.getElementById('live-chart').getContext('2d');
+      if (liveChart) liveChart.destroy();
+      liveChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: meta.label,
+              data: priceData,
+              borderColor: '#1d4ed8',
+              backgroundColor: 'rgba(29,78,216,0.08)',
+              fill: true,
+              pointRadius: 0,
+              borderWidth: 2,
+              tension: 0.15
+            },
+            {
+              label: 'Supertrend',
+              data: line,
+              borderColor: '#888',
+              segment: {
+                borderColor: (segCtx) => {
+                  const i = segCtx.p1DataIndex;
+                  return trend[i] === 1 ? '#0f7a3d' : '#c81e3a';
+                }
+              },
+              pointRadius: 0,
+              borderWidth: 2,
+              spanGaps: true,
+              fill: false
+            },
+            {
+              label: 'Prev Close',
+              data: prevCloseData,
+              borderColor: '#999',
+              borderDash: [4, 4],
+              pointRadius: 0,
+              borderWidth: 1,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.formattedValue}` } }
+          },
+          scales: {
+            x: { ticks: { maxTicksLimit: 6, color: '#667085', font: { size: 10 } }, grid: { display: false } },
+            y: { position: 'left', ticks: { color: '#667085', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
+          }
+        }
+      });
+    } catch (err) {
+      // leave last known chart in place on a transient failure
+    }
+  }
+
+  setInterval(updateLiveChart, 30000);
 </script>
 
 </body>
