@@ -663,7 +663,7 @@
   <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
     <input id="spot-input" type="text" inputmode="decimal" placeholder="Or type spot to override" style="flex:1 1 160px; min-width:140px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.95rem;">
     <button id="spot-set-btn" style="flex:0 0 auto; padding:10px 20px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
-    <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:10px 16px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--muted); font-size:0.88rem; cursor:pointer; white-space:nowrap;">✕ Reset</button>
+    <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:6px 12px; border-radius:16px; border:1px solid var(--red-soft); background:var(--red-soft); color:var(--red); font-size:0.72rem; font-weight:700; cursor:pointer; white-space:nowrap;">✕ Reset</button>
   </div>
   <div id="spot-result" style="margin-top:10px; font-size:0.8rem; line-height:1.6; font-family:ui-monospace, monospace;"></div>
 </div>
@@ -764,7 +764,6 @@
       try {
         const { price, change } = await fetchPrice(symbol);
         const el = document.getElementById(elId);
-        el.textContent = price.toLocaleString('en-IN', { maximumFractionDigits: 2 });
         el.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
         currentPrice[elId] = price;
       } catch (err) {
@@ -772,6 +771,7 @@
       }
       await sleep(500); // stagger requests to avoid proxy rate limits
     }
+    if (typeof refreshHandMarkers === 'function') refreshHandMarkers(); // re-apply text + hand marker for all tiles
     statusEl.textContent = anyManual
       ? "Manual spot active for one or more indices"
       : anyError
@@ -1395,6 +1395,19 @@
     sensex:    { priceEl: "sensex-price",    zoneEl: "sensex-zone",    label: "SENSEX",    offset: 300 }
   };
 
+  // Redraws all 3 price tiles — the hand ✋ shows on exactly one tile: whichever index is currently focused
+  // (via Set or a tap-to-check). Switching focus or hitting Reset always redraws immediately, so the hand
+  // never gets stuck even if the next live-price fetch happens to fail.
+  function refreshHandMarkers() {
+    Object.entries(spotIndexMeta).forEach(([key, meta]) => {
+      const price = currentPrice[meta.priceEl];
+      if (price == null) return;
+      const el = document.getElementById(meta.priceEl);
+      const isFocused = (key === lastSpotKey);
+      el.textContent = price.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + (isFocused ? ' ✋' : '');
+    });
+  }
+
   // Auto-detect index from the leading digit: 2xxxx=Nifty, 5xxxx=BankNifty, 7xxxx=Sensex
   function detectIndexFromSpot(spot) {
     const leadDigit = String(Math.trunc(Math.abs(spot)))[0];
@@ -1455,14 +1468,12 @@
     }
     const meta = spotIndexMeta[key];
 
-    // Override the live price feed for this index — persists until "Resume Live" is tapped
+    // Override the live price feed for this index — persists until "Reset" is tapped
     manualOverride[meta.priceEl] = true;
     currentPrice[meta.priceEl] = spot;
-    const priceEl = document.getElementById(meta.priceEl);
-    priceEl.textContent = spot.toLocaleString('en-IN') + " ✋";
-    priceEl.style.color = "var(--accent)";
-
     lastSpotKey = key;
+    refreshHandMarkers(); // hand moves to this tile, clears from any previously-focused tile
+    document.getElementById(meta.priceEl).style.color = "var(--accent)";
     renderSpotResult(key, spot);
     document.getElementById('spot-resume-btn').classList.remove('hidden');
   });
@@ -1477,6 +1488,7 @@
     document.getElementById('spot-result').innerHTML = '';
     document.getElementById('spot-input').value = '';
     lastSpotKey = null;
+    refreshHandMarkers(); // clears the hand from every tile immediately, doesn't wait on the live fetch
     updatePrices(); // immediately re-fetch live feed instead of waiting for next 30s cycle
   });
 
@@ -1490,6 +1502,7 @@
         return;
       }
       lastSpotKey = key;
+      refreshHandMarkers(); // hand moves to the tapped tile, clears from any previous one
       renderSpotResult(key, price);
     });
   });
