@@ -1686,22 +1686,29 @@
     const wrapEl = document.getElementById('chart-wrap');
     const labelEl = document.getElementById('chart-index-label');
 
-    if (!lastSpotKey) {
+    const requestedKey = lastSpotKey; // capture now — checked again after the fetch to detect a stale response
+
+    if (!requestedKey) {
       placeholderEl.classList.remove('hidden');
       wrapEl.classList.add('hidden');
       labelEl.textContent = '';
       return;
     }
 
-    const meta = spotIndexMeta[lastSpotKey];
+    const meta = spotIndexMeta[requestedKey];
     const symbol = zoneIds[meta.zoneEl];
-    labelEl.textContent = `— ${meta.label}`;
 
     try {
       const { candles, prevClose } = await fetchChartCandles(symbol);
-      if (candles.length === 0 || lastSpotKey == null) return;
+
+      // If focus moved to a different index while this fetch was in flight, this response
+      // is stale — discard it instead of overwriting whatever's now actually selected.
+      if (requestedKey !== lastSpotKey) return;
+      if (candles.length === 0) return;
+
       const { trend, line } = computeSupertrendSeries(candles);
 
+      labelEl.textContent = `— ${meta.label}`;
       placeholderEl.classList.add('hidden');
       wrapEl.classList.remove('hidden');
 
