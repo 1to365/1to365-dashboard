@@ -340,6 +340,18 @@
     white-space: nowrap;
     letter-spacing: -0.01em;
   }
+  .expiry-tag {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--red);
+    background: var(--red-soft);
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+  .expiry-tag:empty { display: none; }
 
   /* DESKTOP: 2 cards side by side, sized to their own content — no forced full-height stretch */
   @media (min-width: 900px) {
@@ -643,19 +655,22 @@
 <!-- LIVE PRICES -->
 <div class="card theme-blue">
   <h2>📈 Market Pulse <button class="info-icon-btn" data-info="info-prices">i</button></h2>
-  <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Tap any index tile to instantly check its zones using the currently shown price — or type your broker's exact spot below to override it. Manual override stays in effect until you tap "Resume Live".</div>
+  <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Tiles always show the real live price. Tap a tile, or type a spot below, to run the CE/PE zone calculator for that index — it never changes what's shown on the tile.</div>
   <div class="price-grid">
     <div class="price-box idx-nifty" id="tile-nifty" style="cursor:pointer;">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-price">—</div>
+      <div id="nifty-expiry-tag" class="expiry-tag"></div>
     </div>
     <div class="price-box idx-banknifty" id="tile-banknifty" style="cursor:pointer;">
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-price">—</div>
+      <div id="banknifty-expiry-tag" class="expiry-tag"></div>
     </div>
     <div class="price-box idx-sensex" id="tile-sensex" style="cursor:pointer;">
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-price">—</div>
+      <div id="sensex-expiry-tag" class="expiry-tag"></div>
     </div>
   </div>
   <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin-top:8px;">Loading prices...</p>
@@ -898,6 +913,21 @@
     return NSE_HOLIDAYS_2026.includes(`${y}-${m}-${d}`);
   }
 
+  // Weekly/monthly expiry rules (2026): Nifty=Tue weekly, Sensex=Thu weekly, BankNifty=monthly only, last Tue
+  function isExpiryDay(key) {
+    const istDate = getIstDate();
+    const day = istDate.getDay(); // 0=Sun ... 2=Tue, 4=Thu
+    if (key === 'nifty') return day === 2;
+    if (key === 'sensex') return day === 4;
+    if (key === 'banknifty') {
+      if (day !== 2) return false;
+      const test = new Date(istDate);
+      test.setDate(test.getDate() + 7);
+      return test.getMonth() !== istDate.getMonth();
+    }
+    return false;
+  }
+
   function isWeekend() {
     const day = getIstDate().getDay();
     return day === 0 || day === 6;
@@ -932,6 +962,14 @@
   }
   updateTimeWindow();
   setInterval(updateTimeWindow, 1000);
+
+  // ---- EXPIRY DAY TAGS (checked once — the day doesn't change mid-session) ----
+  ['nifty', 'banknifty', 'sensex'].forEach(key => {
+    const tagEl = document.getElementById(key + '-expiry-tag');
+    if (tagEl && isExpiryDay(key)) {
+      tagEl.textContent = '🔥 EXPIRY';
+    }
+  });
 
   const stCodeMap = {
     "nifty-zone":     { CE: "TNG", PE: "TNR" },
@@ -1395,10 +1433,10 @@
   function refreshHandMarkers() {
     Object.entries(spotIndexMeta).forEach(([key, meta]) => {
       const price = currentPrice[meta.priceEl];
-      if (price == null) return;
       const el = document.getElementById(meta.priceEl);
       const isFocused = (key === lastSpotKey);
-      el.textContent = price.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + (isFocused ? ' ✋' : '');
+      const priceText = price != null ? price.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : "—";
+      el.textContent = priceText + (isFocused ? ' ✋' : '');
     });
   }
 
