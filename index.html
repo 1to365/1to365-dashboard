@@ -771,8 +771,8 @@
     }
   }
 
-  async function fetchViaProxy(proxyBuilder, yahooUrl) {
-    const res = await fetchWithTimeout(proxyBuilder(yahooUrl), { cache: 'no-store' });
+  async function fetchViaProxy(proxy, yahooUrl) {
+    const res = await fetchWithTimeout(proxy.build(yahooUrl), { cache: 'no-store', headers: proxy.headers });
     if (!res.ok) throw new Error("Network error");
     const data = await res.json();
     const result = data.chart.result[0];
@@ -788,9 +788,11 @@
     return { price, change: price - prevClose };
   }
 
+  // corsproxy.io was found to be returning a bot-challenge page instead of data (confirmed via
+  // direct testing) — replaced with r.jina.ai, verified working with correct CORS support.
   const proxies = [
-    (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+    { build: (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, headers: {} },
+    { build: (url) => `https://r.jina.ai/${encodeURIComponent(url)}`, headers: { 'X-Return-Format': 'text' } }
   ];
 
   async function fetchPrice(symbol) {
@@ -898,7 +900,7 @@
     for (const proxy of proxies) {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          const res = await fetchWithTimeout(proxy(yahooUrl), { cache: 'no-store' });
+          const res = await fetchWithTimeout(proxy.build(yahooUrl), { cache: 'no-store', headers: proxy.headers });
           if (!res.ok) throw new Error("Network error");
           const data = await res.json();
           const result = data.chart.result[0];
@@ -1659,7 +1661,7 @@
     let lastErr;
     for (const proxy of proxies) {
       try {
-        const res = await fetchWithTimeout(proxy(yahooUrl), { cache: 'no-store' }, 4000); // 4s timeout, 1 try per proxy — chart should fail fast, not leave you guessing for 20+s
+        const res = await fetchWithTimeout(proxy.build(yahooUrl), { cache: 'no-store', headers: proxy.headers }, 4000); // 4s timeout, 1 try per proxy — chart should fail fast, not leave you guessing for 20+s
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
         const result = data.chart.result[0];
