@@ -216,21 +216,21 @@
   }
   .card .price-box { background: var(--panel); }
   .card h2 {
-    font-size: 1.1rem;
+    font-size: 0.92rem;
     font-weight: 800;
     color: var(--accent);
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
   }
   .card .card-note {
     text-align: center;
     color: var(--muted);
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     margin-top: 6px;
     line-height: 1.4;
   }
@@ -238,14 +238,14 @@
   .price-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
   .price-box {
     background: var(--panel-alt);
     border: 1px solid var(--border);
-    border-top: 4px solid var(--border);
+    border-top: 3px solid var(--border);
     border-radius: 10px;
-    padding: 14px 6px;
+    padding: 10px 3px;
     text-align: center;
     min-width: 0;
     transition: transform 0.15s ease;
@@ -258,14 +258,15 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 17px;
+    height: 17px;
     border-radius: 50%;
-    font-size: 0.85rem;
+    font-size: 0.58rem;
     font-weight: 800;
     color: #fff;
-    margin-right: 6px;
+    margin-right: 3px;
     vertical-align: middle;
+    flex-shrink: 0;
   }
   .idx-icon.nifty     { background: var(--nifty); }
   .idx-icon.banknifty { background: var(--banknifty); }
@@ -273,20 +274,22 @@
 
   .price-box .label {
     color: var(--muted);
-    font-size: 0.95rem;
+    font-size: 0.62rem;
     font-weight: 700;
     white-space: nowrap;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    gap: 2px;
+    overflow: hidden;
   }
   .price-box .value {
-    font-size: 1.85rem;
+    font-size: 1.05rem;
     font-weight: 800;
-    margin-top: 8px;
-    word-break: break-word;
+    margin-top: 5px;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
   }
 
   /* DESKTOP: 2 cards side by side, sized to their own content — no forced full-height stretch */
@@ -297,33 +300,37 @@
       grid-template-columns: repeat(2, 1fr);
       align-items: start;
       gap: 22px;
-      max-width: 1000px;
+      max-width: 900px;
       margin: 0 auto;
     }
-    header, footer { max-width: 1000px; margin-left: auto; margin-right: auto; }
-    .card h2 { font-size: 1.3rem; }
-    .price-box .value { font-size: 2rem; }
-    .card .card-note { font-size: 0.9rem; }
+    header, footer { max-width: 900px; margin-left: auto; margin-right: auto; }
+    .card h2 { font-size: 1.05rem; }
+    .price-box .value { font-size: 1.3rem; }
+    .price-box .label { font-size: 0.7rem; }
+    .idx-icon { width: 19px; height: 19px; font-size: 0.62rem; }
+    .card .card-note { font-size: 0.78rem; }
   }
 
-  /* Small phones: trim padding only, keep text large and readable */
+  /* Small phones: trim padding, keep numbers on one line */
   @media (max-width: 380px) {
-    body { padding: 12px; }
+    body { padding: 10px; }
     header .tagline { display: none; }
-    .card { padding: 16px 14px; }
-    .price-grid { gap: 8px; }
-    .price-box { padding: 12px 4px; }
-    .price-box .value { font-size: 1.5rem; }
-    .price-box .label { font-size: 0.82rem; }
+    .card { padding: 14px 12px; }
+    .price-grid { gap: 6px; }
+    .price-box { padding: 8px 2px; }
+    .price-box .value { font-size: 0.9rem; }
+    .price-box .label { font-size: 0.56rem; }
+    .idx-icon { width: 15px; height: 15px; font-size: 0.52rem; margin-right: 2px; }
   }
 
   .badge {
     display: inline-block;
-    padding: 6px 14px;
+    padding: 4px 10px;
     border-radius: 20px;
-    font-size: 1.05rem;
+    font-size: 0.78rem;
     font-weight: 800;
     letter-spacing: 0.01em;
+    white-space: nowrap;
   }
   .badge.strong { background: var(--green-soft); color: var(--green); }
   .badge.bias   { background: var(--amber-soft); color: var(--amber); }
@@ -608,7 +615,7 @@
     <button id="spot-set-btn" style="flex:0 0 auto; padding:10px 20px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
     <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:10px 16px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--muted); font-size:0.88rem; cursor:pointer; white-space:nowrap;">↩ Live</button>
   </div>
-  <div id="spot-result" style="margin-top:12px; font-size:0.95rem; line-height:1.7; font-family:ui-monospace, monospace;"></div>
+  <div id="spot-result" style="margin-top:10px; font-size:0.8rem; line-height:1.6; font-family:ui-monospace, monospace;"></div>
 </div>
 
 <!-- ST SIGNAL (now includes Strong Signal Alerts + CE/PE Zone wording) -->
@@ -618,18 +625,18 @@
   <div class="price-grid">
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
-      <div class="value" style="font-size:1.05rem; margin-top:8px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
-      <div id="st-nifty-zone-label" style="font-size:0.82rem; margin-top:6px; font-weight:700;"></div>
+      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
+      <div id="st-nifty-zone-label" style="font-size:0.65rem; margin-top:4px; font-weight:700; white-space:nowrap;"></div>
     </div>
     <div class="price-box idx-banknifty">
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
-      <div class="value" style="font-size:1.05rem; margin-top:8px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
-      <div id="st-banknifty-zone-label" style="font-size:0.82rem; margin-top:6px; font-weight:700;"></div>
+      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
+      <div id="st-banknifty-zone-label" style="font-size:0.65rem; margin-top:4px; font-weight:700; white-space:nowrap;"></div>
     </div>
     <div class="price-box idx-sensex">
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
-      <div class="value" style="font-size:1.05rem; margin-top:8px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
-      <div id="st-sensex-zone-label" style="font-size:0.82rem; margin-top:6px; font-weight:700;"></div>
+      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
+      <div id="st-sensex-zone-label" style="font-size:0.65rem; margin-top:4px; font-weight:700; white-space:nowrap;"></div>
     </div>
   </div>
   <div style="display:flex; align-items:center; justify-content:space-between; margin-top:16px; margin-bottom:8px;">
