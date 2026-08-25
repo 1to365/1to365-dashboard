@@ -753,14 +753,10 @@
     throw lastErr;
   }
 
-  const manualOverride = {}; // priceElId -> true when manually set, paused from auto-refresh
-
   async function updatePrices() {
     const statusEl = document.getElementById('price-status');
     let anyError = false;
-    let anyManual = false;
     for (const [elId, symbol] of Object.entries(symbols)) {
-      if (manualOverride[elId]) { anyManual = true; continue; } // skip — manual spot in effect
       try {
         const { price, change } = await fetchPrice(symbol);
         const el = document.getElementById(elId);
@@ -772,9 +768,7 @@
       await sleep(500); // stagger requests to avoid proxy rate limits
     }
     if (typeof refreshHandMarkers === 'function') refreshHandMarkers(); // re-apply text + hand marker for all tiles
-    statusEl.textContent = anyManual
-      ? "Manual spot active for one or more indices"
-      : anyError
+    statusEl.textContent = anyError
       ? "Some prices failed to load — will retry in 30s"
       : "Last updated: " + new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
   }
@@ -1155,7 +1149,7 @@
     const emoji = direction === "CE" ? "🟢▲" : "🔴▼";
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const spot = currentPrice[zoneToPriceEl[elId]];
-    const spotLine = spot != null ? `Spot: ${spot.toLocaleString('en-IN')}${manualOverride[zoneToPriceEl[elId]] ? ' (manual)' : ''}\n` : '';
+    const spotLine = spot != null ? `Spot: ${spot.toLocaleString('en-IN')}\n` : '';
     const text = `${emoji} ${indexName} ${direction} STRONG — ${stCode}\n${spotLine}Trend held 15+ min, high confidence\n${timeStr} IST`;
     sendTelegramText(text);
   }
@@ -1196,7 +1190,7 @@
 
       // Telegram
       const spot = currentPrice[zoneToPriceEl[elId]];
-      const spotLine = spot != null ? `Spot: ${spot.toLocaleString('en-IN')}${manualOverride[zoneToPriceEl[elId]] ? ' (manual)' : ''}\n` : '';
+      const spotLine = spot != null ? `Spot: ${spot.toLocaleString('en-IN')}\n` : '';
       sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP\n${prevCode} → ${stCode} (now ${direction})\n${spotLine}Direction just changed — wait for confirmation\n${timeStr} IST`);
 
       // Animated flip badge in the Manual Spot result box, if it's showing this index
@@ -1466,14 +1460,11 @@
       alert("Couldn't detect index from that number — Nifty starts with 2, BankNifty with 5, Sensex with 7.");
       return;
     }
-    const meta = spotIndexMeta[key];
 
-    // Override the live price feed for this index — persists until "Reset" is tapped
-    manualOverride[meta.priceEl] = true;
-    currentPrice[meta.priceEl] = spot;
+    // The price tile always keeps showing the real live market price — typing a spot here
+    // only feeds the calculator below, it never overwrites what's displayed on the tile.
     lastSpotKey = key;
-    refreshHandMarkers(); // hand moves to this tile, clears from any previously-focused tile
-    document.getElementById(meta.priceEl).style.color = "var(--accent)";
+    refreshHandMarkers(); // hand moves to this tile (still showing the real market price), clears from any other
     renderSpotResult(key, spot);
     document.getElementById('spot-resume-btn').classList.remove('hidden');
   });
@@ -1483,13 +1474,11 @@
   });
 
   document.getElementById('spot-resume-btn').addEventListener('click', () => {
-    Object.values(spotIndexMeta).forEach(meta => { manualOverride[meta.priceEl] = false; });
     document.getElementById('spot-resume-btn').classList.add('hidden');
     document.getElementById('spot-result').innerHTML = '';
     document.getElementById('spot-input').value = '';
     lastSpotKey = null;
-    refreshHandMarkers(); // clears the hand from every tile immediately, doesn't wait on the live fetch
-    updatePrices(); // immediately re-fetch live feed instead of waiting for next 30s cycle
+    refreshHandMarkers(); // clears the hand from every tile — price tiles were never touched, so nothing else to restore
   });
 
   // ---- TAP-TO-CHECK: click a price tile to instantly zone-check its current displayed price ----
