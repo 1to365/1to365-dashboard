@@ -150,8 +150,8 @@
     header h1 { font-size: 1.15rem; }
     header .tagline { font-size: 0.68rem; margin-left: 6px; padding-left: 6px; }
     header p#clock { font-size: 0.75rem; }
-    #rules-toggle, #pnl-toggle { font-size: 0.72rem; padding: 5px 10px; }
-    #time-window-badge { font-size: 0.72rem; padding: 4px 9px; }
+    #pnl-toggle { font-size: 0.72rem; padding: 5px 10px; }
+    #rules-toggle { width: 26px; height: 26px; font-size: 0.8rem; }
   }
 
   .dashboard {
@@ -228,6 +228,31 @@
     align-items: center;
     gap: 5px;
   }
+  .ribbon-icon-btn {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.6);
+    transition: background 0.3s ease;
+  }
+  .status-dot.live { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.7); }
+  .status-dot.closed { background: #ef4444; }
   .card.theme-blue, .card.theme-mint, .card.theme-amber,
   .card.theme-teal, .card.theme-rose, .card.theme-lavender {
     background: #f3f4f6;
@@ -571,8 +596,9 @@
     <span class="tagline">Live Mining</span>
   </div>
   <div style="display:flex; align-items:center; gap:10px; position:relative; flex-wrap:wrap;">
-    <button id="rules-toggle" class="ribbon-btn">📋 Rules ▾</button>
+    <button id="rules-toggle" class="ribbon-icon-btn" title="Rules">❔</button>
     <div id="rules-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:14px 16px; z-index:300;">
+      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">📋 Rules</p>
       <ul class="checklist" style="margin:0;">
         <li>Real trades allowed any trading day (Mon–Fri)</li>
         <li>Max ₹10–15K capital per trade</li>
@@ -605,7 +631,7 @@
       <div id="monthly-list"></div>
     </div>
 
-    <span id="time-window-badge" class="badge bias" style="background:rgba(255,255,255,0.18); color:#fff;">Checking...</span>
+    <span id="time-window-dot" class="status-dot" title="Checking..."></span>
     <p id="clock">Loading time...</p>
   </div>
 </header>
@@ -635,9 +661,9 @@
   <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin-top:8px;">Loading prices...</p>
 
   <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
-    <input id="spot-input" type="number" inputmode="decimal" placeholder="Or type spot to override" style="flex:1 1 160px; min-width:140px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.95rem;">
+    <input id="spot-input" type="text" inputmode="decimal" placeholder="Or type spot to override" style="flex:1 1 160px; min-width:140px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.95rem;">
     <button id="spot-set-btn" style="flex:0 0 auto; padding:10px 20px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
-    <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:10px 16px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--muted); font-size:0.88rem; cursor:pointer; white-space:nowrap;">↩ Live</button>
+    <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:10px 16px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--muted); font-size:0.88rem; cursor:pointer; white-space:nowrap;">✕ Reset</button>
   </div>
   <div id="spot-result" style="margin-top:10px; font-size:0.8rem; line-height:1.6; font-family:ui-monospace, monospace;"></div>
 </div>
@@ -892,20 +918,20 @@
   }
 
   function updateTimeWindow() {
-    const badge = document.getElementById('time-window-badge');
+    const dot = document.getElementById('time-window-dot');
     const overlay = document.getElementById('market-closed-overlay');
     if (isTodayHoliday()) {
-      badge.className = "badge weak";
-      badge.textContent = "MARKET HOLIDAY ❌";
+      dot.className = "status-dot closed";
+      dot.title = "Market Holiday";
       overlay.textContent = "Today Market Holiday";
       overlay.classList.remove('hidden');
     } else if (isWithinTradeWindow()) {
-      badge.className = "badge strong";
-      badge.textContent = "SESSION LIVE ✅";
+      dot.className = "status-dot live";
+      dot.title = "Session Live";
       overlay.classList.add('hidden');
     } else {
-      badge.className = "badge weak";
-      badge.textContent = "SESSION CLOSED ❌";
+      dot.className = "status-dot closed";
+      dot.title = "Session Closed";
       overlay.textContent = "Market Closed";
       overlay.classList.remove('hidden');
     }
@@ -1449,6 +1475,7 @@
     Object.values(spotIndexMeta).forEach(meta => { manualOverride[meta.priceEl] = false; });
     document.getElementById('spot-resume-btn').classList.add('hidden');
     document.getElementById('spot-result').innerHTML = '';
+    document.getElementById('spot-input').value = '';
     lastSpotKey = null;
     updatePrices(); // immediately re-fetch live feed instead of waiting for next 30s cycle
   });
