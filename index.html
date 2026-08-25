@@ -739,6 +739,8 @@
 <footer>Signa365 · Personal Trading System · Not financial advice</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
 <script>
   function updateClock() {
     const now = new Date();
@@ -1079,8 +1081,12 @@
   updateZones();
   setInterval(updateZones, 30000);
 
-  // ---- TRADE STORAGE (localStorage) — backs Daily P&L and Quick Log ----
+  // ---- TRADE STORAGE (localStorage, with Firestore cloud sync for cross-device P&L) ----
+  // localStorage stays the source of truth the rest of the app reads from — Firestore just
+  // keeps it topped up in the background. If Firebase is unreachable for any reason, the
+  // dashboard quietly falls back to localStorage-only and nothing breaks.
   const TJ_KEY = "signa365_trades";
+  const TRADES_COLLECTION = "trades";
 
   function tjLoad() {
     try {
@@ -1091,6 +1097,72 @@
   }
   function tjSave(trades) {
     localStorage.setItem(TJ_KEY, JSON.stringify(trades));
+  }
+
+  // Union-merge trades coming from the cloud into the local copy (by id), so this device
+  // picks up trades logged on other devices too.
+  function tjMergeFromCloud(cloudTrades) {
+    const byId = {};
+    tjLoad().forEach(t => { byId[t.id] = t; });
+    cloudTrades.forEach(t => { byId[t.id] = t; });
+    const merged = Object.values(byId).sort((a, b) => a.ts - b.ts);
+    tjSave(merged);
+    return merged;
+  }
+
+  // Add a trade: saves locally first (instant, works even if offline), then best-effort
+  // mirrors it to the cloud so other devices see it too.
+  function tjAddTrade(trade) {
+    const trades = tjLoad();
+    trades.push(trade);
+    tjSave(trades);
+    if (fbDb) {
+      fbDb.collection(TRADES_COLLECTION).doc(String(trade.id)).set(trade)
+        .catch(err => console.warn("Signa365: cloud sync failed for trade, saved locally only:", err));
+    }
+    return trades;
+  }
+
+  // ---- FIREBASE / FIRESTORE (cloud sync — optional enhancement over localStorage) ----
+  const firebaseConfig = {
+    apiKey: "AIzaSyBQ6LKotzvHyZf9ubsW1iTs1Grnm2ZyvS4",
+    authDomain: "signa365.firebaseapp.com",
+    projectId: "signa365",
+    storageBucket: "signa365.firebasestorage.app",
+    messagingSenderId: "274414173260",
+    appId: "1:274414173260:web:58991e44967c13db3c88e9"
+  };
+  let fbDb = null;
+  let fbMigratedOnce = false;
+  try {
+    if (typeof firebase !== 'undefined') {
+      firebase.initializeApp(firebaseConfig);
+      fbDb = firebase.firestore();
+      fbDb.collection(TRADES_COLLECTION).onSnapshot(
+        (snapshot) => {
+          const cloudTrades = snapshot.docs.map(d => d.data());
+          const merged = tjMergeFromCloud(cloudTrades);
+          updatePnL();
+          renderMonthlySummary();
+          // One-time: push any trades that existed locally before cloud sync was ever set up,
+          // so trade history logged before tonight's update still shows up on other devices.
+          if (!fbMigratedOnce) {
+            fbMigratedOnce = true;
+            const cloudIds = new Set(cloudTrades.map(t => String(t.id)));
+            merged.filter(t => !cloudIds.has(String(t.id))).forEach(t => {
+              fbDb.collection(TRADES_COLLECTION).doc(String(t.id)).set(t)
+                .catch(err => console.warn("Signa365: migration upload failed:", err));
+            });
+          }
+        },
+        (err) => {
+          console.warn("Signa365: Firestore sync unavailable, running on localStorage only:", err);
+        }
+      );
+    }
+  } catch (err) {
+    console.warn("Signa365: Firebase init failed, running on localStorage only:", err);
+    fbDb = null;
   }
 
   // ---- DAILY P&L TRACKER ----
@@ -1142,10 +1214,9 @@
       alert("Enter an amount (positive for profit, negative for loss).");
       return;
     }
-    const trades = tjLoad();
-    trades.push({ id: Date.now(), index: "QUICK", type: "", qty: null, entry: null, exit: null, pnl: amount, ts: Date.now() });
-    tjSave(trades);
+    tjAddTrade({ id: Date.now(), index: "QUICK", type: "", qty: null, entry: null, exit: null, pnl: amount, ts: Date.now() });
     updatePnL();
+    renderMonthlySummary();
     input.value = '';
   });
 
