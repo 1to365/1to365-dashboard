@@ -761,6 +761,34 @@
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+  // ---- LAST-KNOWN PRICE CACHE — paints tiles instantly on load instead of a blank "—" ----
+  // while the real fetch (which can take a few seconds on a slow mobile connection) runs.
+  const PRICE_CACHE_KEY = "signa365_last_prices";
+  function loadPriceCache() {
+    try { return JSON.parse(localStorage.getItem(PRICE_CACHE_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function cachePrice(elId, price, change) {
+    try {
+      const cache = loadPriceCache();
+      cache[elId] = { price, change };
+      localStorage.setItem(PRICE_CACHE_KEY, JSON.stringify(cache));
+    } catch (e) { /* localStorage full or unavailable — safe to skip caching */ }
+  }
+  (function paintCachedPrices() {
+    const cache = loadPriceCache();
+    Object.keys(symbols).forEach((elId) => {
+      const cached = cache[elId];
+      if (cached && cached.price != null) {
+        currentPrice[elId] = cached.price;
+        const el = document.getElementById(elId);
+        if (el) {
+          el.textContent = cached.price.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+          el.style.color = cached.change >= 0 ? 'var(--green)' : 'var(--red)';
+        }
+      }
+    });
+  })();
+
   // A hung/slow proxy response could otherwise wait on the browser's own default timeout,
   // which can be very long — this forces each attempt to fail fast (6s) and move on.
   async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
@@ -816,19 +844,25 @@
 
   async function updatePrices() {
     const statusEl = document.getElementById('price-status');
-    let anyError = false;
-    for (const [elId, symbol] of Object.entries(symbols)) {
+    // Fetch all three indices concurrently instead of one-after-another — requests still start
+    // a little apart (i * 250ms) so the proxies don't see a simultaneous 3-way burst, but each
+    // tile no longer has to wait for the OTHER two to finish (or time out) before it can update.
+    // This is the main fix for the "everything looks stuck after unlocking" mobile lag.
+    const results = await Promise.all(Object.entries(symbols).map(async ([elId, symbol], i) => {
+      await sleep(i * 250);
       try {
         const { price, change } = await fetchPrice(symbol);
         const el = document.getElementById(elId);
         el.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
         currentPrice[elId] = price;
+        cachePrice(elId, price, change);
+        if (typeof refreshHandMarkers === 'function') refreshHandMarkers(); // paint this tile the moment ITS price lands, don't wait on the other two
+        return true;
       } catch (err) {
-        anyError = true;
+        return false;
       }
-      await sleep(500); // stagger requests to avoid proxy rate limits
-    }
-    if (typeof refreshHandMarkers === 'function') refreshHandMarkers(); // re-apply text + hand marker for all tiles
+    }));
+    const anyError = results.some(ok => !ok);
     statusEl.textContent = anyError
       ? "Some prices failed to load — will retry in 30s"
       : "Last updated: " + new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
@@ -1041,7 +1075,10 @@
   };
 
   async function updateZones() {
-    for (const [elId, symbol] of Object.entries(zoneIds)) {
+    // Same fix as updatePrices() — run all three indices concurrently (staggered start only)
+    // instead of sequentially, so a slow/erroring proxy on one index doesn't hold up the other two.
+    await Promise.all(Object.entries(zoneIds).map(async ([elId, symbol], i) => {
+      await sleep(i * 300);
       try {
         const candles = await fetchCandles(symbol);
         const { trend, duration } = computeSupertrend(candles);
@@ -1074,8 +1111,7 @@
       } catch (err) {
         // keep last known values on transient failure
       }
-      await sleep(600); // stagger requests to avoid proxy rate limits
-    }
+    }));
   }
 
   updateZones();
