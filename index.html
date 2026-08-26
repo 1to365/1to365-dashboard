@@ -725,7 +725,7 @@
 </div>
 
 <!-- LIVE INTRADAY CHART -->
-<div class="card" style="grid-column: 1 / -1;">
+<div class="card" id="live-chart-card" style="grid-column: 1 / -1;">
   <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button></h2>
   <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = Supertrend(7,3) · Dotted = prev. close</div>
   <div id="chart-placeholder" class="placeholder" style="font-size:0.9rem;">Tap a tile above or set a spot to see its live chart here</div>
@@ -983,6 +983,13 @@
 
   function getIstDate() {
     const istStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour12: false });
+    return new Date(istStr);
+  }
+
+  // Same trick as getIstDate(), but for an arbitrary candle timestamp instead of "now" — used
+  // to tell which IST calendar day a given 5-min candle belongs to.
+  function toIstDate(ms) {
+    const istStr = new Date(ms).toLocaleString("en-US", { timeZone: "Asia/Kolkata", hour12: false });
     return new Date(istStr);
   }
 
@@ -1617,6 +1624,15 @@
     });
   }
 
+  // Brings the Live Chart card into view when the user actively selects/switches an index in
+  // Market Pulse (tapping a tile, or hitting Set). Only ever called from those direct user
+  // actions below — never from updateLiveChart's own 30s auto-refresh — so it scrolls once per
+  // selection and doesn't yank the page around on every background price tick.
+  function scrollToLiveChart() {
+    const chartCard = document.getElementById('live-chart-card');
+    if (chartCard) chartCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   // Auto-detect index from the leading digit: 2xxxx=Nifty, 5xxxx=BankNifty, 7xxxx=Sensex
   function detectIndexFromSpot(spot) {
     const leadDigit = String(Math.trunc(Math.abs(spot)))[0];
@@ -1684,6 +1700,7 @@
     renderSpotResult(key, spot);
     updateLiveChart();
     document.getElementById('spot-resume-btn').classList.remove('hidden');
+    scrollToLiveChart();
   });
 
   document.getElementById('spot-input').addEventListener('keydown', (e) => {
@@ -1712,6 +1729,10 @@
       refreshHandMarkers(); // hand moves to the tapped tile, clears from any previous one
       renderSpotResult(key, price);
       updateLiveChart();
+      // Tap-to-check used to leave no way back except the manual spot-entry flow's Reset
+      // button — reveal that same button here too, so a plain tap is just as reversible as Set.
+      document.getElementById('spot-resume-btn').classList.remove('hidden');
+      scrollToLiveChart();
     });
   });
 
@@ -1762,9 +1783,19 @@
     return { trend, line };
   }
 
+  // range=5d (not 1d): Supertrend(7,3) needs ~7-10 candles of ATR warm-up before its value
+  // stabilizes. With only today's candles, that warm-up ate the first ~30-35 min of the
+  // session (chart looked like it "started" around 9:45 with no Supertrend line before that).
+  // Fetching the last few trading days instead means the warm-up is satisfied by the tail end
+  // of the previous session, so today's very first 9:15 candle already has a stable, correctly
+  // seeded trend/color. Yahoo's own response already omits weekends and NSE holidays (no
+  // candles exist for days the exchange was shut), so "previous trading day" comes out right
+  // here for free, including around the hardcoded 2026 holiday list, without us re-deriving it.
+  // updateLiveChart() computes Supertrend over this whole window, then trims the display back
+  // down to just today's candles.
   async function fetchIntradayCandles(symbol) {
     const cacheBust = `&_cb=${Date.now()}`;
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=1d${cacheBust}`;
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=5d${cacheBust}`;
     let lastErr;
     for (const proxy of proxies) {
       try {
@@ -1845,14 +1876,34 @@
     }
 
     try {
-      const { candles, prevClose } = await fetchChartCandles(symbol);
+      const { candles: allCandles, prevClose } = await fetchChartCandles(symbol);
 
       // If focus moved to a different index while this fetch was in flight, this response
       // is stale — discard it instead of overwriting whatever's now actually selected.
       if (requestedKey !== lastSpotKey) return;
-      if (candles.length === 0) return;
+      if (allCandles.length === 0) return;
 
-      const { trend, line } = computeSupertrendSeries(candles);
+      // Compute Supertrend across the FULL fetched window (today plus the prior trading
+      // day(s) fetched purely for warm-up) so ATR/the bands are already stable by 9:15 —
+      // see the comment on fetchIntradayCandles for why.
+      const { trend: allTrend, line: allLine } = computeSupertrendSeries(allCandles);
+
+      // Trim back down to just today's (IST) candles for what's actually plotted — the
+      // earlier days' candles were only ever fetched to warm up the calculation above.
+      const today = getIstDate();
+      const todayIdx = [];
+      allCandles.forEach((c, i) => {
+        const cd = toIstDate(c.time);
+        if (cd.getFullYear() === today.getFullYear() && cd.getMonth() === today.getMonth() && cd.getDate() === today.getDate()) {
+          todayIdx.push(i);
+        }
+      });
+      // Fallback for the rare case today has no candles yet (e.g. page opened in the first
+      // seconds after 9:15 before Yahoo has posted a bar) — show what's available rather than
+      // a blank chart; the next 30s refresh corrects it once today's candles exist.
+      const candles = todayIdx.length ? todayIdx.map(i => allCandles[i]) : allCandles;
+      const trend = todayIdx.length ? todayIdx.map(i => allTrend[i]) : allTrend;
+      const line = todayIdx.length ? todayIdx.map(i => allLine[i]) : allLine;
 
       labelEl.textContent = `— ${meta.label}`;
       placeholderEl.classList.add('hidden');
