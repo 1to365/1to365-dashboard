@@ -726,12 +726,12 @@
 
 <!-- LIVE INTRADAY CHART -->
 <div class="card" style="grid-column: 1 / -1;">
-  <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span></h2>
+  <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button></h2>
+  <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = Supertrend(7,3) · Dotted = prev. close</div>
   <div id="chart-placeholder" class="placeholder" style="font-size:0.9rem;">Tap a tile above or set a spot to see its live chart here</div>
   <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
     <canvas id="live-chart"></canvas>
   </div>
-  <p style="text-align:center; color:var(--muted); font-size:0.72rem; margin-top:6px;">Blue = price · Green/Red = Supertrend(7,3) · Dotted = prev. close</p>
 </div>
 
 </div>
