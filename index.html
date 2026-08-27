@@ -307,6 +307,20 @@
     font-size: 0.85rem;
     line-height: 1;
   }
+  .gfinance-btn {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 4px;
+    white-space: nowrap;
+  }
+  .gfinance-btn:hover { color: var(--accent); border-color: var(--accent); }
   .price-box.idx-nifty     { background: var(--nifty-soft);     border-top-color: var(--nifty); }
   .price-box.idx-banknifty { background: var(--banknifty-soft); border-top-color: var(--banknifty); }
   .price-box.idx-sensex    { background: var(--sensex-soft);    border-top-color: var(--sensex); }
@@ -444,6 +458,25 @@
     padding: 14px 0 6px;
   }
 
+  #big-move-toast {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 500;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    max-width: calc(100vw - 24px);
+    text-align: center;
+  }
+  #big-move-toast.hidden { display: none; }
+  #big-move-toast.ce { background: var(--green); }
+  #big-move-toast.pe { background: var(--red); }
+
   /* ---- MARKET CLOSED WATERMARK ---- */
   #market-closed-overlay {
     position: fixed;
@@ -468,6 +501,74 @@
     #market-closed-overlay { font-size: 4.2rem; }
   }
 
+  /* ---- LOGIN / ACCOUNT SCREEN ---- */
+  #auth-screen {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(160deg, rgba(219,235,255,0.95) 0%, rgba(228,238,252,0.92) 45%, rgba(238,244,249,0.95) 100%);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #auth-screen.hidden { display: none; }
+  #auth-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--orange) 0%, var(--accent) 100%);
+    color: #fff;
+    font-size: 1.6rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(29,78,216,0.25);
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+  #auth-brand { color: var(--accent); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+  #auth-subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; text-align: center; }
+  #auth-screen input {
+    width: min(280px, 100%);
+    box-sizing: border-box;
+    padding: 11px 14px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 0.92rem;
+  }
+  #auth-login-btn {
+    width: min(280px, 100%);
+    padding: 11px 14px;
+    margin-top: 4px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #auth-error {
+    color: var(--red);
+    font-size: 0.8rem;
+    min-height: 1.2em;
+    margin-top: 10px;
+    text-align: center;
+    max-width: 280px;
+  }
+  #auth-hint {
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin-top: 18px;
+    text-align: center;
+  }
+
   /* ---- PIN LOCK SCREEN ---- */
   #lock-screen {
     position: fixed;
@@ -485,6 +586,19 @@
     padding: 20px;
   }
   #lock-screen.hidden { display: none; }
+  #lock-expired {
+    text-align: center;
+    max-width: 260px;
+    margin: 4px 0 22px;
+  }
+  #lock-expired.hidden { display: none; }
+  #lock-expired-icon { font-size: 2.2rem; margin-bottom: 10px; opacity: 0.75; }
+  #lock-expired-text {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--red);
+    line-height: 1.4;
+  }
   .hidden { display: none !important; }
   .lock-deco {
     position: absolute;
@@ -581,8 +695,21 @@
 </head>
 <body>
 
+<!-- ACCOUNTS: login gate — sits on top of everything (including the PIN lock) until
+     Firebase Auth confirms a signed-in, non-disabled user with a valid account doc. -->
+<div id="auth-screen">
+  <div id="auth-logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 17 L8 11 L12 14 L16 7 L22 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="3" r="2.4" fill="#fff"/></svg></div>
+  <div id="auth-brand">Signa365</div>
+  <div id="auth-subtitle">Sign in to continue</div>
+  <input id="auth-email" type="email" placeholder="Email" autocomplete="username">
+  <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password">
+  <button id="auth-login-btn">Log In</button>
+  <div id="auth-error"></div>
+  <div id="auth-hint">Forgot your password? Contact your admin.</div>
+</div>
+
 <div id="lock-screen">
-  <div id="lock-logo">S</div>
+  <div id="lock-logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 17 L8 11 L12 14 L16 7 L22 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="3" r="2.4" fill="#fff"/></svg></div>
   <div id="lock-brand">Signa365</div>
   <div id="lock-subtitle">Enter PIN</div>
   <div id="lock-dots">
@@ -592,6 +719,11 @@
     <div class="lock-dot"></div>
   </div>
   <div id="lock-error"></div>
+  <!-- ACCOUNTS: shown instead of the keypad for a non-admin whose PIN has expired and admin hasn't unlocked a reset yet -->
+  <div id="lock-expired" class="hidden">
+    <div id="lock-expired-icon">⏳</div>
+    <div id="lock-expired-text">PIN expired — contact your admin to unlock a reset</div>
+  </div>
   <div id="lock-keypad">
     <button class="lock-key" data-key="1">1</button>
     <button class="lock-key" data-key="2">2</button>
@@ -669,12 +801,33 @@
       <div id="monthly-list"></div>
     </div>
 
+    <!-- ACCOUNTS: admin-only panel — hidden by default, shown by applyRoleUI() once role is known -->
+    <button id="admin-toggle" class="ribbon-btn" style="display:none;">👑 Admin</button>
+    <div id="admin-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:16px; z-index:300; color:var(--text);">
+      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
+      <input id="admin-new-username" type="text" placeholder="Username" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+      <input id="admin-new-email" type="email" placeholder="Email" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+      <input id="admin-new-password" type="text" placeholder="Temporary password (6+ chars)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+      <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
+      <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
+
+      <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <p style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin:0;">👥 Manage Users</p>
+      </div>
+      <div id="admin-user-list"></div>
+    </div>
+
+    <span id="current-username" style="font-size:0.7rem; color:rgba(255,255,255,0.85); display:none;"></span>
+    <button id="logout-btn" class="ribbon-icon-btn" title="Logout" style="display:none;">🚪</button>
+
     <span id="time-window-dot" class="status-dot" title="Checking..."></span>
     <p id="clock">Loading time...</p>
   </div>
 </header>
 
 <div id="market-closed-overlay" class="hidden">Market Closed</div>
+<div id="big-move-toast" class="hidden"></div>
 
 <div class="dashboard">
 
@@ -688,18 +841,21 @@
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-price">—</div>
       <div id="nifty-expiry-tag" class="expiry-tag"></div>
+      <a href="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn" onclick="event.stopPropagation();">📊 Chart</a>
     </div>
     <div class="price-box idx-banknifty" id="tile-banknifty" style="cursor:pointer;">
       <span class="hand-marker" id="banknifty-hand"></span>
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-price">—</div>
       <div id="banknifty-expiry-tag" class="expiry-tag"></div>
+      <a href="https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn" onclick="event.stopPropagation();">📊 Chart</a>
     </div>
     <div class="price-box idx-sensex" id="tile-sensex" style="cursor:pointer;">
       <span class="hand-marker" id="sensex-hand"></span>
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-price">—</div>
       <div id="sensex-expiry-tag" class="expiry-tag"></div>
+      <a href="https://www.google.com/finance/quote/SENSEX:INDEXBOM" target="_blank" rel="noopener" class="gfinance-btn" onclick="event.stopPropagation();">📊 Chart</a>
     </div>
   </div>
   <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin-top:8px;">Loading prices...</p>
@@ -759,6 +915,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
 <script>
   function updateClock() {
     const now = new Date();
@@ -874,9 +1031,24 @@
     if (!threshold) return;
     const delta = newPrice - prevPrice;
     if (Math.abs(delta) < threshold) return;
-    const dirWord = delta > 0 ? "up" : "down";
+    const isUp = delta > 0;
+    const sideWord = isUp ? "STRONG CE" : "STRONG PE";
+    const sideIcon = isUp ? "🟢" : "🔴";
+    const ptsStr = `${isUp ? '+' : '-'}${Math.abs(delta).toFixed(0)} pts`;
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    sendTelegramText(`🚨 BIG MOVE ALERT — ${priceIndexNames[elId]} moved ${Math.abs(delta).toFixed(0)} pts ${dirWord} in 30 seconds. Check immediately.\n${timeStr} IST`);
+    sendTelegramText(`🚨 BIG MOVE ALERT — ${sideWord} ${priceIndexNames[elId]} ${sideIcon} (${ptsStr}) · ${timeStr} IST`);
+    showBigMoveToast(`🚨 BIG MOVE — ${sideWord} ${priceIndexNames[elId]} ${sideIcon} (${ptsStr})`, isUp);
+  }
+
+  // Same alert, shown inside the dashboard itself (not just Telegram) — auto-hides after 6s.
+  let bigMoveToastTimer = null;
+  function showBigMoveToast(text, isUp) {
+    const el = document.getElementById('big-move-toast');
+    el.textContent = text;
+    el.classList.remove('ce', 'pe', 'hidden');
+    el.classList.add(isUp ? 'ce' : 'pe');
+    clearTimeout(bigMoveToastTimer);
+    bigMoveToastTimer = setTimeout(() => el.classList.add('hidden'), 6000);
   }
 
   async function updatePrices() {
@@ -1198,18 +1370,23 @@
   // localStorage stays the source of truth the rest of the app reads from — Firestore just
   // keeps it topped up in the background. If Firebase is unreachable for any reason, the
   // dashboard quietly falls back to localStorage-only and nothing breaks.
-  const TJ_KEY = "signa365_trades";
-  const TRADES_COLLECTION = "trades";
+  const TJ_KEY = "signa365_trades"; // fallback key, only used pre-login (shouldn't normally show data)
+  // ACCOUNTS: each signed-in user gets their own localStorage bucket and Firestore subcollection,
+  // so P&L stays private per account instead of one shared "trades" collection.
+  let currentUid = null, currentRole = null, currentUsername = null;
+  function currentTjKey() {
+    return currentUid ? ("signa365_trades_" + currentUid) : TJ_KEY;
+  }
 
   function tjLoad() {
     try {
-      return JSON.parse(localStorage.getItem(TJ_KEY)) || [];
+      return JSON.parse(localStorage.getItem(currentTjKey())) || [];
     } catch (e) {
       return [];
     }
   }
   function tjSave(trades) {
-    localStorage.setItem(TJ_KEY, JSON.stringify(trades));
+    localStorage.setItem(currentTjKey(), JSON.stringify(trades));
   }
 
   // Union-merge trades coming from the cloud into the local copy (by id), so this device
@@ -1229,8 +1406,8 @@
     const trades = tjLoad();
     trades.push(trade);
     tjSave(trades);
-    if (fbDb) {
-      fbDb.collection(TRADES_COLLECTION).doc(String(trade.id)).set(trade)
+    if (fbDb && currentUid) {
+      tradesCollectionRef().doc(String(trade.id)).set(trade)
         .catch(err => console.warn("Signa365: cloud sync failed for trade, saved locally only:", err));
     }
     return trades;
@@ -1246,37 +1423,26 @@
     appId: "1:274414173260:web:58991e44967c13db3c88e9"
   };
   let fbDb = null;
+  let fbAuth = null;
   let fbMigratedOnce = false;
+  let tradesUnsubscribe = null; // set once a user is signed in; called again before re-subscribing
+  let ownUserDocUnsubscribe = null; // live listener on this account's own users/{uid} doc (PIN + disabled)
+  // ACCOUNTS: trades now live per-user at users/{uid}/trades instead of one shared "trades"
+  // collection, so P&L is private to each account. The actual subscription only starts once
+  // sign-in resolves and currentUid is known — see subscribeToTrades() further down.
+  function tradesCollectionRef() {
+    return fbDb.collection('users').doc(currentUid).collection('trades');
+  }
   try {
     if (typeof firebase !== 'undefined') {
       firebase.initializeApp(firebaseConfig);
       fbDb = firebase.firestore();
-      fbDb.collection(TRADES_COLLECTION).onSnapshot(
-        (snapshot) => {
-          const cloudTrades = snapshot.docs.map(d => d.data());
-          const merged = tjMergeFromCloud(cloudTrades);
-          updatePnL();
-          renderMonthlySummary();
-          renderWeeklySummary();
-          // One-time: push any trades that existed locally before cloud sync was ever set up,
-          // so trade history logged before tonight's update still shows up on other devices.
-          if (!fbMigratedOnce) {
-            fbMigratedOnce = true;
-            const cloudIds = new Set(cloudTrades.map(t => String(t.id)));
-            merged.filter(t => !cloudIds.has(String(t.id))).forEach(t => {
-              fbDb.collection(TRADES_COLLECTION).doc(String(t.id)).set(t)
-                .catch(err => console.warn("Signa365: migration upload failed:", err));
-            });
-          }
-        },
-        (err) => {
-          console.warn("Signa365: Firestore sync unavailable, running on localStorage only:", err);
-        }
-      );
+      fbAuth = firebase.auth();
     }
   } catch (err) {
     console.warn("Signa365: Firebase init failed, running on localStorage only:", err);
     fbDb = null;
+    fbAuth = null;
   }
 
   // ---- DAILY P&L TRACKER ----
@@ -1590,6 +1756,12 @@
   // Note: client-side only screen lock, not real security — a deterrent, not a vault.
   const PIN_KEY = "signa365_pin_hash";
 
+  // ACCOUNTS: non-admin PINs are self-chosen too (same as admin's), just scoped to the account's
+  // uid so the same browser can't inherit a leftover PIN if the device lock is ever cleared and
+  // reassigned to a different user. Nothing about this is tied to the account's email.
+  function userPinKey(uid) { return "signa365_user_pin_" + uid; }
+  function userPinSetKey(uid) { return "signa365_user_pin_set_" + uid; }
+
   function simpleHash(str) {
     // Small, dependency-free hash (works over file:// too, unlike crypto.subtle which needs a secure context)
     let hash = 5381;
@@ -1608,13 +1780,99 @@
   const lockErrorEl = document.getElementById('lock-error');
   const lockDotsEl = document.getElementById('lock-dots');
   const lockScreenEl = document.getElementById('lock-screen');
+  const lockExpiredEl = document.getElementById('lock-expired');
+  const lockKeypadEl = document.getElementById('lock-keypad');
+  const lockForgotBtn = document.getElementById('lock-forgot');
+
+  // ACCOUNTS: non-admin PINs are self-chosen, exactly like admin's, with a 30-day expiry that
+  // admin's PIN doesn't have. Unlike admin, replacing a non-admin PIN — whether it expired or
+  // they just forgot it — is admin-gated, not self-service: admin clicks "Allow PIN Reset" in
+  // the Admin panel (writes pinResetUnlockedAt to their Firestore doc), and only then can that
+  // user set a fresh PIN. This stays true even on expiry, on purpose, so a user can't just tap
+  // through and mint themselves a new PIN unsupervised. serverPinCode/serverPinIssuedAt hold the
+  // local PIN hash + set-timestamp; pinResetUnlockedAt holds the admin's most recent unlock.
+  const PIN_VALID_MS = 30 * 24 * 60 * 60 * 1000; // one month
+  let serverPinCode = null;
+  let serverPinIssuedAt = null;
+  let pinResetUnlockedAt = null;
+
+  // True exactly when admin has granted an unlock that this account hasn't "spent" yet (spent =
+  // a PIN was set after that unlock, which naturally re-arms the gate for next time).
+  function pinResetIsUnlocked() {
+    return !!(pinResetUnlockedAt && (!serverPinIssuedAt || pinResetUnlockedAt > serverPinIssuedAt));
+  }
+
+  function pinDaysLeft() {
+    if (!serverPinIssuedAt) return null;
+    const msLeft = (serverPinIssuedAt + PIN_VALID_MS) - Date.now();
+    return Math.ceil(msLeft / (24 * 60 * 60 * 1000));
+  }
 
   function renderLockSubtitle() {
     if (lockMode === "setup-new") lockSubtitleEl.textContent = "Set a 4-digit PIN";
     else if (lockMode === "setup-confirm") lockSubtitleEl.textContent = "Confirm your PIN";
+    else if (currentRole === 'user' && serverPinCode) {
+      const daysLeft = pinDaysLeft();
+      lockSubtitleEl.textContent = (daysLeft !== null && daysLeft <= 7)
+        ? `Enter PIN (expires in ${Math.max(daysLeft, 0)} day${daysLeft === 1 ? '' : 's'})`
+        : "Enter PIN";
+    }
     else lockSubtitleEl.textContent = "Enter PIN";
   }
   renderLockSubtitle();
+
+  // Dead-end state for a non-admin whose PIN has expired (or who tapped Forgot PIN) and whose
+  // admin hasn't unlocked a reset yet.
+  function showPinExpiredScreen() {
+    lockDotsEl.style.display = 'none';
+    lockKeypadEl.style.display = 'none';
+    lockForgotBtn.style.display = 'none';
+    lockSubtitleEl.textContent = '';
+    lockErrorEl.textContent = '';
+    lockExpiredEl.classList.remove('hidden');
+  }
+  function hidePinExpiredScreen() {
+    lockDotsEl.style.display = '';
+    lockKeypadEl.style.display = '';
+    lockForgotBtn.style.display = '';
+    lockExpiredEl.classList.add('hidden');
+  }
+
+  // Re-evaluates the lock screen for the current account's own (self-chosen) PIN. Called once
+  // right after login resolves, and again live if admin unlocks a reset while this user is
+  // stuck on the expired dead-end screen (see subscribeToOwnUserDoc).
+  function refreshPinLockMode() {
+    if (!serverPinCode) {
+      // First-ever PIN for this account/device — always allowed, no admin gate (the account
+      // itself was already admin-created, that's gate enough for the very first PIN).
+      hidePinExpiredScreen();
+      lockMode = "setup-new";
+      firstPinBuffer = "";
+      enteredDigits = "";
+      updateDots();
+      lockSubtitleEl.textContent = "Set a 4-digit PIN";
+      lockErrorEl.textContent = "";
+      return;
+    }
+    const expired = Date.now() - serverPinIssuedAt > PIN_VALID_MS;
+    if (expired && !pinResetIsUnlocked()) {
+      showPinExpiredScreen();
+    } else if (expired) {
+      hidePinExpiredScreen();
+      lockMode = "setup-new";
+      firstPinBuffer = "";
+      enteredDigits = "";
+      updateDots();
+      lockSubtitleEl.textContent = "PIN expired — set a new one";
+      lockErrorEl.textContent = "";
+    } else {
+      hidePinExpiredScreen();
+      lockMode = "unlock";
+      enteredDigits = "";
+      updateDots();
+      renderLockSubtitle();
+    }
+  }
 
   function updateDots() {
     const dots = lockDotsEl.querySelectorAll('.lock-dot');
@@ -1637,7 +1895,18 @@
       updateDots();
     } else if (lockMode === "setup-confirm") {
       if (enteredDigits === firstPinBuffer) {
-        localStorage.setItem(PIN_KEY, simpleHash(enteredDigits));
+        const hash = simpleHash(enteredDigits);
+        if (currentRole === 'user' && currentUid) {
+          // ACCOUNTS: non-admin PIN — self-chosen like admin's, scoped to this account's uid
+          // (not the email) with a set-timestamp that starts its 30-day clock.
+          const setAt = Date.now();
+          localStorage.setItem(userPinKey(currentUid), hash);
+          localStorage.setItem(userPinSetKey(currentUid), String(setAt));
+          serverPinCode = hash;
+          serverPinIssuedAt = setAt;
+        } else {
+          localStorage.setItem(PIN_KEY, hash);
+        }
         lockScreenEl.classList.add('hidden');
       } else {
         lockErrorEl.textContent = "";
@@ -1646,7 +1915,14 @@
         renderLockSubtitle();
         lockShakeError("PINs didn't match — start again");
       }
-    } else { // unlock
+    } else if (currentRole === 'user' && serverPinCode) {
+      // ACCOUNTS: non-admin — self-chosen PIN, compared against the locally-stored hash.
+      if (simpleHash(enteredDigits) === serverPinCode) {
+        lockScreenEl.classList.add('hidden');
+      } else {
+        lockShakeError("Wrong PIN, try again");
+      }
+    } else { // unlock (admin / no server PIN in play — original local-only behavior)
       const savedHash = localStorage.getItem(PIN_KEY);
       if (simpleHash(enteredDigits) === savedHash) {
         lockScreenEl.classList.add('hidden');
@@ -1674,9 +1950,21 @@
     });
   });
 
-  document.getElementById('lock-forgot').addEventListener('click', () => {
+  lockForgotBtn.addEventListener('click', () => {
+    // ACCOUNTS: non-admin needs an admin-granted unlock before they can replace an existing PIN
+    // — same gate as the expiry path. Admin keeps the original, ungated self-service reset.
+    if (currentRole === 'user' && !pinResetIsUnlocked()) {
+      alert("Ask your admin to unlock a PIN reset for you.");
+      return;
+    }
     if (confirm("Reset your PIN? This clears the current PIN and lets you set a new one.")) {
-      localStorage.removeItem(PIN_KEY);
+      if (currentRole === 'user' && currentUid) {
+        // Don't wipe the old hash/timestamp here — handlePinComplete's setup-confirm overwrites
+        // them once a new PIN is actually chosen. Clearing them now would look like "no PIN was
+        // ever set", which skips the admin gate entirely on the next check.
+      } else {
+        localStorage.removeItem(PIN_KEY);
+      }
       lockMode = "setup-new";
       firstPinBuffer = "";
       enteredDigits = "";
@@ -1802,6 +2090,361 @@
       });
     }
   });
+
+  // ==================================================================
+  // ---- ACCOUNTS: login, roles, per-device lock, admin panel (Firebase Auth) ----
+  // Nothing below changes how the dashboard itself works — it only gates access to it and
+  // hides the Rules/info (❔ / i / ?) buttons for non-admin accounts. Existing feeds, alerts,
+  // PIN lock and P&L logic are untouched.
+  // ==================================================================
+  const authScreenEl = document.getElementById('auth-screen');
+  const authEmailEl = document.getElementById('auth-email');
+  const authPasswordEl = document.getElementById('auth-password');
+  const authLoginBtn = document.getElementById('auth-login-btn');
+  const authErrorEl = document.getElementById('auth-error');
+
+  const adminToggleBtn = document.getElementById('admin-toggle');
+  const adminPanelEl = document.getElementById('admin-panel');
+  const adminUserListEl = document.getElementById('admin-user-list');
+  const adminNewUsernameEl = document.getElementById('admin-new-username');
+  const adminNewEmailEl = document.getElementById('admin-new-email');
+  const adminNewPasswordEl = document.getElementById('admin-new-password');
+  const adminAddUserBtn = document.getElementById('admin-add-user-btn');
+  const adminAddStatusEl = document.getElementById('admin-add-status');
+
+  const logoutBtn = document.getElementById('logout-btn');
+  const currentUsernameEl = document.getElementById('current-username');
+
+  let pendingAuthMessage = ""; // survives the signOut() round-trip so the real reason still shows
+
+  function showAuthScreen(message) {
+    authScreenEl.classList.remove('hidden');
+    authErrorEl.textContent = message || "";
+  }
+  function hideAuthScreen() {
+    authScreenEl.classList.add('hidden');
+    authErrorEl.textContent = "";
+    authPasswordEl.value = "";
+  }
+  function forceSignOutWithMessage(msg) {
+    pendingAuthMessage = msg;
+    fbAuth.signOut();
+  }
+
+  function getOrCreateDeviceId() {
+    const KEY = 'signa365_device_id';
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  }
+
+  function applyRoleUI(role) {
+    const isAdmin = role === 'admin';
+    const loggedIn = !!role;
+    rulesToggleBtn.style.display = isAdmin ? '' : 'none';
+    document.querySelectorAll('.info-icon-btn').forEach(btn => { btn.style.display = isAdmin ? '' : 'none'; });
+    if (!isAdmin) {
+      rulesPanelEl.classList.add('hidden');
+      document.querySelectorAll('.info-popover').forEach(p => p.classList.add('hidden'));
+    }
+    adminToggleBtn.style.display = isAdmin ? '' : 'none';
+    if (!isAdmin) adminPanelEl.classList.add('hidden');
+    logoutBtn.style.display = loggedIn ? '' : 'none';
+    currentUsernameEl.style.display = loggedIn ? '' : 'none';
+    currentUsernameEl.textContent = loggedIn ? (currentUsername || '') : '';
+  }
+
+  authLoginBtn.addEventListener('click', () => {
+    const email = authEmailEl.value.trim();
+    const password = authPasswordEl.value;
+    if (!email || !password) {
+      authErrorEl.textContent = 'Enter your email and password.';
+      return;
+    }
+    if (!fbAuth) {
+      authErrorEl.textContent = "Can't connect right now — check your internet and reload.";
+      return;
+    }
+    authLoginBtn.disabled = true;
+    authErrorEl.textContent = '';
+    fbAuth.signInWithEmailAndPassword(email, password)
+      .catch(err => {
+        authErrorEl.textContent = 'Login failed — check your email and password.';
+        console.warn('Signa365: login failed:', err);
+      })
+      .finally(() => { authLoginBtn.disabled = false; });
+  });
+  authPasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') authLoginBtn.click(); });
+  authEmailEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') authPasswordEl.focus(); });
+
+  logoutBtn.addEventListener('click', () => {
+    if (fbAuth) fbAuth.signOut();
+  });
+
+  function subscribeToTrades() {
+    if (!fbDb || !currentUid) return;
+    tradesUnsubscribe = tradesCollectionRef().onSnapshot(
+      (snapshot) => {
+        const cloudTrades = snapshot.docs.map(d => d.data());
+        const merged = tjMergeFromCloud(cloudTrades);
+        updatePnL();
+        renderMonthlySummary();
+        renderWeeklySummary();
+        // One-time per login: push any trades that existed locally before cloud sync was
+        // ever set up for this account, so older history still shows up on other devices.
+        if (!fbMigratedOnce) {
+          fbMigratedOnce = true;
+          const cloudIds = new Set(cloudTrades.map(t => String(t.id)));
+          merged.filter(t => !cloudIds.has(String(t.id))).forEach(t => {
+            tradesCollectionRef().doc(String(t.id)).set(t)
+              .catch(err => console.warn("Signa365: migration upload failed:", err));
+          });
+        }
+      },
+      (err) => {
+        console.warn("Signa365: Firestore sync unavailable, running on localStorage only:", err);
+      }
+    );
+  }
+
+  // Live view of this account's own users/{uid} doc — picks up an admin's PIN-reset unlock or a
+  // disable toggle without needing to log out and back in. Doesn't touch an already-unlocked
+  // session (only re-renders the lock screen live while it's still showing).
+  function subscribeToOwnUserDoc(uid) {
+    if (!fbDb) return;
+    ownUserDocUnsubscribe = fbDb.collection('users').doc(uid).onSnapshot(
+      (snap) => {
+        if (!snap.exists) return;
+        const data = snap.data();
+        if (data.disabled) {
+          forceSignOutWithMessage('This account has been disabled. Contact your admin.');
+          return;
+        }
+        if (currentRole === 'user') {
+          pinResetUnlockedAt = data.pinResetUnlockedAt || null;
+          if (!lockScreenEl.classList.contains('hidden')) {
+            refreshPinLockMode();
+          }
+        }
+      },
+      (err) => console.warn('Signa365: account status sync unavailable:', err)
+    );
+  }
+
+  // ---- ADMIN PANEL: add users, reset passwords, clear device locks, enable/disable ----
+  // PIN management is no longer part of this panel — PINs are self-chosen and local to each
+  // account/device now (see refreshPinLockMode etc. above), so admin has no PIN to see or reset.
+
+  function renderDeviceStatus(u) {
+    if (u.disabled) return '🚫 Disabled';
+    return u.deviceId ? '🔒 Locked to a device' : '🔓 Not yet logged in anywhere';
+  }
+
+  function loadAdminUserList() {
+    if (!fbDb) return;
+    adminUserListEl.innerHTML = '<p style="font-size:0.8rem; color:var(--muted); font-style:italic;">Loading…</p>';
+    fbDb.collection('users').where('role', '==', 'user').get()
+      .then(snapshot => {
+        const users = snapshot.docs.map(d => ({ uid: d.id, ...d.data() }));
+        if (users.length === 0) {
+          adminUserListEl.innerHTML = '<p style="font-size:0.8rem; color:var(--muted); font-style:italic;">No non-admin accounts yet</p>';
+          return;
+        }
+        adminUserListEl.innerHTML = users.map(u => `
+          <div style="border-bottom:1px solid var(--border); padding:8px 0;">
+            <div style="font-size:0.85rem; font-weight:700;">${u.username || '(no name)'}</div>
+            <div style="font-size:0.72rem; color:var(--muted); margin-bottom:5px;">${u.email || ''} · ${renderDeviceStatus(u)}</div>
+            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+              <button data-action="reset" data-uid="${u.uid}" data-email="${u.email || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Reset PW</button>
+              <button data-action="allow-pin-reset" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Allow PIN Reset</button>
+              <button data-action="clear-device" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Clear Device</button>
+              <button data-action="toggle-disable" data-uid="${u.uid}" data-disabled="${!!u.disabled}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">${u.disabled ? 'Enable' : 'Disable'}</button>
+            </div>
+          </div>
+        `).join('');
+      })
+      .catch(err => {
+        adminUserListEl.innerHTML = '<p style="font-size:0.8rem; color:var(--red);">Couldn\'t load users.</p>';
+        console.warn('Signa365: admin user list failed:', err);
+      });
+  }
+
+  adminUserListEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const action = btn.getAttribute('data-action');
+    const uid = btn.getAttribute('data-uid');
+    if (action === 'reset') {
+      const email = btn.getAttribute('data-email');
+      if (!email || !fbAuth) return;
+      fbAuth.sendPasswordResetEmail(email)
+        .then(() => alert('Password reset email sent to ' + email))
+        .catch(err => { alert('Could not send reset email.'); console.warn(err); });
+    } else if (action === 'allow-pin-reset') {
+      fbDb.collection('users').doc(uid).update({ pinResetUnlockedAt: Date.now() })
+        .then(() => alert('PIN reset unlocked — they can now set a new PIN next time they open the app (or right away if they\'re already stuck on the expired screen).'))
+        .catch(err => { alert('Could not unlock PIN reset.'); console.warn(err); });
+    } else if (action === 'clear-device') {
+      fbDb.collection('users').doc(uid).update({ deviceId: null })
+        .then(() => loadAdminUserList())
+        .catch(err => { alert('Could not clear device.'); console.warn(err); });
+    } else if (action === 'toggle-disable') {
+      const isDisabled = btn.getAttribute('data-disabled') === 'true';
+      fbDb.collection('users').doc(uid).update({ disabled: !isDisabled })
+        .then(() => loadAdminUserList())
+        .catch(err => { alert('Could not update account.'); console.warn(err); });
+    }
+  });
+
+  adminAddUserBtn.addEventListener('click', () => {
+    const username = adminNewUsernameEl.value.trim();
+    const email = adminNewEmailEl.value.trim();
+    const password = adminNewPasswordEl.value;
+    if (!username || !email || !password) {
+      adminAddStatusEl.textContent = 'Fill in username, email, and a temporary password.';
+      adminAddStatusEl.style.color = 'var(--red)';
+      return;
+    }
+    if (password.length < 6) {
+      adminAddStatusEl.textContent = 'Password must be at least 6 characters (Firebase minimum).';
+      adminAddStatusEl.style.color = 'var(--red)';
+      return;
+    }
+    adminAddUserBtn.disabled = true;
+    adminAddStatusEl.textContent = 'Creating account...';
+    adminAddStatusEl.style.color = 'var(--muted)';
+
+    // Use a throwaway secondary Firebase app instance to create the Auth account — this avoids
+    // signing the admin themselves out, which is what createUserWithEmailAndPassword would do
+    // if run on the main app instance (it signs in as the newly created user).
+    let secondaryApp;
+    try {
+      secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary-' + Date.now());
+    } catch (err) {
+      adminAddStatusEl.textContent = 'Could not start account creation. Try again.';
+      adminAddStatusEl.style.color = 'var(--red)';
+      adminAddUserBtn.disabled = false;
+      return;
+    }
+    secondaryApp.auth().createUserWithEmailAndPassword(email, password)
+      .then(cred => {
+        const newUid = cred.user.uid;
+        return fbDb.collection('users').doc(newUid).set({
+          role: 'user',
+          username: username,
+          email: email,
+          deviceId: null,
+          disabled: false,
+          createdAt: Date.now(),
+          createdBy: currentUid
+        }).then(() => secondaryApp.auth().signOut()).then(() => secondaryApp.delete());
+      })
+      .then(() => {
+        adminAddStatusEl.textContent = `✅ Account created for ${username} — they'll set their own 4-digit PIN the first time they log in.`;
+        adminAddStatusEl.style.color = 'var(--green)';
+        adminNewUsernameEl.value = '';
+        adminNewEmailEl.value = '';
+        adminNewPasswordEl.value = '';
+        loadAdminUserList();
+      })
+      .catch(err => {
+        adminAddStatusEl.textContent = 'Could not create account: ' + (err && err.message ? err.message : err);
+        adminAddStatusEl.style.color = 'var(--red)';
+        console.warn('Signa365: add user failed:', err);
+        secondaryApp.delete().catch(() => {});
+      })
+      .finally(() => { adminAddUserBtn.disabled = false; });
+  });
+
+  adminToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    positionRibbonPanel(adminPanelEl);
+    const wasHidden = adminPanelEl.classList.contains('hidden');
+    adminPanelEl.classList.toggle('hidden');
+    if (wasHidden) loadAdminUserList();
+  });
+  document.addEventListener('click', (e) => {
+    if (!adminPanelEl.classList.contains('hidden') && !adminPanelEl.contains(e.target) && e.target !== adminToggleBtn) {
+      adminPanelEl.classList.add('hidden');
+    }
+  });
+
+  // ---- AUTH STATE GATE — the actual login check that runs on every load and on every sign-in/out ----
+  if (fbAuth) {
+    fbAuth.onAuthStateChanged(async (user) => {
+      if (tradesUnsubscribe) { tradesUnsubscribe(); tradesUnsubscribe = null; }
+      if (ownUserDocUnsubscribe) { ownUserDocUnsubscribe(); ownUserDocUnsubscribe = null; }
+
+      if (!user) {
+        currentUid = null; currentRole = null; currentUsername = null;
+        applyRoleUI(null);
+        showAuthScreen(pendingAuthMessage);
+        pendingAuthMessage = "";
+        return;
+      }
+
+      try {
+        const snap = await fbDb.collection('users').doc(user.uid).get();
+        if (!snap.exists) {
+          forceSignOutWithMessage('Account not set up yet. Contact your admin.');
+          return;
+        }
+        const data = snap.data();
+        if (data.disabled) {
+          forceSignOutWithMessage('This account has been disabled. Contact your admin.');
+          return;
+        }
+
+        // Device lock applies to non-admin accounts only — admin can use multiple devices.
+        if (data.role !== 'admin') {
+          const myDevice = getOrCreateDeviceId();
+          if (!data.deviceId) {
+            await fbDb.collection('users').doc(user.uid).update({ deviceId: myDevice });
+          } else if (data.deviceId !== myDevice) {
+            forceSignOutWithMessage('This account is already active on another device. Ask your admin to clear device access.');
+            return;
+          }
+        }
+
+        currentUid = user.uid;
+        currentRole = data.role;
+        currentUsername = data.username || user.email;
+        fbMigratedOnce = false;
+
+        // ACCOUNTS: PIN expiry (30 days) only applies to non-admin — admin keeps the original
+        // fully-local, self-service PIN with no expiry. Both are self-chosen and local-only;
+        // nothing PIN-related is read from or written to this account's email/Firestore doc.
+        if (currentRole === 'user') {
+          serverPinCode = localStorage.getItem(userPinKey(user.uid));
+          serverPinIssuedAt = parseInt(localStorage.getItem(userPinSetKey(user.uid)) || '', 10) || null;
+          pinResetUnlockedAt = data.pinResetUnlockedAt || null;
+          refreshPinLockMode();
+        } else {
+          serverPinCode = null;
+          serverPinIssuedAt = null;
+          pinResetUnlockedAt = null;
+          hidePinExpiredScreen();
+          lockForgotBtn.style.display = '';
+        }
+
+        hideAuthScreen();
+        applyRoleUI(currentRole);
+        subscribeToTrades();
+        subscribeToOwnUserDoc(user.uid);
+        updatePnL();
+        renderMonthlySummary();
+        renderWeeklySummary();
+      } catch (err) {
+        console.warn('Signa365: auth check failed:', err);
+        forceSignOutWithMessage("Something went wrong signing you in. Check your connection and try again.");
+      }
+    });
+  } else {
+    showAuthScreen("Can't connect right now — check your internet and reload.");
+  }
 
   // ---- MANUAL SPOT OVERRIDE (fixes the Yahoo delay for the price you actually trade on) ----
   const spotIndexMeta = {
@@ -2110,9 +2753,53 @@
       wrapEl.classList.remove('hidden');
       currentlyDisplayedKey = requestedKey;
 
-      const labels = candles.map(c => new Date(c.time).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit' }));
-      const priceData = candles.map(c => c.close);
-      const prevCloseData = candles.map(() => prevClose);
+      // ---- FULL TRADING-DAY WINDOW (9:15 AM – 3:30 PM IST) ----
+      // Fixed-width x-axis grid covering the whole session in 5-min steps (matching the 5m
+      // candle interval fetched above), so the chart always shows the full day's shape — like
+      // Google Finance — instead of auto-narrowing to just "since page load". Slots later than
+      // the current time are left as gaps (null); the line simply stops at "now" and extends
+      // naturally as later candles arrive on each 30s refresh.
+      const SESSION_START_MIN = 9 * 60 + 15;   // 9:15
+      const SESSION_END_MIN = 15 * 60 + 30;    // 15:30
+      const SLOT_STEP_MIN = 5;
+      const slotCount = (SESSION_END_MIN - SESSION_START_MIN) / SLOT_STEP_MIN + 1;
+      function formatSlotLabel(totalMin) {
+        const h = Math.floor(totalMin / 60), m = totalMin % 60;
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        let h12 = h % 12; if (h12 === 0) h12 = 12;
+        return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+      }
+      const labels = [];
+      for (let i = 0; i < slotCount; i++) labels.push(formatSlotLabel(SESSION_START_MIN + i * SLOT_STEP_MIN));
+
+      const priceData = new Array(slotCount).fill(null);
+      const lineData = new Array(slotCount).fill(null);
+      const trendBySlot = new Array(slotCount).fill(null);
+      const prevCloseData = new Array(slotCount).fill(prevClose);
+
+      // Flip points — where the Supertrend line changes color between two consecutive candles —
+      // captured with their real candle timestamp so the on-chart arrow can auto-expire.
+      const flipPoints = [];
+      let prevCandleTrend = null;
+      candles.forEach((c, i) => {
+        const ist = toIstDate(c.time);
+        const mins = ist.getHours() * 60 + ist.getMinutes();
+        const slotIdx = Math.round((mins - SESSION_START_MIN) / SLOT_STEP_MIN);
+        if (slotIdx < 0 || slotIdx >= slotCount) return;
+        priceData[slotIdx] = c.close;
+        lineData[slotIdx] = line[i];
+        trendBySlot[slotIdx] = trend[i];
+        if (prevCandleTrend != null && trend[i] != null && trend[i] !== prevCandleTrend) {
+          flipPoints.push({ slotIdx, time: c.time, direction: trend[i] });
+        }
+        if (trend[i] != null) prevCandleTrend = trend[i];
+      });
+
+      // Arrow stays on the chart for 5 minutes after a flip, then disappears on its own as the
+      // 30s refresh loop re-evaluates which flips are still "recent".
+      const FLIP_ARROW_WINDOW_MS = 5 * 60 * 1000;
+      const nowMs = Date.now();
+      const visibleFlips = flipPoints.filter(f => nowMs - f.time < FLIP_ARROW_WINDOW_MS);
 
       const ctx = document.getElementById('live-chart').getContext('2d');
       if (liveChart) liveChart.destroy();
@@ -2133,12 +2820,12 @@
             },
             {
               label: 'Supertrend',
-              data: line,
+              data: lineData,
               borderColor: '#888',
               segment: {
                 borderColor: (segCtx) => {
                   const i = segCtx.p1DataIndex;
-                  return trend[i] === 1 ? '#0f7a3d' : '#c81e3a';
+                  return trendBySlot[i] === 1 ? '#0f7a3d' : trendBySlot[i] === -1 ? '#c81e3a' : '#888';
                 }
               },
               pointRadius: 0,
@@ -2190,6 +2877,27 @@
             c.fillStyle = '#667085';
             c.textAlign = 'right';
             c.fillText(`Prev close ${prevClose.toLocaleString('en-IN')}`, xScale.right - 4, yPixel - 4);
+            c.restore();
+          }
+        }, {
+          id: 'stFlipArrows',
+          afterDraw(chart) {
+            if (!visibleFlips.length) return;
+            const xScale = chart.scales.x;
+            const yScale = chart.scales.y;
+            const c = chart.ctx;
+            c.save();
+            c.textAlign = 'center';
+            c.font = 'bold 20px -apple-system, Segoe UI, sans-serif';
+            visibleFlips.forEach(f => {
+              const yVal = lineData[f.slotIdx];
+              if (yVal == null) return;
+              const x = xScale.getPixelForValue(f.slotIdx);
+              const yPixel = yScale.getPixelForValue(yVal);
+              const isUp = f.direction === 1; // red -> green flip
+              c.fillStyle = isUp ? '#0f7a3d' : '#c81e3a';
+              c.fillText(isUp ? '▲' : '▼', x, isUp ? yPixel - 12 : yPixel + 22);
+            });
             c.restore();
           }
         }]
