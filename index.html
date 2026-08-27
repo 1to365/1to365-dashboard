@@ -646,6 +646,24 @@
         <input id="quick-pnl-amount" type="number" placeholder="e.g. 1200 or -800" style="flex:1; min-width:0; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem;">
         <button id="quick-pnl-btn" style="flex:0 0 auto; padding:8px 14px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer;">+ Log</button>
       </div>
+
+      <!-- FEATURE 6: DETAILED TRADE LOG (new, additive — sits alongside the Quick Log above, doesn't replace it) -->
+      <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
+      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">🧮 Detailed Trade Log</p>
+      <div style="display:flex; gap:5px; margin-bottom:6px;">
+        <input id="dtl-entry" type="number" placeholder="Entry ₹" style="flex:1; min-width:0; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+        <input id="dtl-exit" type="number" placeholder="Exit ₹" style="flex:1; min-width:0; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+        <input id="dtl-qty" type="number" placeholder="Qty" style="flex:1; min-width:0; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <span id="dtl-preview" style="font-size:0.78rem; color:var(--muted); flex:1; min-width:0;">P&L preview: —</span>
+        <button id="dtl-log-btn" style="flex:0 0 auto; padding:7px 14px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">+ Log Trade</button>
+      </div>
+
+      <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
+      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">📆 Weekly Totals</p>
+      <div id="weekly-list"></div>
+
       <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
       <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">📅 Monthly Totals</p>
       <div id="monthly-list"></div>
@@ -842,6 +860,25 @@
     throw lastErr;
   }
 
+  // ---- FEATURE 1: BIG MOVE ALERT (new, additive) ----
+  // Purely informational — flags an unusually large single-refresh (30s) jump so you know to
+  // go look. It does not recommend a trade, a direction, or a strike. BankNifty threshold set
+  // proportionally between your Sensex/Nifty numbers since you didn't specify one for it —
+  // easy to adjust if it fires too often or too rarely.
+  const BIG_MOVE_THRESHOLD = { "sensex-price": 100, "nifty-price": 50, "banknifty-price": 75 };
+  const priceIndexNames = { "sensex-price": "SENSEX", "nifty-price": "NIFTY", "banknifty-price": "BANKNIFTY" };
+
+  function checkBigMove(elId, prevPrice, newPrice) {
+    if (prevPrice == null || newPrice == null) return; // first reading this session — nothing to compare yet
+    const threshold = BIG_MOVE_THRESHOLD[elId];
+    if (!threshold) return;
+    const delta = newPrice - prevPrice;
+    if (Math.abs(delta) < threshold) return;
+    const dirWord = delta > 0 ? "up" : "down";
+    const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    sendTelegramText(`🚨 BIG MOVE ALERT — ${priceIndexNames[elId]} moved ${Math.abs(delta).toFixed(0)} pts ${dirWord} in 30 seconds. Check immediately.\n${timeStr} IST`);
+  }
+
   async function updatePrices() {
     const statusEl = document.getElementById('price-status');
     // Fetch all three indices concurrently instead of one-after-another — requests still start
@@ -854,6 +891,7 @@
         const { price, change } = await fetchPrice(symbol);
         const el = document.getElementById(elId);
         el.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
+        checkBigMove(elId, currentPrice[elId], price); // FEATURE 1 — compare before overwriting
         currentPrice[elId] = price;
         cachePrice(elId, price, change);
         if (typeof refreshHandMarkers === 'function') refreshHandMarkers(); // paint this tile the moment ITS price lands, don't wait on the other two
@@ -972,6 +1010,7 @@
   const STRONG_THRESHOLD = 3; // consecutive 5-min candles to call it "Strong"
   const currentDirection = {}; // elId -> "CE" | "PE"
   const currentStrength = {}; // elId -> "Strong" | "Bias"
+  const currentZoneLevel = {}; // elId -> current Supertrend band level (the "zone" price), used in Feature 3's Telegram text
 
   // Official NSE/BSE 2026 trading holidays (source: NSE circular / Zerodha holiday calendar)
   const NSE_HOLIDAYS_2026 = [
@@ -1067,6 +1106,36 @@
   updateTimeWindow();
   setInterval(updateTimeWindow, 1000);
 
+  // ---- FEATURE 4: TIME WINDOW ALERTS (new, additive) ----
+  // Fires each listed IST time once per trading day via Telegram. Skips holidays/weekends
+  // (reuses the existing isTodayHoliday/isWeekend checks). Checked every 20s so an exact
+  // minute is never missed by drift, but each slot only ever fires once per calendar day.
+  const TIME_WINDOW_ALERTS = [
+    { h: 9,  m: 25, text: "Market opens in 5 mins. Be ready." },
+    { h: 9,  m: 30, text: "Market open. Watch for signals." },
+    { h: 10, m: 30, text: "Best entry window closing." },
+    { h: 14, m: 0,  text: "Expiry momentum window open." },
+    { h: 15, m: 0,  text: "Last 30 mins. No new entries." },
+    { h: 15, m: 15, text: "Market closing. Exit all positions." }
+  ];
+  const firedTimeAlerts = new Set(); // "YYYY-M-D-H:M" keys — grows unbounded only across a single day's slots, harmless
+
+  function checkTimeWindowAlerts() {
+    if (isTodayHoliday() || isWeekend()) return;
+    const istDate = getIstDate();
+    const h = istDate.getHours(), m = istDate.getMinutes();
+    const dayKey = `${istDate.getFullYear()}-${istDate.getMonth()}-${istDate.getDate()}`;
+    TIME_WINDOW_ALERTS.forEach(slot => {
+      if (h !== slot.h || m !== slot.m) return;
+      const key = `${dayKey}-${slot.h}:${slot.m}`;
+      if (firedTimeAlerts.has(key)) return;
+      firedTimeAlerts.add(key);
+      sendTelegramText(`⏰ ${String(slot.h).padStart(2, '0')}:${String(slot.m).padStart(2, '0')} IST — ${slot.text}`);
+    });
+  }
+  checkTimeWindowAlerts();
+  setInterval(checkTimeWindowAlerts, 20000);
+
   // ---- EXPIRY DAY TAGS (checked once — the day doesn't change mid-session) ----
   ['nifty', 'banknifty', 'sensex'].forEach(key => {
     const tagEl = document.getElementById(key + '-expiry-tag');
@@ -1088,7 +1157,7 @@
       await sleep(i * 300);
       try {
         const candles = await fetchCandles(symbol);
-        const { trend, duration } = computeSupertrend(candles);
+        const { trend, duration, line } = computeSupertrend(candles);
         const direction = trend === 1 ? "CE" : "PE";
         const strength = duration >= STRONG_THRESHOLD ? "Strong" : "Bias";
         const isCE = direction === "CE";
@@ -1111,6 +1180,7 @@
 
         currentDirection[elId] = direction;
         currentStrength[elId] = strength;
+        currentZoneLevel[elId] = line;
         if (isWithinTradeWindow()) {
           checkAlertTrigger(elId, direction, strength);
           checkFlipAlert(elId, direction, stCode);
@@ -1187,6 +1257,7 @@
           const merged = tjMergeFromCloud(cloudTrades);
           updatePnL();
           renderMonthlySummary();
+          renderWeeklySummary();
           // One-time: push any trades that existed locally before cloud sync was ever set up,
           // so trade history logged before tonight's update still shows up on other devices.
           if (!fbMigratedOnce) {
@@ -1260,7 +1331,49 @@
     tjAddTrade({ id: Date.now(), index: "QUICK", type: "", qty: null, entry: null, exit: null, pnl: amount, ts: Date.now() });
     updatePnL();
     renderMonthlySummary();
+    renderWeeklySummary();
     input.value = '';
+  });
+
+  // ---- FEATURE 6: DETAILED TRADE LOG (entry/exit/qty -> auto P&L, logged via existing tjAddTrade) ----
+  const dtlEntryEl = document.getElementById('dtl-entry');
+  const dtlExitEl = document.getElementById('dtl-exit');
+  const dtlQtyEl = document.getElementById('dtl-qty');
+  const dtlPreviewEl = document.getElementById('dtl-preview');
+
+  function updateDtlPreview() {
+    const entry = parseFloat(dtlEntryEl.value);
+    const exit = parseFloat(dtlExitEl.value);
+    const qty = parseFloat(dtlQtyEl.value);
+    if (isNaN(entry) || isNaN(exit) || isNaN(qty)) {
+      dtlPreviewEl.textContent = "P&L preview: —";
+      dtlPreviewEl.style.color = 'var(--muted)';
+      return;
+    }
+    const pnl = (exit - entry) * qty;
+    dtlPreviewEl.textContent = `P&L preview: ₹${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}`;
+    dtlPreviewEl.style.color = pnl > 0 ? 'var(--green)' : pnl < 0 ? 'var(--red)' : 'var(--muted)';
+  }
+  [dtlEntryEl, dtlExitEl, dtlQtyEl].forEach(el => el.addEventListener('input', updateDtlPreview));
+
+  document.getElementById('dtl-log-btn').addEventListener('click', () => {
+    const entry = parseFloat(dtlEntryEl.value);
+    const exit = parseFloat(dtlExitEl.value);
+    const qty = parseFloat(dtlQtyEl.value);
+    if (isNaN(entry) || isNaN(exit) || isNaN(qty) || qty <= 0) {
+      alert("Enter valid Entry, Exit, and Qty (Qty must be greater than 0).");
+      return;
+    }
+    const pnl = (exit - entry) * qty;
+    tjAddTrade({ id: Date.now(), index: "MANUAL", type: "", qty, entry, exit, pnl, ts: Date.now() });
+    updatePnL();
+    renderMonthlySummary();
+    renderWeeklySummary();
+    dtlEntryEl.value = '';
+    dtlExitEl.value = '';
+    dtlQtyEl.value = '';
+    dtlPreviewEl.textContent = "P&L preview: —";
+    dtlPreviewEl.style.color = 'var(--muted)';
   });
 
   // ---- STRONG SIGNAL ALERTS (sound + visual) ----
@@ -1339,20 +1452,40 @@
     }).join('');
   }
 
+  // ---- FEATURE 3: STRONG SIGNAL CONFIRMATION (new) ----
+  // Same pattern as the flip-confirmation fix: a direction must show "Strong" on 2 consecutive
+  // 30s refreshes (60s total) before it's announced, so one glitchy reading can't fire a false
+  // Strong alert. previousStrength[elId] is only ever set to "Strong" once actually confirmed —
+  // it's used as "already announced this stretch", not as a raw per-cycle mirror.
+  const pendingStrong = {}; // elId -> direction seen once at Strong, awaiting a second confirming refresh
+
   function checkAlertTrigger(elId, direction, strength) {
-    const prev = previousStrength[elId];
-    if (strength === "Strong" && prev !== "Strong") {
-      const idxName = alertIndexNames[elId];
-      for (let i = alertHistory.length - 1; i >= 0; i--) {
-        if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
-      }
-      alertHistory.unshift({ index: idxName, direction, ts: Date.now() });
-      if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
-      renderAlerts();
-      playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
-      sendTelegramAlert(elId, direction);
+    if (strength !== "Strong") {
+      delete pendingStrong[elId];
+      previousStrength[elId] = strength;
+      return;
     }
-    previousStrength[elId] = strength;
+    if (previousStrength[elId] === "Strong") {
+      return; // already confirmed & alerted for this Strong stretch
+    }
+    if (pendingStrong[elId] !== direction) {
+      pendingStrong[elId] = direction; // first sighting — hold, wait for a second confirming refresh
+      return;
+    }
+
+    // Confirmed on 2 consecutive refreshes (60s)
+    delete pendingStrong[elId];
+    previousStrength[elId] = "Strong";
+
+    const idxName = alertIndexNames[elId];
+    for (let i = alertHistory.length - 1; i >= 0; i--) {
+      if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
+    }
+    alertHistory.unshift({ index: idxName, direction, ts: Date.now() });
+    if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
+    renderAlerts();
+    playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
+    sendTelegramAlert(elId, direction);
   }
 
   // ---- TELEGRAM ALERTS ----
@@ -1363,11 +1496,14 @@
   async function sendTelegramAlert(elId, direction) {
     const indexName = alertIndexNames[elId];
     const stCode = stCodeMap[elId][direction];
-    const emoji = direction === "CE" ? "🟢▲" : "🔴▼";
+    const emoji = direction === "CE" ? "✅" : "🔻";
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const spot = currentPrice[zoneToPriceEl[elId]];
-    const spotLine = spot != null ? `Spot: ${spot.toLocaleString('en-IN')}\n` : '';
-    const text = `${emoji} ${indexName} ${direction} STRONG — ${stCode}\n${spotLine}Trend held 15+ min, high confidence\n${timeStr} IST`;
+    const zone = currentZoneLevel[elId];
+    const spotStr = spot != null ? spot.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '—';
+    const zoneStr = zone != null ? zone.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '—';
+    const sideWord = direction === "CE" ? "above" : "below";
+    const text = `${emoji} STRONG ${direction} CONFIRMED — ${indexName} at ${spotStr} (${sideWord} zone ${zoneStr}). Sustained 60 seconds.\n${stCode} · Trend held 15+ min\n${timeStr} IST`;
     sendTelegramText(text);
   }
 
@@ -1385,40 +1521,67 @@
 
   // ---- ST CODE FLIP ALERT (separate from the Strong-signal alert above) ----
   // Fires whenever a T-code flips direction (e.g. TSG -> TSR), regardless of Strong/Bias.
-  const previousStCode = {}; // elId -> last T-code shown
+  const previousStCode = {}; // elId -> last CONFIRMED T-code announced
 
   const recentFlipTs = {}; // elId -> timestamp of last flip, drives the animated badge
   let lastSpotKey = null;  // which index the spot-result box is currently showing
 
+  // ---- FLIP CONFIRMATION GUARD (fix for the missed Sensex flip) ----
+  // Root cause: an occasional glitchy/stale single price read (the same kind of thing behind
+  // the ~150pt Sensex-vs-Google-Finance gaps you spotted) could make the computed T-code land
+  // on the TRUE new code for one 30s refresh, silently matching before a real flip was ever
+  // announced — because previousStCode used to update every single cycle unconditionally.
+  // Fix: a new code must now appear on 2 CONSECUTIVE refreshes (60s) before it's accepted and
+  // announced. A one-off blip that reverts next cycle is simply discarded. This only delays a
+  // genuine flip announcement by ~30s — it doesn't touch the Yahoo feed, Telegram sending, or
+  // the CE/PE Supertrend calculation itself.
+  const pendingStCode = {}; // elId -> a new code seen once, awaiting a second confirming refresh
+
   function checkFlipAlert(elId, direction, stCode) {
     const prevCode = previousStCode[elId];
-    if (prevCode && prevCode !== stCode) {
-      const isCE = direction === "CE";
-      const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const idxName = alertIndexNames[elId];
 
-      // On-screen alert list (reuses the same Alerts card, marked as a flip)
-      for (let i = alertHistory.length - 1; i >= 0; i--) {
-        if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
-      }
-      alertHistory.unshift({ index: idxName, direction, ts: Date.now(), isFlip: true, fromCode: prevCode, toCode: stCode });
-      if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
-      renderAlerts();
+    if (!prevCode) {
+      previousStCode[elId] = stCode; // first-ever reading for this index — just set the baseline
+      return;
+    }
 
-      // Distinct two-tone beep so a flip doesn't sound identical to a Strong trigger
-      playBeep(isCE ? 700 : 350);
-      setTimeout(() => playBeep(isCE ? 900 : 300), 160);
+    if (stCode === prevCode) {
+      delete pendingStCode[elId]; // matches the confirmed baseline — clear any pending change
+      return;
+    }
 
-      // Telegram
-      const spot = currentPrice[zoneToPriceEl[elId]];
-      const spotLine = spot != null ? `Spot: ${spot.toLocaleString('en-IN')}\n` : '';
-      sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP\n${prevCode} → ${stCode} (now ${direction})\n${spotLine}Direction just changed — wait for confirmation\n${timeStr} IST`);
+    if (pendingStCode[elId] !== stCode) {
+      pendingStCode[elId] = stCode; // first time seeing this different code — hold, don't announce yet
+      return;
+    }
 
-      // Animated flip badge in the Manual Spot result box, if it's showing this index
-      recentFlipTs[elId] = Date.now();
-      if (lastSpotKey && spotIndexMeta[lastSpotKey].zoneEl === elId) {
-        renderSpotResult(lastSpotKey, currentPrice[spotIndexMeta[lastSpotKey].priceEl]);
-      }
+    // Seen on 2 consecutive refreshes now — treat as a real, confirmed flip
+    delete pendingStCode[elId];
+    const isCE = direction === "CE";
+    const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const idxName = alertIndexNames[elId];
+
+    // On-screen alert list (reuses the same Alerts card, marked as a flip)
+    for (let i = alertHistory.length - 1; i >= 0; i--) {
+      if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
+    }
+    alertHistory.unshift({ index: idxName, direction, ts: Date.now(), isFlip: true, fromCode: prevCode, toCode: stCode });
+    if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
+    renderAlerts();
+
+    // Distinct two-tone beep so a flip doesn't sound identical to a Strong trigger
+    playBeep(isCE ? 700 : 350);
+    setTimeout(() => playBeep(isCE ? 900 : 300), 160);
+
+    // Telegram
+    const spot = currentPrice[zoneToPriceEl[elId]];
+    const spotLine = spot != null ? `Spot: ${spot.toLocaleString('en-IN')}\n` : '';
+    sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP\n${prevCode} → ${stCode} (now ${direction})\n${spotLine}Confirmed on 2 refreshes\n${timeStr} IST`);
+
+    // Animated flip badge in the Manual Spot result box, if it's showing this index
+    recentFlipTs[elId] = Date.now();
+    if (lastSpotKey && spotIndexMeta[lastSpotKey].zoneEl === elId) {
+      renderSpotResult(lastSpotKey, currentPrice[spotIndexMeta[lastSpotKey].priceEl]);
     }
     previousStCode[elId] = stCode;
   }
@@ -1573,9 +1736,46 @@
     }).join('');
   }
 
+  // ---- FEATURE 6: WEEKLY TOTALS (new — same pattern as renderMonthlySummary, grouped Mon–Sun) ----
+  const weeklyListEl = document.getElementById('weekly-list');
+  function weekStartKey(ts) {
+    // Convert to an IST calendar date, then find that week's Monday, as a stable sortable key
+    const d = new Date(new Date(ts).toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const day = d.getDay(); // 0=Sun..6=Sat
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diffToMonday);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  function renderWeeklySummary() {
+    const trades = tjLoad();
+    if (trades.length === 0) {
+      weeklyListEl.innerHTML = '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No logs yet</p>';
+      return;
+    }
+    const totals = {}; // monday-date-string -> { sum, label }
+    trades.forEach(t => {
+      const monday = weekStartKey(t.ts);
+      const key = monday.toISOString();
+      const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+      const label = `${monday.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} – ${sunday.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`;
+      if (!totals[key]) totals[key] = { sum: 0, label };
+      totals[key].sum += t.pnl;
+    });
+    const sorted = Object.entries(totals).sort((a, b) => new Date(b[0]) - new Date(a[0]));
+    weeklyListEl.innerHTML = sorted.map(([, { sum, label }]) => {
+      const color = sum >= 0 ? 'var(--green)' : 'var(--red)';
+      return `<div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); font-size:0.88rem;">
+        <span>${label}</span>
+        <strong style="color:${color};">₹${sum >= 0 ? '+' : ''}${sum.toFixed(0)}</strong>
+      </div>`;
+    }).join('');
+  }
+
   pnlToggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     renderMonthlySummary();
+    renderWeeklySummary();
     positionRibbonPanel(pnlPanelEl);
     pnlPanelEl.classList.toggle('hidden');
   });
