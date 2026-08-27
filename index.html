@@ -853,7 +853,7 @@
     <button id="admin-toggle" class="ribbon-btn" style="display:none;">👑 Admin</button>
     <div id="admin-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:16px; z-index:300; color:var(--text);">
       <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
-      <input id="admin-new-username" type="text" placeholder="Username" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+      <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
       <input id="admin-new-pin" type="text" inputmode="numeric" maxlength="4" placeholder="Starter PIN (4 digits)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
       <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
       <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
@@ -2462,16 +2462,44 @@
     }
   });
 
+  // ACCOUNTS: usernames are system-generated (S365D1, S365D2, ...) — never typed by admin or
+  // user — so there's no risk of typos, duplicates, or someone picking something confusing.
+  // Re-run any time the admin panel opens and right after each account is created, so the
+  // field always shows the next one ready to go.
+  function computeNextUsername() {
+    adminNewUsernameEl.value = '';
+    adminNewUsernameEl.placeholder = 'Generating username…';
+    if (!fbDb) return;
+    fbDb.collection('users').where('role', '==', 'user').get()
+      .then(snapshot => {
+        let maxN = 0;
+        snapshot.docs.forEach(doc => {
+          const m = /^S365D(\d+)$/i.exec((doc.data().username || '').trim());
+          if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+        });
+        adminNewUsernameEl.value = 'S365D' + (maxN + 1);
+      })
+      .catch(err => {
+        adminNewUsernameEl.placeholder = "Couldn't generate — reopen panel to retry";
+        console.warn('Signa365: computeNextUsername failed:', err);
+      });
+  }
+
   adminAddUserBtn.addEventListener('click', () => {
     const username = adminNewUsernameEl.value.trim();
     const starterPin = adminNewPinEl.value.trim();
-    if (!username || !starterPin) {
-      adminAddStatusEl.textContent = 'Fill in a username and a 4-digit starter PIN.';
+    if (!username) {
+      adminAddStatusEl.textContent = 'Still generating a username — wait a moment and try again.';
+      adminAddStatusEl.style.color = 'var(--red)';
+      return;
+    }
+    if (!starterPin) {
+      adminAddStatusEl.textContent = 'Enter a 4-digit starter PIN.';
       adminAddStatusEl.style.color = 'var(--red)';
       return;
     }
     if (username.toLowerCase() === 'admin') {
-      adminAddStatusEl.textContent = '"admin" is reserved — pick a different username.';
+      adminAddStatusEl.textContent = '"admin" is reserved — reopen the panel to regenerate a username.';
       adminAddStatusEl.style.color = 'var(--red)';
       return;
     }
@@ -2515,10 +2543,10 @@
         }).then(() => secondaryApp.auth().signOut()).then(() => secondaryApp.delete());
       })
       .then(() => {
-        adminAddStatusEl.textContent = `✅ Account created for ${username} — starter PIN ${starterPin}. Share it with them; they'll set their own permanent PIN on first login.`;
+        adminAddStatusEl.textContent = `✅ Account created — username ${username}, starter PIN ${starterPin}. Share both with them; they'll set their own permanent PIN on first login.`;
         adminAddStatusEl.style.color = 'var(--green)';
-        adminNewUsernameEl.value = '';
         adminNewPinEl.value = '';
+        computeNextUsername();
         loadAdminUserList();
       })
       .catch(err => {
@@ -2535,7 +2563,7 @@
     positionRibbonPanel(adminPanelEl);
     const wasHidden = adminPanelEl.classList.contains('hidden');
     adminPanelEl.classList.toggle('hidden');
-    if (wasHidden) loadAdminUserList();
+    if (wasHidden) { loadAdminUserList(); computeNextUsername(); }
   });
   document.addEventListener('click', (e) => {
     if (!adminPanelEl.classList.contains('hidden') && !adminPanelEl.contains(e.target) && e.target !== adminToggleBtn) {
