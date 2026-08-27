@@ -542,7 +542,7 @@
     color: var(--text);
     font-size: 0.92rem;
   }
-  #auth-login-btn {
+  #auth-continue-btn, #auth-legacy-login-btn {
     width: min(280px, 100%);
     padding: 11px 14px;
     margin-top: 4px;
@@ -553,6 +553,16 @@
     font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
+  }
+  #auth-pin-subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; text-align: center; }
+  #auth-switch-user-btn {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
   }
   #auth-error {
     color: var(--red);
@@ -567,6 +577,10 @@
     font-size: 0.75rem;
     margin-top: 18px;
     text-align: center;
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
   }
 
   /* ---- PIN LOCK SCREEN ---- */
@@ -636,7 +650,7 @@
     text-align: center;
     min-height: 1.2em;
   }
-  #lock-dots {
+  #lock-dots, .pin-dots-row {
     display: flex;
     gap: 14px;
     margin-bottom: 26px;
@@ -649,7 +663,7 @@
     transition: background 0.15s ease;
   }
   .lock-dot.filled { background: var(--orange); }
-  #lock-dots.shake { animation: shakeErr 0.4s; }
+  #lock-dots.shake, .pin-dots-row.shake { animation: shakeErr 0.4s; }
   @keyframes shakeErr {
     0%, 100% { transform: translateX(0); }
     20%, 60% { transform: translateX(-8px); }
@@ -661,7 +675,7 @@
     min-height: 1.2em;
     margin-bottom: 10px;
   }
-  #lock-keypad {
+  #lock-keypad, .pin-keypad-grid {
     display: grid;
     grid-template-columns: repeat(3, 64px);
     gap: 12px;
@@ -701,11 +715,45 @@
   <div id="auth-logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 17 L8 11 L12 14 L16 7 L22 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="3" r="2.4" fill="#fff"/></svg></div>
   <div id="auth-brand">Signa365</div>
   <div id="auth-subtitle">Sign in to continue</div>
-  <input id="auth-email" type="email" placeholder="Email" autocomplete="username">
-  <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password">
-  <button id="auth-login-btn">Log In</button>
+
+  <div id="auth-username-step">
+    <input id="auth-username" type="text" placeholder="Username" autocomplete="username">
+    <button id="auth-continue-btn">Continue</button>
+  </div>
+
+  <div id="auth-pin-step" class="hidden">
+    <div id="auth-pin-subtitle">Enter PIN</div>
+    <div id="auth-dots" class="pin-dots-row">
+      <div class="lock-dot"></div>
+      <div class="lock-dot"></div>
+      <div class="lock-dot"></div>
+      <div class="lock-dot"></div>
+    </div>
+    <div id="auth-keypad" class="pin-keypad-grid">
+      <button class="lock-key" data-key="1">1</button>
+      <button class="lock-key" data-key="2">2</button>
+      <button class="lock-key" data-key="3">3</button>
+      <button class="lock-key" data-key="4">4</button>
+      <button class="lock-key" data-key="5">5</button>
+      <button class="lock-key" data-key="6">6</button>
+      <button class="lock-key" data-key="7">7</button>
+      <button class="lock-key" data-key="8">8</button>
+      <button class="lock-key" data-key="9">9</button>
+      <button class="lock-key empty"></button>
+      <button class="lock-key" data-key="0">0</button>
+      <button class="lock-key" data-key="back">⌫</button>
+    </div>
+    <button id="auth-switch-user-btn">← Not you? Switch user</button>
+  </div>
+
   <div id="auth-error"></div>
-  <div id="auth-hint">Forgot your password? Contact your admin.</div>
+  <button id="auth-hint">Forgot your PIN?</button>
+  <button id="auth-legacy-toggle" style="margin-top:8px; color:var(--muted); font-size:0.68rem; text-decoration:underline; background:none; border:none; cursor:pointer;">Admin — first time? Use email + password</button>
+  <div id="auth-legacy-step" class="hidden">
+    <input id="auth-legacy-email" type="email" placeholder="Email" autocomplete="username">
+    <input id="auth-legacy-password" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="auth-legacy-login-btn">Log In</button>
+  </div>
 </div>
 
 <div id="lock-screen">
@@ -806,8 +854,7 @@
     <div id="admin-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:16px; z-index:300; color:var(--text);">
       <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
       <input id="admin-new-username" type="text" placeholder="Username" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
-      <input id="admin-new-email" type="email" placeholder="Email" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
-      <input id="admin-new-password" type="text" placeholder="Temporary password (6+ chars)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+      <input id="admin-new-pin" type="text" inputmode="numeric" maxlength="4" placeholder="Starter PIN (4 digits)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
       <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
       <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
 
@@ -1907,6 +1954,17 @@
         } else {
           localStorage.setItem(PIN_KEY, hash);
         }
+        // ACCOUNTS: the PIN doubles as the Firebase sign-in password now (see pinToPassword) —
+        // keep Firebase in sync so this same PIN works to sign in from any other device too.
+        // Already signed in at this point, so this is a normal client-side self-update.
+        if (fbAuth && fbAuth.currentUser) {
+          fbAuth.currentUser.updatePassword(pinToPassword(enteredDigits)).catch(err => {
+            console.warn('Signa365: could not sync PIN to sign-in credential:', err);
+            if (err && err.code === 'auth/requires-recent-login') {
+              alert('Your PIN is saved on this device, but syncing it for other devices needs a fresh login first. Log out, log back in, then set your PIN again.');
+            }
+          });
+        }
         lockScreenEl.classList.add('hidden');
       } else {
         lockErrorEl.textContent = "";
@@ -1932,7 +1990,9 @@
     }
   }
 
-  document.querySelectorAll('.lock-key[data-key]').forEach(btn => {
+  // Scoped to #lock-keypad only — the separate #auth-keypad (first-time sign-in) has its own
+  // listener further down, since it drives an actual Firebase sign-in, not a local hash compare.
+  document.querySelectorAll('#lock-keypad .lock-key[data-key]').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.getAttribute('data-key');
       lockErrorEl.textContent = "";
@@ -2098,17 +2158,42 @@
   // PIN lock and P&L logic are untouched.
   // ==================================================================
   const authScreenEl = document.getElementById('auth-screen');
-  const authEmailEl = document.getElementById('auth-email');
-  const authPasswordEl = document.getElementById('auth-password');
-  const authLoginBtn = document.getElementById('auth-login-btn');
+  const authUsernameStepEl = document.getElementById('auth-username-step');
+  const authUsernameEl = document.getElementById('auth-username');
+  const authContinueBtn = document.getElementById('auth-continue-btn');
+  const authPinStepEl = document.getElementById('auth-pin-step');
+  const authDotsEl = document.getElementById('auth-dots');
+  const authSwitchUserBtn = document.getElementById('auth-switch-user-btn');
   const authErrorEl = document.getElementById('auth-error');
+
+  // ACCOUNTS: username + PIN only, everywhere — nothing on screen ever says "email" or
+  // "password". Under the hood, Firebase still needs an email+password pair per account, so:
+  //  - every non-admin username becomes a hidden alias of the admin's own inbox via "+" tagging
+  //    (works on Gmail/Yahoo/Outlook-business/etc.) — e.g. "rahul" -> viewsri+rahul@yahoo.com.
+  //    A password-reset email for that account lands in the admin's own inbox, never the user's.
+  //  - the 4-digit PIN doubles as the Firebase password (padded to meet its 6-char minimum) —
+  //    kept in sync with whichever PIN is currently set via updatePassword() (see
+  //    handlePinComplete's setup-confirm branch).
+  //  - "admin" is a reserved username that maps straight to the admin's real address, no alias.
+  const ADMIN_EMAIL = "viewsri@yahoo.com";
+  function usernameToEmail(username) {
+    const [local, domain] = ADMIN_EMAIL.split('@');
+    const clean = username.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    return `${local}+${clean}@${domain}`;
+  }
+  function pinToPassword(pin) {
+    return 'sg365_' + pin;
+  }
+  function resolveLoginEmail(username) {
+    const trimmed = username.trim().toLowerCase();
+    return trimmed === 'admin' ? ADMIN_EMAIL : usernameToEmail(trimmed);
+  }
 
   const adminToggleBtn = document.getElementById('admin-toggle');
   const adminPanelEl = document.getElementById('admin-panel');
   const adminUserListEl = document.getElementById('admin-user-list');
   const adminNewUsernameEl = document.getElementById('admin-new-username');
-  const adminNewEmailEl = document.getElementById('admin-new-email');
-  const adminNewPasswordEl = document.getElementById('admin-new-password');
+  const adminNewPinEl = document.getElementById('admin-new-pin');
   const adminAddUserBtn = document.getElementById('admin-add-user-btn');
   const adminAddStatusEl = document.getElementById('admin-add-status');
 
@@ -2116,15 +2201,27 @@
   const currentUsernameEl = document.getElementById('current-username');
 
   let pendingAuthMessage = ""; // survives the signOut() round-trip so the real reason still shows
+  let authEnteredDigits = "";
+  let authPendingUsername = "";
 
+  function updateAuthDots() {
+    authDotsEl.querySelectorAll('.lock-dot').forEach((d, i) => d.classList.toggle('filled', i < authEnteredDigits.length));
+  }
+  function resetAuthToUsernameStep() {
+    authPinStepEl.classList.add('hidden');
+    authUsernameStepEl.classList.remove('hidden');
+    authEnteredDigits = "";
+    updateAuthDots();
+  }
   function showAuthScreen(message) {
     authScreenEl.classList.remove('hidden');
     authErrorEl.textContent = message || "";
+    resetAuthToUsernameStep();
   }
   function hideAuthScreen() {
     authScreenEl.classList.add('hidden');
     authErrorEl.textContent = "";
-    authPasswordEl.value = "";
+    resetAuthToUsernameStep();
   }
   function forceSignOutWithMessage(msg) {
     pendingAuthMessage = msg;
@@ -2157,9 +2254,74 @@
     currentUsernameEl.textContent = loggedIn ? (currentUsername || '') : '';
   }
 
-  authLoginBtn.addEventListener('click', () => {
-    const email = authEmailEl.value.trim();
-    const password = authPasswordEl.value;
+  authContinueBtn.addEventListener('click', () => {
+    const username = authUsernameEl.value.trim();
+    if (!username) {
+      authErrorEl.textContent = 'Enter your username.';
+      return;
+    }
+    authPendingUsername = username;
+    authErrorEl.textContent = '';
+    authUsernameStepEl.classList.add('hidden');
+    authPinStepEl.classList.remove('hidden');
+    authEnteredDigits = '';
+    updateAuthDots();
+  });
+  authUsernameEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') authContinueBtn.click(); });
+
+  authSwitchUserBtn.addEventListener('click', resetAuthToUsernameStep);
+
+  document.getElementById('auth-hint').addEventListener('click', () => {
+    alert("Contact your admin — they'll reset your PIN and send you the new one.");
+  });
+
+  function attemptAuthSignIn() {
+    if (!fbAuth) {
+      authErrorEl.textContent = "Can't connect right now — check your internet and reload.";
+      return;
+    }
+    authErrorEl.textContent = '';
+    fbAuth.signInWithEmailAndPassword(resolveLoginEmail(authPendingUsername), pinToPassword(authEnteredDigits))
+      .catch(err => {
+        authErrorEl.textContent = 'Wrong username or PIN.';
+        console.warn('Signa365: login failed:', err);
+        authEnteredDigits = '';
+        updateAuthDots();
+        authDotsEl.classList.add('shake');
+        setTimeout(() => authDotsEl.classList.remove('shake'), 400);
+      });
+  }
+  document.querySelectorAll('#auth-keypad .lock-key[data-key]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-key');
+      authErrorEl.textContent = '';
+      if (key === 'back') {
+        authEnteredDigits = authEnteredDigits.slice(0, -1);
+        updateAuthDots();
+        return;
+      }
+      if (authEnteredDigits.length >= 4) return;
+      authEnteredDigits += key;
+      updateAuthDots();
+      if (authEnteredDigits.length === 4) {
+        setTimeout(attemptAuthSignIn, 150);
+      }
+    });
+  });
+
+  // ACCOUNTS: one-time bootstrap for the admin's existing Firebase account (set up with a real
+  // email+password in the Firebase console, before this PIN-only scheme existed). Signing in
+  // here the old way, once, lets the app migrate that account's password to the PIN scheme (see
+  // handlePinComplete) — after which "admin" + PIN works like everyone else, on any device.
+  const authLegacyToggleBtn = document.getElementById('auth-legacy-toggle');
+  const authLegacyStepEl = document.getElementById('auth-legacy-step');
+  const authLegacyEmailEl = document.getElementById('auth-legacy-email');
+  const authLegacyPasswordEl = document.getElementById('auth-legacy-password');
+  const authLegacyLoginBtn = document.getElementById('auth-legacy-login-btn');
+  authLegacyToggleBtn.addEventListener('click', () => authLegacyStepEl.classList.toggle('hidden'));
+  authLegacyLoginBtn.addEventListener('click', () => {
+    const email = authLegacyEmailEl.value.trim();
+    const password = authLegacyPasswordEl.value;
     if (!email || !password) {
       authErrorEl.textContent = 'Enter your email and password.';
       return;
@@ -2168,17 +2330,15 @@
       authErrorEl.textContent = "Can't connect right now — check your internet and reload.";
       return;
     }
-    authLoginBtn.disabled = true;
+    authLegacyLoginBtn.disabled = true;
     authErrorEl.textContent = '';
     fbAuth.signInWithEmailAndPassword(email, password)
       .catch(err => {
         authErrorEl.textContent = 'Login failed — check your email and password.';
-        console.warn('Signa365: login failed:', err);
+        console.warn('Signa365: legacy login failed:', err);
       })
-      .finally(() => { authLoginBtn.disabled = false; });
+      .finally(() => { authLegacyLoginBtn.disabled = false; });
   });
-  authPasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') authLoginBtn.click(); });
-  authEmailEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') authPasswordEl.focus(); });
 
   logoutBtn.addEventListener('click', () => {
     if (fbAuth) fbAuth.signOut();
@@ -2256,9 +2416,9 @@
         adminUserListEl.innerHTML = users.map(u => `
           <div style="border-bottom:1px solid var(--border); padding:8px 0;">
             <div style="font-size:0.85rem; font-weight:700;">${u.username || '(no name)'}</div>
-            <div style="font-size:0.72rem; color:var(--muted); margin-bottom:5px;">${u.email || ''} · ${renderDeviceStatus(u)}</div>
+            <div style="font-size:0.72rem; color:var(--muted); margin-bottom:5px;">${renderDeviceStatus(u)}</div>
             <div style="display:flex; gap:5px; flex-wrap:wrap;">
-              <button data-action="reset" data-uid="${u.uid}" data-email="${u.email || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Reset PW</button>
+              <button data-action="send-reset-email" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Send Reset Email</button>
               <button data-action="allow-pin-reset" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Allow PIN Reset</button>
               <button data-action="clear-device" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Clear Device</button>
               <button data-action="toggle-disable" data-uid="${u.uid}" data-disabled="${!!u.disabled}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">${u.disabled ? 'Enable' : 'Disable'}</button>
@@ -2277,11 +2437,14 @@
     if (!btn) return;
     const action = btn.getAttribute('data-action');
     const uid = btn.getAttribute('data-uid');
-    if (action === 'reset') {
-      const email = btn.getAttribute('data-email');
-      if (!email || !fbAuth) return;
-      fbAuth.sendPasswordResetEmail(email)
-        .then(() => alert('Password reset email sent to ' + email))
+    if (action === 'send-reset-email') {
+      // ACCOUNTS: this user has no real email — their account's address is a hidden alias of
+      // the admin's own inbox, so this reset link lands there, not with the end user. For the
+      // fully-locked-out case (can't sign in at all, so "Allow PIN Reset" can't reach them).
+      const username = btn.getAttribute('data-username') || '';
+      if (!username || !fbAuth) return;
+      fbAuth.sendPasswordResetEmail(usernameToEmail(username))
+        .then(() => alert(`Reset link sent to your own inbox (${ADMIN_EMAIL}) for ${username}. Open it, set the password field to "sg365_" + a new 4-digit PIN, then tell ${username} that PIN.`))
         .catch(err => { alert('Could not send reset email.'); console.warn(err); });
     } else if (action === 'allow-pin-reset') {
       fbDb.collection('users').doc(uid).update({ pinResetUnlockedAt: Date.now() })
@@ -2301,21 +2464,31 @@
 
   adminAddUserBtn.addEventListener('click', () => {
     const username = adminNewUsernameEl.value.trim();
-    const email = adminNewEmailEl.value.trim();
-    const password = adminNewPasswordEl.value;
-    if (!username || !email || !password) {
-      adminAddStatusEl.textContent = 'Fill in username, email, and a temporary password.';
+    const starterPin = adminNewPinEl.value.trim();
+    if (!username || !starterPin) {
+      adminAddStatusEl.textContent = 'Fill in a username and a 4-digit starter PIN.';
       adminAddStatusEl.style.color = 'var(--red)';
       return;
     }
-    if (password.length < 6) {
-      adminAddStatusEl.textContent = 'Password must be at least 6 characters (Firebase minimum).';
+    if (username.toLowerCase() === 'admin') {
+      adminAddStatusEl.textContent = '"admin" is reserved — pick a different username.';
+      adminAddStatusEl.style.color = 'var(--red)';
+      return;
+    }
+    if (!/^\d{4}$/.test(starterPin)) {
+      adminAddStatusEl.textContent = 'Starter PIN must be exactly 4 digits.';
       adminAddStatusEl.style.color = 'var(--red)';
       return;
     }
     adminAddUserBtn.disabled = true;
     adminAddStatusEl.textContent = 'Creating account...';
     adminAddStatusEl.style.color = 'var(--muted)';
+
+    // ACCOUNTS: no real email involved for non-admin — the account's Firebase identity is a
+    // hidden alias of the admin's own inbox (see usernameToEmail), and the PIN itself doubles
+    // as the Firebase password (see pinToPassword). Nothing here is shown to the end user.
+    const syntheticEmail = usernameToEmail(username);
+    const syntheticPassword = pinToPassword(starterPin);
 
     // Use a throwaway secondary Firebase app instance to create the Auth account — this avoids
     // signing the admin themselves out, which is what createUserWithEmailAndPassword would do
@@ -2329,13 +2502,12 @@
       adminAddUserBtn.disabled = false;
       return;
     }
-    secondaryApp.auth().createUserWithEmailAndPassword(email, password)
+    secondaryApp.auth().createUserWithEmailAndPassword(syntheticEmail, syntheticPassword)
       .then(cred => {
         const newUid = cred.user.uid;
         return fbDb.collection('users').doc(newUid).set({
           role: 'user',
           username: username,
-          email: email,
           deviceId: null,
           disabled: false,
           createdAt: Date.now(),
@@ -2343,11 +2515,10 @@
         }).then(() => secondaryApp.auth().signOut()).then(() => secondaryApp.delete());
       })
       .then(() => {
-        adminAddStatusEl.textContent = `✅ Account created for ${username} — they'll set their own 4-digit PIN the first time they log in.`;
+        adminAddStatusEl.textContent = `✅ Account created for ${username} — starter PIN ${starterPin}. Share it with them; they'll set their own permanent PIN on first login.`;
         adminAddStatusEl.style.color = 'var(--green)';
         adminNewUsernameEl.value = '';
-        adminNewEmailEl.value = '';
-        adminNewPasswordEl.value = '';
+        adminNewPinEl.value = '';
         loadAdminUserList();
       })
       .catch(err => {
