@@ -2260,6 +2260,13 @@
       authErrorEl.textContent = 'Enter your username.';
       return;
     }
+    // ACCOUNTS: user (non-admin) login is paused while it's redesigned — only "admin" can
+    // proceed to the PIN step for now. Everything else about this screen (layout, logo,
+    // keypad) is unchanged; this is the one gate that was added back in.
+    if (username.trim().toLowerCase() !== 'admin') {
+      authErrorEl.textContent = 'User login is temporarily unavailable — please contact admin.';
+      return;
+    }
     authPendingUsername = username;
     authErrorEl.textContent = '';
     authUsernameStepEl.classList.add('hidden');
