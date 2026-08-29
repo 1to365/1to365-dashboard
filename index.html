@@ -829,19 +829,6 @@
         <button id="quick-pnl-btn" style="flex:0 0 auto; padding:8px 14px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer;">+ Log</button>
       </div>
 
-      <!-- FEATURE 6: DETAILED TRADE LOG (new, additive — sits alongside the Quick Log above, doesn't replace it) -->
-      <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">🧮 Detailed Trade Log</p>
-      <div style="display:flex; gap:5px; margin-bottom:6px;">
-        <input id="dtl-entry" type="number" placeholder="Entry ₹" style="flex:1; min-width:0; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
-        <input id="dtl-exit" type="number" placeholder="Exit ₹" style="flex:1; min-width:0; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
-        <input id="dtl-qty" type="number" placeholder="Qty" style="flex:1; min-width:0; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-        <span id="dtl-preview" style="font-size:0.78rem; color:var(--muted); flex:1; min-width:0;">P&L preview: —</span>
-        <button id="dtl-log-btn" style="flex:0 0 auto; padding:7px 14px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">+ Log Trade</button>
-      </div>
-
       <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
       <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">📆 Weekly Totals</p>
       <div id="weekly-list"></div>
@@ -1512,6 +1499,31 @@
     return trades;
   }
 
+  // FIX: trades logged before the accounts/PIN system existed were saved under one unscoped
+  // key (TJ_KEY) shared by whoever used the browser. Once a real account logs in, tjLoad()/
+  // tjSave() switch to a per-uid key — so without this, that older history (e.g. earlier this
+  // month, before login was added) would look "missing" from Monthly/Weekly Totals even though
+  // it's still sitting in this same browser under the old key. Runs once per account/browser.
+  function migrateLegacyTradesIfNeeded() {
+    if (!currentUid) return;
+    const doneKey = "signa365_legacy_trades_migrated_" + currentUid;
+    if (localStorage.getItem(doneKey)) return;
+    try {
+      const legacy = JSON.parse(localStorage.getItem(TJ_KEY)) || [];
+      if (legacy.length) {
+        const current = tjLoad();
+        const byId = {};
+        current.forEach(t => { byId[t.id] = t; });
+        legacy.forEach(t => { if (!(t.id in byId)) byId[t.id] = t; });
+        const merged = Object.values(byId).sort((a, b) => a.ts - b.ts);
+        tjSave(merged);
+      }
+    } catch (e) {
+      // legacy data unreadable — nothing to migrate, don't block login over it
+    }
+    localStorage.setItem(doneKey, "1");
+  }
+
   // ---- FIREBASE / FIRESTORE (cloud sync — optional enhancement over localStorage) ----
   const firebaseConfig = {
     apiKey: "AIzaSyBQ6LKotzvHyZf9ubsW1iTs1Grnm2ZyvS4",
@@ -1598,47 +1610,6 @@
     renderMonthlySummary();
     renderWeeklySummary();
     input.value = '';
-  });
-
-  // ---- FEATURE 6: DETAILED TRADE LOG (entry/exit/qty -> auto P&L, logged via existing tjAddTrade) ----
-  const dtlEntryEl = document.getElementById('dtl-entry');
-  const dtlExitEl = document.getElementById('dtl-exit');
-  const dtlQtyEl = document.getElementById('dtl-qty');
-  const dtlPreviewEl = document.getElementById('dtl-preview');
-
-  function updateDtlPreview() {
-    const entry = parseFloat(dtlEntryEl.value);
-    const exit = parseFloat(dtlExitEl.value);
-    const qty = parseFloat(dtlQtyEl.value);
-    if (isNaN(entry) || isNaN(exit) || isNaN(qty)) {
-      dtlPreviewEl.textContent = "P&L preview: —";
-      dtlPreviewEl.style.color = 'var(--muted)';
-      return;
-    }
-    const pnl = (exit - entry) * qty;
-    dtlPreviewEl.textContent = `P&L preview: ₹${pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}`;
-    dtlPreviewEl.style.color = pnl > 0 ? 'var(--green)' : pnl < 0 ? 'var(--red)' : 'var(--muted)';
-  }
-  [dtlEntryEl, dtlExitEl, dtlQtyEl].forEach(el => el.addEventListener('input', updateDtlPreview));
-
-  document.getElementById('dtl-log-btn').addEventListener('click', () => {
-    const entry = parseFloat(dtlEntryEl.value);
-    const exit = parseFloat(dtlExitEl.value);
-    const qty = parseFloat(dtlQtyEl.value);
-    if (isNaN(entry) || isNaN(exit) || isNaN(qty) || qty <= 0) {
-      alert("Enter valid Entry, Exit, and Qty (Qty must be greater than 0).");
-      return;
-    }
-    const pnl = (exit - entry) * qty;
-    tjAddTrade({ id: Date.now(), index: "MANUAL", type: "", qty, entry, exit, pnl, ts: Date.now() });
-    updatePnL();
-    renderMonthlySummary();
-    renderWeeklySummary();
-    dtlEntryEl.value = '';
-    dtlExitEl.value = '';
-    dtlQtyEl.value = '';
-    dtlPreviewEl.textContent = "P&L preview: —";
-    dtlPreviewEl.style.color = 'var(--muted)';
   });
 
   // ---- STRONG SIGNAL ALERTS (sound + visual) ----
@@ -2671,6 +2642,7 @@
         currentRole = data.role;
         currentUsername = data.username || user.email;
         fbMigratedOnce = false;
+        migrateLegacyTradesIfNeeded();
 
         // ACCOUNTS: PIN expiry (30 days) only applies to non-admin — admin keeps the original
         // fully-local, self-service PIN with no expiry. Both are self-chosen and local-only;
