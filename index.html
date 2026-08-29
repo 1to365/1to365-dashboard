@@ -308,16 +308,17 @@
     line-height: 1;
   }
   .gfinance-btn {
-    display: block;
-    margin-top: 6px;
-    font-size: 0.58rem;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 6px;
+    font-size: 0.68rem;
     font-weight: 700;
     text-decoration: none;
     color: var(--muted);
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 3px 4px;
+    padding: 4px 8px;
     white-space: nowrap;
   }
   .gfinance-btn:hover { color: var(--accent); border-color: var(--accent); }
@@ -888,21 +889,18 @@
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-price">—</div>
       <div id="nifty-expiry-tag" class="expiry-tag"></div>
-      <a href="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn" onclick="event.stopPropagation();">📊 Chart</a>
     </div>
     <div class="price-box idx-banknifty" id="tile-banknifty" style="cursor:pointer;">
       <span class="hand-marker" id="banknifty-hand"></span>
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-price">—</div>
       <div id="banknifty-expiry-tag" class="expiry-tag"></div>
-      <a href="https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn" onclick="event.stopPropagation();">📊 Chart</a>
     </div>
     <div class="price-box idx-sensex" id="tile-sensex" style="cursor:pointer;">
       <span class="hand-marker" id="sensex-hand"></span>
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-price">—</div>
       <div id="sensex-expiry-tag" class="expiry-tag"></div>
-      <a href="https://www.google.com/finance/quote/SENSEX:INDEXBOM" target="_blank" rel="noopener" class="gfinance-btn" onclick="event.stopPropagation();">📊 Chart</a>
     </div>
   </div>
   <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin-top:8px;">Loading prices...</p>
@@ -947,7 +945,7 @@
 
 <!-- LIVE INTRADAY CHART -->
 <div class="card" id="live-chart-card" style="grid-column: 1 / -1;">
-  <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button></h2>
+  <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <a id="chart-gfinance-btn" class="gfinance-btn hidden" href="#" target="_blank" rel="noopener">📊 Google Finance</a> <button class="info-icon-btn" data-info="info-chart">?</button></h2>
   <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = Supertrend(7,3) · Dotted = prev. close</div>
   <div id="chart-placeholder" class="placeholder" style="font-size:0.9rem;">Tap a tile above or set a spot to see its live chart here</div>
   <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
@@ -1072,7 +1070,16 @@
   const BIG_MOVE_THRESHOLD = { "sensex-price": 100, "nifty-price": 50, "banknifty-price": 75 };
   const priceIndexNames = { "sensex-price": "SENSEX", "nifty-price": "NIFTY", "banknifty-price": "BANKNIFTY" };
 
+  // Today's Big Move Alert events per index, kept only so the live chart can mark where they
+  // fired (see the bigMoveMarkers chart plugin below). Session-only — resets on page reload,
+  // same as everything else here — and only ever read back filtered to "today" anyway.
+  const bigMoveAlertLog = { "sensex-price": [], "nifty-price": [], "banknifty-price": [] };
+
   function checkBigMove(elId, prevPrice, newPrice) {
+    // FIX: checkAlertTrigger/checkFlipAlert already skip outside the trade window — this one
+    // never did, so a stray after-hours/pre-market price blip from Yahoo (any time of day,
+    // including overnight) could read as a "big move" and fire a false alert. Same gate now.
+    if (!isWithinTradeWindow()) return;
     if (prevPrice == null || newPrice == null) return; // first reading this session — nothing to compare yet
     const threshold = BIG_MOVE_THRESHOLD[elId];
     if (!threshold) return;
@@ -1085,6 +1092,7 @@
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     sendTelegramText(`🚨 BIG MOVE ALERT — ${sideWord} ${priceIndexNames[elId]} ${sideIcon} (${ptsStr}) · ${timeStr} IST`);
     showBigMoveToast(`🚨 BIG MOVE — ${sideWord} ${priceIndexNames[elId]} ${sideIcon} (${ptsStr})`, isUp);
+    if (bigMoveAlertLog[elId]) bigMoveAlertLog[elId].push({ time: Date.now(), isUp });
   }
 
   // Same alert, shown inside the dashboard itself (not just Telegram) — auto-hides after 6s.
@@ -2652,6 +2660,16 @@
     showAuthScreen("Can't connect right now — check your internet and reload.");
   }
 
+  // Google Finance link now lives once in the Live Chart panel's own header (updated to match
+  // whichever index is currently open) instead of 3 tiny buttons crammed onto each price tile
+  // — those were an easy mis-tap next to the tile's own "open chart" tap target, especially on
+  // mobile.
+  const gfinanceUrls = {
+    nifty: "https://www.google.com/finance/quote/NIFTY_50:INDEXNSE",
+    banknifty: "https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE",
+    sensex: "https://www.google.com/finance/quote/SENSEX:INDEXBOM"
+  };
+
   // ---- MANUAL SPOT OVERRIDE (fixes the Yahoo delay for the price you actually trade on) ----
   const spotIndexMeta = {
     nifty:     { priceEl: "nifty-price",     zoneEl: "nifty-zone",     label: "NIFTY",     offset: 150 },
@@ -2901,6 +2919,7 @@
     const placeholderEl = document.getElementById('chart-placeholder');
     const wrapEl = document.getElementById('chart-wrap');
     const labelEl = document.getElementById('chart-index-label');
+    const gfinanceBtnEl = document.getElementById('chart-gfinance-btn');
 
     const requestedKey = lastSpotKey; // capture now — checked again after the fetch to detect a stale response
 
@@ -2909,6 +2928,7 @@
       placeholderEl.classList.remove('hidden');
       wrapEl.classList.add('hidden');
       labelEl.textContent = '';
+      gfinanceBtnEl.classList.add('hidden');
       currentlyDisplayedKey = null;
       return;
     }
@@ -2957,6 +2977,8 @@
       labelEl.textContent = `— ${meta.label}`;
       placeholderEl.classList.add('hidden');
       wrapEl.classList.remove('hidden');
+      gfinanceBtnEl.href = gfinanceUrls[requestedKey] || '#';
+      gfinanceBtnEl.classList.remove('hidden');
       currentlyDisplayedKey = requestedKey;
 
       // ---- FULL TRADING-DAY WINDOW (9:15 AM – 3:30 PM IST) ----
@@ -2983,8 +3005,7 @@
       const trendBySlot = new Array(slotCount).fill(null);
       const prevCloseData = new Array(slotCount).fill(prevClose);
 
-      // Flip points — where the Supertrend line changes color between two consecutive candles —
-      // captured with their real candle timestamp so the on-chart arrow can auto-expire.
+      // Flip points — where the Supertrend line changes color between two consecutive candles.
       const flipPoints = [];
       let prevCandleTrend = null;
       candles.forEach((c, i) => {
@@ -3001,11 +3022,25 @@
         if (trend[i] != null) prevCandleTrend = trend[i];
       });
 
-      // Arrow stays on the chart for 5 minutes after a flip, then disappears on its own as the
-      // 30s refresh loop re-evaluates which flips are still "recent".
-      const FLIP_ARROW_WINDOW_MS = 5 * 60 * 1000;
-      const nowMs = Date.now();
-      const visibleFlips = flipPoints.filter(f => nowMs - f.time < FLIP_ARROW_WINDOW_MS);
+      // FIX: used to auto-expire 5 minutes after a flip, which meant you almost never actually
+      // caught one on screen. `candles` above is already trimmed to just today's IST candles,
+      // so nothing stale from a prior warm-up day can leak in here — safe to just keep every
+      // flip from today visible on the chart all day instead of hiding it after 5 minutes.
+      const visibleFlips = flipPoints;
+
+      // Big Move Alert markers — same idea as the flip arrows above, but placed at the exact
+      // time(s) a BIG MOVE ALERT actually fired for this index today (from bigMoveAlertLog,
+      // populated by checkBigMove), plotted against the price line rather than the Supertrend
+      // line since a Big Move is a price event, not a trend-color event.
+      const bigMoveMarkers = [];
+      (bigMoveAlertLog[meta.priceEl] || []).forEach(ev => {
+        const ist = toIstDate(ev.time);
+        if (ist.getFullYear() !== today.getFullYear() || ist.getMonth() !== today.getMonth() || ist.getDate() !== today.getDate()) return;
+        const mins = ist.getHours() * 60 + ist.getMinutes();
+        const slotIdx = Math.round((mins - SESSION_START_MIN) / SLOT_STEP_MIN);
+        if (slotIdx < 0 || slotIdx >= slotCount) return;
+        bigMoveMarkers.push({ slotIdx, isUp: ev.isUp });
+      });
 
       const ctx = document.getElementById('live-chart').getContext('2d');
       if (liveChart) liveChart.destroy();
@@ -3103,6 +3138,26 @@
               const isUp = f.direction === 1; // red -> green flip
               c.fillStyle = isUp ? '#0f7a3d' : '#c81e3a';
               c.fillText(isUp ? '▲' : '▼', x, isUp ? yPixel - 12 : yPixel + 22);
+            });
+            c.restore();
+          }
+        }, {
+          id: 'bigMoveMarkers',
+          afterDraw(chart) {
+            if (!bigMoveMarkers.length) return;
+            const xScale = chart.scales.x;
+            const yScale = chart.scales.y;
+            const c = chart.ctx;
+            c.save();
+            c.textAlign = 'center';
+            c.font = 'bold 20px -apple-system, Segoe UI, sans-serif';
+            bigMoveMarkers.forEach(mk => {
+              const yVal = priceData[mk.slotIdx];
+              if (yVal == null) return;
+              const x = xScale.getPixelForValue(mk.slotIdx);
+              const yPixel = yScale.getPixelForValue(yVal);
+              c.fillStyle = mk.isUp ? '#0f7a3d' : '#c81e3a';
+              c.fillText(mk.isUp ? '▲' : '▼', x, mk.isUp ? yPixel - 14 : yPixel + 26);
             });
             c.restore();
           }
