@@ -322,6 +322,18 @@
     white-space: nowrap;
   }
   .gfinance-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .gfinance-all-link {
+    display: inline-block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+  }
+  .gfinance-all-link:hover { color: var(--accent); border-color: var(--accent); }
   .price-box.idx-nifty     { background: var(--nifty-soft);     border-top-color: var(--nifty); }
   .price-box.idx-banknifty { background: var(--banknifty-soft); border-top-color: var(--banknifty); }
   .price-box.idx-sensex    { background: var(--sensex-soft);    border-top-color: var(--sensex); }
@@ -850,22 +862,6 @@
       <div id="monthly-list"></div>
     </div>
 
-    <!-- ACCOUNTS: admin-only panel — hidden by default, shown by applyRoleUI() once role is known -->
-    <button id="admin-toggle" class="ribbon-btn" style="display:none;">👑 Admin</button>
-    <div id="admin-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:16px; z-index:300; color:var(--text);">
-      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
-      <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
-      <input id="admin-new-pin" type="text" inputmode="numeric" maxlength="4" placeholder="Starter PIN (4 digits)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
-      <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
-      <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
-
-      <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-        <p style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin:0;">👥 Manage Users</p>
-      </div>
-      <div id="admin-user-list"></div>
-    </div>
-
     <span id="current-username" style="font-size:0.7rem; color:rgba(255,255,255,0.85); display:none;"></span>
     <button id="logout-btn" class="ribbon-icon-btn" title="Logout" style="display:none;">🚪</button>
 
@@ -944,6 +940,17 @@
 </div>
 
 <!-- LIVE INTRADAY CHART -->
+<!-- Always-visible Google Finance access for all 3 indexes, independent of whichever index is
+     currently open in the Live Chart panel below. -->
+<div class="card" id="gfinance-all-card" style="grid-column: 1 / -1;">
+  <h2>📊 Google Finance Charts</h2>
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <a href="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" target="_blank" rel="noopener" class="gfinance-all-link">📊 NIFTY</a>
+    <a href="https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE" target="_blank" rel="noopener" class="gfinance-all-link">📊 BANKNIFTY</a>
+    <a href="https://www.google.com/finance/quote/SENSEX:INDEXBOM" target="_blank" rel="noopener" class="gfinance-all-link">📊 SENSEX</a>
+  </div>
+</div>
+
 <div class="card" id="live-chart-card" style="grid-column: 1 / -1;">
   <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <a id="chart-gfinance-btn" class="gfinance-btn hidden" href="#" target="_blank" rel="noopener">📊 Google Finance</a> <button class="info-icon-btn" data-info="info-chart">?</button></h2>
   <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = Supertrend(7,3) · Dotted = prev. close</div>
@@ -951,6 +958,24 @@
   <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
     <canvas id="live-chart"></canvas>
   </div>
+</div>
+
+<!-- ACCOUNTS: admin-only card — hidden by default, shown/hidden by applyRoleUI() once role is
+     known. Used to be a floating dropdown off a header button; moved here so it's just a
+     normal tile at the bottom of the dashboard, always visible while logged in as admin. -->
+<div class="card hidden" id="admin-panel" style="grid-column: 1 / -1;">
+  <h2>👑 Admin</h2>
+  <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
+  <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
+  <input id="admin-new-pin" type="text" inputmode="numeric" maxlength="4" placeholder="Starter PIN (4 digits)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+  <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
+  <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
+
+  <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin:0;">👥 Manage Users</p>
+  </div>
+  <div id="admin-user-list"></div>
 </div>
 
 </div>
@@ -2197,7 +2222,6 @@
     return trimmed === 'admin' ? ADMIN_EMAIL : usernameToEmail(trimmed);
   }
 
-  const adminToggleBtn = document.getElementById('admin-toggle');
   const adminPanelEl = document.getElementById('admin-panel');
   const adminUserListEl = document.getElementById('admin-user-list');
   const adminNewUsernameEl = document.getElementById('admin-new-username');
@@ -2255,8 +2279,12 @@
       rulesPanelEl.classList.add('hidden');
       document.querySelectorAll('.info-popover').forEach(p => p.classList.add('hidden'));
     }
-    adminToggleBtn.style.display = isAdmin ? '' : 'none';
-    if (!isAdmin) adminPanelEl.classList.add('hidden');
+    // ACCOUNTS: the Admin panel used to be a header dropdown you had to open with a button —
+    // now it's just a normal tile at the bottom of the dashboard, shown/hidden with everything
+    // else based on role. Refresh its contents the moment admin status is established instead
+    // of waiting for a toggle click that no longer exists.
+    adminPanelEl.classList.toggle('hidden', !isAdmin);
+    if (isAdmin) { loadAdminUserList(); computeNextUsername(); }
     logoutBtn.style.display = loggedIn ? '' : 'none';
     currentUsernameEl.style.display = loggedIn ? '' : 'none';
     currentUsernameEl.textContent = loggedIn ? (currentUsername || '') : '';
@@ -2571,19 +2599,6 @@
         secondaryApp.delete().catch(() => {});
       })
       .finally(() => { adminAddUserBtn.disabled = false; });
-  });
-
-  adminToggleBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    positionRibbonPanel(adminPanelEl);
-    const wasHidden = adminPanelEl.classList.contains('hidden');
-    adminPanelEl.classList.toggle('hidden');
-    if (wasHidden) { loadAdminUserList(); computeNextUsername(); }
-  });
-  document.addEventListener('click', (e) => {
-    if (!adminPanelEl.classList.contains('hidden') && !adminPanelEl.contains(e.target) && e.target !== adminToggleBtn) {
-      adminPanelEl.classList.add('hidden');
-    }
   });
 
   // ---- AUTH STATE GATE — the actual login check that runs on every load and on every sign-in/out ----
@@ -3005,9 +3020,10 @@
       const trendBySlot = new Array(slotCount).fill(null);
       const prevCloseData = new Array(slotCount).fill(prevClose);
 
-      // Flip points — where the Supertrend line changes color between two consecutive candles.
-      const flipPoints = [];
-      let prevCandleTrend = null;
+      // Chart arrows are Big-Move-Alert-only now (the earlier per-flip arrows on the
+      // Supertrend line were removed — with flips happening several times a session, the
+      // line ended up cluttered with arrows). The Supertrend line itself is still colored
+      // green/red via trendBySlot below; only the on-chart ▲/▼ markers changed.
       candles.forEach((c, i) => {
         const ist = toIstDate(c.time);
         const mins = ist.getHours() * 60 + ist.getMinutes();
@@ -3016,17 +3032,7 @@
         priceData[slotIdx] = c.close;
         lineData[slotIdx] = line[i];
         trendBySlot[slotIdx] = trend[i];
-        if (prevCandleTrend != null && trend[i] != null && trend[i] !== prevCandleTrend) {
-          flipPoints.push({ slotIdx, time: c.time, direction: trend[i] });
-        }
-        if (trend[i] != null) prevCandleTrend = trend[i];
       });
-
-      // FIX: used to auto-expire 5 minutes after a flip, which meant you almost never actually
-      // caught one on screen. `candles` above is already trimmed to just today's IST candles,
-      // so nothing stale from a prior warm-up day can leak in here — safe to just keep every
-      // flip from today visible on the chart all day instead of hiding it after 5 minutes.
-      const visibleFlips = flipPoints;
 
       // Big Move Alert markers — same idea as the flip arrows above, but placed at the exact
       // time(s) a BIG MOVE ALERT actually fired for this index today (from bigMoveAlertLog,
@@ -3118,27 +3124,6 @@
             c.fillStyle = '#667085';
             c.textAlign = 'right';
             c.fillText(`Prev close ${prevClose.toLocaleString('en-IN')}`, xScale.right - 4, yPixel - 4);
-            c.restore();
-          }
-        }, {
-          id: 'stFlipArrows',
-          afterDraw(chart) {
-            if (!visibleFlips.length) return;
-            const xScale = chart.scales.x;
-            const yScale = chart.scales.y;
-            const c = chart.ctx;
-            c.save();
-            c.textAlign = 'center';
-            c.font = 'bold 20px -apple-system, Segoe UI, sans-serif';
-            visibleFlips.forEach(f => {
-              const yVal = lineData[f.slotIdx];
-              if (yVal == null) return;
-              const x = xScale.getPixelForValue(f.slotIdx);
-              const yPixel = yScale.getPixelForValue(yVal);
-              const isUp = f.direction === 1; // red -> green flip
-              c.fillStyle = isUp ? '#0f7a3d' : '#c81e3a';
-              c.fillText(isUp ? '▲' : '▼', x, isUp ? yPixel - 12 : yPixel + 22);
-            });
             c.restore();
           }
         }, {
