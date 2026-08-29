@@ -308,32 +308,21 @@
     line-height: 1;
   }
   .gfinance-btn {
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 6px;
+    display: block;
+    text-align: center;
     font-size: 0.68rem;
     font-weight: 700;
     text-decoration: none;
     color: var(--muted);
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 4px 8px;
+    border-radius: 8px;
+    padding: 8px 4px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .gfinance-btn:hover { color: var(--accent); border-color: var(--accent); }
-  .gfinance-all-link {
-    display: inline-block;
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-decoration: none;
-    color: var(--text);
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 14px;
-  }
-  .gfinance-all-link:hover { color: var(--accent); border-color: var(--accent); }
   .price-box.idx-nifty     { background: var(--nifty-soft);     border-top-color: var(--nifty); }
   .price-box.idx-banknifty { background: var(--banknifty-soft); border-top-color: var(--banknifty); }
   .price-box.idx-sensex    { background: var(--sensex-soft);    border-top-color: var(--sensex); }
@@ -901,6 +890,14 @@
   </div>
   <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin-top:8px;">Loading prices...</p>
 
+  <!-- Google Finance links, one per index, in their own row well below the tiles above so
+       there's no overlap with the tile's own tap-to-open-chart area. -->
+  <div class="price-grid" style="margin-top:10px;">
+    <a href="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn">📊 NIFTY Chart</a>
+    <a href="https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn">📊 BANKNIFTY Chart</a>
+    <a href="https://www.google.com/finance/quote/SENSEX:INDEXBOM" target="_blank" rel="noopener" class="gfinance-btn">📊 SENSEX Chart</a>
+  </div>
+
   <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
     <input id="spot-input" type="text" inputmode="decimal" placeholder="Or type spot to override" style="flex:1 1 160px; min-width:140px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.95rem;">
     <button id="spot-set-btn" style="flex:0 0 auto; padding:10px 20px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
@@ -940,19 +937,8 @@
 </div>
 
 <!-- LIVE INTRADAY CHART -->
-<!-- Always-visible Google Finance access for all 3 indexes, independent of whichever index is
-     currently open in the Live Chart panel below. -->
-<div class="card" id="gfinance-all-card" style="grid-column: 1 / -1;">
-  <h2>📊 Google Finance Charts</h2>
-  <div style="display:flex; gap:10px; flex-wrap:wrap;">
-    <a href="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" target="_blank" rel="noopener" class="gfinance-all-link">📊 NIFTY</a>
-    <a href="https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE" target="_blank" rel="noopener" class="gfinance-all-link">📊 BANKNIFTY</a>
-    <a href="https://www.google.com/finance/quote/SENSEX:INDEXBOM" target="_blank" rel="noopener" class="gfinance-all-link">📊 SENSEX</a>
-  </div>
-</div>
-
 <div class="card" id="live-chart-card" style="grid-column: 1 / -1;">
-  <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <a id="chart-gfinance-btn" class="gfinance-btn hidden" href="#" target="_blank" rel="noopener">📊 Google Finance</a> <button class="info-icon-btn" data-info="info-chart">?</button></h2>
+  <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button></h2>
   <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = Supertrend(7,3) · Dotted = prev. close</div>
   <div id="chart-placeholder" class="placeholder" style="font-size:0.9rem;">Tap a tile above or set a spot to see its live chart here</div>
   <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
@@ -964,18 +950,23 @@
      known. Used to be a floating dropdown off a header button; moved here so it's just a
      normal tile at the bottom of the dashboard, always visible while logged in as admin. -->
 <div class="card hidden" id="admin-panel" style="grid-column: 1 / -1;">
-  <h2>👑 Admin</h2>
-  <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
-  <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
-  <input id="admin-new-pin" type="text" inputmode="numeric" maxlength="4" placeholder="Starter PIN (4 digits)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
-  <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
-  <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
+  <h2 id="admin-panel-toggle" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+    <span>👑 Admin</span>
+    <span id="admin-panel-caret" style="color:var(--muted); font-size:0.8em;">▸</span>
+  </h2>
+  <div id="admin-panel-body" class="hidden">
+    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
+    <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
+    <input id="admin-new-pin" type="text" inputmode="numeric" maxlength="4" placeholder="Starter PIN (4 digits)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+    <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
+    <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
 
-  <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin:0;">👥 Manage Users</p>
+    <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin:0;">👥 Manage Users</p>
+    </div>
+    <div id="admin-user-list"></div>
   </div>
-  <div id="admin-user-list"></div>
 </div>
 
 </div>
@@ -1095,10 +1086,35 @@
   const BIG_MOVE_THRESHOLD = { "sensex-price": 100, "nifty-price": 50, "banknifty-price": 75 };
   const priceIndexNames = { "sensex-price": "SENSEX", "nifty-price": "NIFTY", "banknifty-price": "BANKNIFTY" };
 
-  // Today's Big Move Alert events per index, kept only so the live chart can mark where they
-  // fired (see the bigMoveMarkers chart plugin below). Session-only — resets on page reload,
-  // same as everything else here — and only ever read back filtered to "today" anyway.
-  const bigMoveAlertLog = { "sensex-price": [], "nifty-price": [], "banknifty-price": [] };
+  // Today's Big Move Alert events per index, kept so the live chart can mark where they fired
+  // (see the bigMoveMarkers chart plugin below) — for the whole trading day, surviving a page
+  // reload/reopen too (localStorage, not just an in-memory array), keyed to today's IST date so
+  // it naturally starts empty again the next day without growing forever.
+  const BIG_MOVE_LOG_KEY = "signa365_bigmove_log";
+  function todayIstKey() {
+    const d = getIstDate();
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+  function emptyBigMoveLog() {
+    return { "sensex-price": [], "nifty-price": [], "banknifty-price": [] };
+  }
+  function loadBigMoveLog() {
+    try {
+      const raw = localStorage.getItem(BIG_MOVE_LOG_KEY);
+      if (!raw) return emptyBigMoveLog();
+      const parsed = JSON.parse(raw);
+      if (parsed.dateKey !== todayIstKey()) return emptyBigMoveLog();
+      return Object.assign(emptyBigMoveLog(), parsed.log || {});
+    } catch (e) {
+      return emptyBigMoveLog();
+    }
+  }
+  const bigMoveAlertLog = loadBigMoveLog();
+  function persistBigMoveLog() {
+    try {
+      localStorage.setItem(BIG_MOVE_LOG_KEY, JSON.stringify({ dateKey: todayIstKey(), log: bigMoveAlertLog }));
+    } catch (e) { /* storage full/unavailable — chart markers just won't survive a reload today */ }
+  }
 
   function checkBigMove(elId, prevPrice, newPrice) {
     // FIX: checkAlertTrigger/checkFlipAlert already skip outside the trade window — this one
@@ -1117,7 +1133,10 @@
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     sendTelegramText(`🚨 BIG MOVE ALERT — ${sideWord} ${priceIndexNames[elId]} ${sideIcon} (${ptsStr}) · ${timeStr} IST`);
     showBigMoveToast(`🚨 BIG MOVE — ${sideWord} ${priceIndexNames[elId]} ${sideIcon} (${ptsStr})`, isUp);
-    if (bigMoveAlertLog[elId]) bigMoveAlertLog[elId].push({ time: Date.now(), isUp });
+    if (bigMoveAlertLog[elId]) {
+      bigMoveAlertLog[elId].push({ time: Date.now(), isUp });
+      persistBigMoveLog();
+    }
   }
 
   // Same alert, shown inside the dashboard itself (not just Telegram) — auto-hides after 6s.
@@ -2229,6 +2248,16 @@
   const adminAddUserBtn = document.getElementById('admin-add-user-btn');
   const adminAddStatusEl = document.getElementById('admin-add-status');
 
+  // Admin tile is collapsible — collapsed by default so it doesn't dominate the bottom of the
+  // page; tap the header to expand/collapse.
+  const adminPanelToggleEl = document.getElementById('admin-panel-toggle');
+  const adminPanelBodyEl = document.getElementById('admin-panel-body');
+  const adminPanelCaretEl = document.getElementById('admin-panel-caret');
+  adminPanelToggleEl.addEventListener('click', () => {
+    const collapsed = adminPanelBodyEl.classList.toggle('hidden');
+    adminPanelCaretEl.textContent = collapsed ? '▸' : '▾';
+  });
+
   const logoutBtn = document.getElementById('logout-btn');
   const currentUsernameEl = document.getElementById('current-username');
 
@@ -2660,6 +2689,12 @@
         }
 
         hideAuthScreen();
+        // FIX: "PIN asking twice" — the local lock-screen (a separate, device-only PIN check,
+        // originally meant for re-locking the app after it's already open) was left visible by
+        // default underneath the login screen, so it always surfaced immediately after every
+        // Firebase login and asked for the PIN a second time. The Firebase login you just
+        // completed already verified the real PIN, so skip this redundant second prompt.
+        lockScreenEl.classList.add('hidden');
         applyRoleUI(currentRole);
         subscribeToTrades();
         subscribeToOwnUserDoc(user.uid);
@@ -2675,15 +2710,8 @@
     showAuthScreen("Can't connect right now — check your internet and reload.");
   }
 
-  // Google Finance link now lives once in the Live Chart panel's own header (updated to match
-  // whichever index is currently open) instead of 3 tiny buttons crammed onto each price tile
-  // — those were an easy mis-tap next to the tile's own "open chart" tap target, especially on
-  // mobile.
-  const gfinanceUrls = {
-    nifty: "https://www.google.com/finance/quote/NIFTY_50:INDEXNSE",
-    banknifty: "https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE",
-    sensex: "https://www.google.com/finance/quote/SENSEX:INDEXBOM"
-  };
+  // Google Finance links are back on each price tile (see the market-pulse HTML above) — with
+  // clearer spacing this time so they don't sit right on top of the tile's own tap area.
 
   // ---- MANUAL SPOT OVERRIDE (fixes the Yahoo delay for the price you actually trade on) ----
   const spotIndexMeta = {
@@ -2934,7 +2962,6 @@
     const placeholderEl = document.getElementById('chart-placeholder');
     const wrapEl = document.getElementById('chart-wrap');
     const labelEl = document.getElementById('chart-index-label');
-    const gfinanceBtnEl = document.getElementById('chart-gfinance-btn');
 
     const requestedKey = lastSpotKey; // capture now — checked again after the fetch to detect a stale response
 
@@ -2943,7 +2970,6 @@
       placeholderEl.classList.remove('hidden');
       wrapEl.classList.add('hidden');
       labelEl.textContent = '';
-      gfinanceBtnEl.classList.add('hidden');
       currentlyDisplayedKey = null;
       return;
     }
@@ -2992,8 +3018,6 @@
       labelEl.textContent = `— ${meta.label}`;
       placeholderEl.classList.add('hidden');
       wrapEl.classList.remove('hidden');
-      gfinanceBtnEl.href = gfinanceUrls[requestedKey] || '#';
-      gfinanceBtnEl.classList.remove('hidden');
       currentlyDisplayedKey = requestedKey;
 
       // ---- FULL TRADING-DAY WINDOW (9:15 AM – 3:30 PM IST) ----
