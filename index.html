@@ -3205,14 +3205,21 @@
             const c = chart.ctx;
             c.save();
             c.textAlign = 'center';
-            c.font = 'bold 20px -apple-system, Segoe UI, sans-serif';
             bigMoveMarkers.forEach(mk => {
               const yVal = priceData[mk.slotIdx];
               if (yVal == null) return;
               const x = xScale.getPixelForValue(mk.slotIdx);
               const yPixel = yScale.getPixelForValue(yVal);
               c.fillStyle = mk.isUp ? '#0f7a3d' : '#c81e3a';
-              c.fillText(mk.isUp ? '▲' : '▼', x, mk.isUp ? yPixel - 14 : yPixel + 26);
+              c.font = 'bold 20px -apple-system, Segoe UI, sans-serif';
+              const arrowY = mk.isUp ? yPixel - 14 : yPixel + 26;
+              c.fillText(mk.isUp ? '▲' : '▼', x, arrowY);
+              // FEATURE: (Call-CE)/(Put-PE) label paired with each Big Move arrow, same isUp
+              // flag the arrow itself already uses — smallest font that still reads clearly next
+              // to the arrow, same side offset (above for CE, below for PE).
+              c.font = '8px -apple-system, Segoe UI, sans-serif';
+              const labelY = mk.isUp ? arrowY - 12 : arrowY + 11;
+              c.fillText(mk.isUp ? '(Call-CE)' : '(Put-PE)', x, labelY);
             });
             c.restore();
           }
