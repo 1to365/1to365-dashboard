@@ -1105,6 +1105,16 @@
     } catch (e) { /* storage full/unavailable — chart markers just won't survive a reload today */ }
   }
 
+  // FIX (Big Move blind spot on gradual moves): the original check only ever compared this
+  // tick's price to the immediately previous one (30s apart), so a big move that built up
+  // gradually over many refreshes — never crossing the threshold in any single 30s step, but
+  // clearly exceeding it over, say, 15 minutes — never fired. Path 1 below (tick-to-tick) is
+  // unchanged and still catches a sudden single-tick spike; Path 2 is new and compares against
+  // the oldest price still inside a rolling 15-minute window, catching a slow bleed too.
+  const BIG_MOVE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes — matches the "held 15+ min" language already used elsewhere for Strong Signal
+  const bigMoveHistory = {}; // elId -> [{t, price}, ...] pruned to the last 15 minutes
+  const bigMoveRollingAlerted = {}; // elId -> 'up' | 'down' | null — which direction was last rolling-alerted, so it doesn't refire every single tick while still drifting the same way
+
   function checkBigMove(elId, prevPrice, newPrice) {
     // FIX: checkAlertTrigger/checkFlipAlert already skip outside the trade window — this one
     // never did, so a stray after-hours/pre-market price blip from Yahoo (any time of day,
@@ -1113,15 +1123,39 @@
     if (prevPrice == null || newPrice == null) return; // first reading this session — nothing to compare yet
     const threshold = BIG_MOVE_THRESHOLD[elId];
     if (!threshold) return;
-    const delta = newPrice - prevPrice;
-    if (Math.abs(delta) < threshold) return;
+
+    const now = Date.now();
+    const hist = bigMoveHistory[elId] || (bigMoveHistory[elId] = []);
+    hist.push({ t: now, price: newPrice });
+    while (hist.length && now - hist[0].t > BIG_MOVE_WINDOW_MS) hist.shift();
+
+    const tickDelta = newPrice - prevPrice;                 // Path 1: sudden single-tick jump
+    const rollingDelta = hist.length ? newPrice - hist[0].price : 0; // Path 2: drift over the rolling window
+
+    let delta, isRolling = false;
+    if (Math.abs(tickDelta) >= threshold) {
+      delta = tickDelta;
+    } else if (Math.abs(rollingDelta) >= threshold) {
+      const dir = rollingDelta > 0 ? 'up' : 'down';
+      if (bigMoveRollingAlerted[elId] === dir) return; // already alerted this stretch — don't refire every tick
+      delta = rollingDelta;
+      isRolling = true;
+    } else {
+      // Neither path triggered. Once price has drifted back to within half the threshold of the
+      // window-start, clear the rolling-alert memory so a fresh excursion can alert again later.
+      if (Math.abs(rollingDelta) < threshold / 2) bigMoveRollingAlerted[elId] = null;
+      return;
+    }
+    if (isRolling) bigMoveRollingAlerted[elId] = delta > 0 ? 'up' : 'down';
+
     const isUp = delta > 0;
     const sideWord = isUp ? "STRONG CE" : "STRONG PE";
     const sideIcon = isUp ? "🟢" : "🔴";
     const ptsStr = `${isUp ? '+' : '-'}${Math.abs(delta).toFixed(0)} pts`;
+    const spanStr = isRolling ? " (15-min)" : "";
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    sendTelegramText(`🚨 ${priceIndexNames[elId]} BIG MOVE ${sideIcon} ${sideWord} ${ptsStr} · ${timeStr} IST`);
-    showBigMoveToast(`🚨 ${priceIndexNames[elId]} BIG MOVE ${sideIcon} ${sideWord} ${ptsStr}`, isUp);
+    sendTelegramText(`🚨 ${priceIndexNames[elId]} BIG MOVE${spanStr} ${sideIcon} ${sideWord} ${ptsStr} · ${timeStr} IST`);
+    showBigMoveToast(`🚨 ${priceIndexNames[elId]} BIG MOVE${spanStr} ${sideIcon} ${sideWord} ${ptsStr}`, isUp);
     if (bigMoveAlertLog[elId]) {
       bigMoveAlertLog[elId].push({ time: Date.now(), isUp });
       persistBigMoveLog();
@@ -3133,23 +3167,33 @@
             const yScale = chart.scales.y;
             const xScale = chart.scales.x;
             const yPixel = yScale.getPixelForValue(prevClose);
-            if (yPixel < chart.chartArea.top || yPixel > chart.chartArea.bottom) return; // off-screen, skip
             const c = chart.ctx;
             c.save();
-            // Drawn directly here (not as a chart dataset) so it sits inline at its own value,
-            // like Google Finance, instead of stretching the y-axis to include it.
-            c.setLineDash([4, 4]);
-            c.strokeStyle = '#999';
-            c.lineWidth = 1;
-            c.beginPath();
-            c.moveTo(chart.chartArea.left, yPixel);
-            c.lineTo(chart.chartArea.right, yPixel);
-            c.stroke();
-            c.setLineDash([]);
             c.font = '10px -apple-system, Segoe UI, sans-serif';
             c.fillStyle = '#667085';
             c.textAlign = 'right';
-            c.fillText(`Prev close ${prevClose.toLocaleString('en-IN')}`, xScale.right - 4, yPixel - 4);
+            const label = `Prev close ${prevClose.toLocaleString('en-IN')}`;
+            // FIX: prevClose can sit above or below today's actual plotted range (the axis now
+            // scales to real data only, see the earlier fix) — instead of just hiding the
+            // reference entirely when that happens, clamp a small arrowed label to the nearest
+            // edge so there's still something to anchor against.
+            if (yPixel < chart.chartArea.top) {
+              c.fillText(`▲ ${label}`, xScale.right - 4, chart.chartArea.top + 10);
+            } else if (yPixel > chart.chartArea.bottom) {
+              c.fillText(`▼ ${label}`, xScale.right - 4, chart.chartArea.bottom - 4);
+            } else {
+              // Drawn directly here (not as a chart dataset) so it sits inline at its own value,
+              // like Google Finance, instead of stretching the y-axis to include it.
+              c.setLineDash([4, 4]);
+              c.strokeStyle = '#999';
+              c.lineWidth = 1;
+              c.beginPath();
+              c.moveTo(chart.chartArea.left, yPixel);
+              c.lineTo(chart.chartArea.right, yPixel);
+              c.stroke();
+              c.setLineDash([]);
+              c.fillText(label, xScale.right - 4, yPixel - 4);
+            }
             c.restore();
           }
         }, {
