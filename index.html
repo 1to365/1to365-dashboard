@@ -1121,7 +1121,12 @@
   // the oldest price still inside a rolling 15-minute window, catching a slow bleed too.
   const BIG_MOVE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes — matches the "held 15+ min" language already used elsewhere for Strong Signal
   const bigMoveHistory = {}; // elId -> [{t, price}, ...] pruned to the last 15 minutes
-  const bigMoveRollingAlerted = {}; // elId -> 'up' | 'down' | null — which direction was last rolling-alerted, so it doesn't refire every single tick while still drifting the same way
+  // FIX (2026-09-03): used to be bigMoveRollingAlerted, checked only by Path 2 — Path 1 (the
+  // sudden-tick check right below) had NO debounce at all, so it could both re-fire every single
+  // 30s cycle on its own during a fast sustained move, AND fire back-to-back with Path 2 for what
+  // was really one move (reported: BANKNIFTY +96 tick alert, then +89 (15-min) alert 30s later).
+  // Now a single shared "already alerted this stretch" flag covers BOTH paths.
+  const bigMoveAlerted = {}; // elId -> 'up' | 'down' | null — shared between the tick and rolling-window paths
 
   function checkBigMove(elId, prevPrice, newPrice) {
     // FIX: checkAlertTrigger/checkFlipAlert already skip outside the trade window — this one
@@ -1142,19 +1147,21 @@
 
     let delta, isRolling = false;
     if (Math.abs(tickDelta) >= threshold) {
+      const dir = tickDelta > 0 ? 'up' : 'down';
+      if (bigMoveAlerted[elId] === dir) return; // already alerted this stretch — don't refire
       delta = tickDelta;
     } else if (Math.abs(rollingDelta) >= threshold) {
       const dir = rollingDelta > 0 ? 'up' : 'down';
-      if (bigMoveRollingAlerted[elId] === dir) return; // already alerted this stretch — don't refire every tick
+      if (bigMoveAlerted[elId] === dir) return; // already alerted this stretch (by either path)
       delta = rollingDelta;
       isRolling = true;
     } else {
       // Neither path triggered. Once price has drifted back to within half the threshold of the
-      // window-start, clear the rolling-alert memory so a fresh excursion can alert again later.
-      if (Math.abs(rollingDelta) < threshold / 2) bigMoveRollingAlerted[elId] = null;
+      // window-start, clear the alert memory so a fresh excursion can alert again later.
+      if (Math.abs(rollingDelta) < threshold / 2) bigMoveAlerted[elId] = null;
       return;
     }
-    if (isRolling) bigMoveRollingAlerted[elId] = delta > 0 ? 'up' : 'down';
+    bigMoveAlerted[elId] = delta > 0 ? 'up' : 'down';
 
     const isUp = delta > 0;
     const sideWord = isUp ? "STRONG CE" : "STRONG PE";
@@ -1661,7 +1668,33 @@
   // several times a minute for what's really one continuous stretch. Now tracks only the DIRECTION
   // (CE/PE) last alerted, and only clears when that direction actually flips — a Bias flicker on
   // the same side no longer re-opens the gate.
-  const lastAlertedDirection = {}; // elId -> CE/PE of the last Strong Confirmed alert actually sent
+  // FIX (2026-09-03, confirmed still repeating live): this was still a plain in-memory object, so
+  // a phone browser tab reload (phone lock, OS reclaiming memory, manual refresh) wiped it and the
+  // next confirmed Strong reading re-fired even though it was the same ongoing move — verified via
+  // a before/after-12-noon Telegram comparison (SENSEX STRONG PE re-fired at 1:10 PM and 1:25 PM
+  // with no flip back to CE in between). Now persisted to localStorage, same day-scoped pattern as
+  // bigMoveAlertLog/flipEventLog above, so a reload doesn't lose it mid-session.
+  const STRONG_DIR_KEY = "signa365_strong_dir";
+  function emptyStrongDir() {
+    return { "nifty-zone": null, "banknifty-zone": null, "sensex-zone": null };
+  }
+  function loadStrongDir() {
+    try {
+      const raw = localStorage.getItem(STRONG_DIR_KEY);
+      if (!raw) return emptyStrongDir();
+      const parsed = JSON.parse(raw);
+      if (parsed.dateKey !== todayIstKey()) return emptyStrongDir();
+      return Object.assign(emptyStrongDir(), parsed.dir || {});
+    } catch (e) {
+      return emptyStrongDir();
+    }
+  }
+  const lastAlertedDirection = loadStrongDir(); // elId -> CE/PE of the last Strong Confirmed alert actually sent
+  function persistStrongDir() {
+    try {
+      localStorage.setItem(STRONG_DIR_KEY, JSON.stringify({ dateKey: todayIstKey(), dir: lastAlertedDirection }));
+    } catch (e) { /* storage full/unavailable — dedup just won't survive a reload today */ }
+  }
   const alertHistory = [];
   const MAX_ALERTS = 25;
 
@@ -1790,6 +1823,7 @@
     // Confirmed on 2 consecutive refreshes (60s)
     delete pendingStrong[elId];
     lastAlertedDirection[elId] = direction;
+    persistStrongDir();
 
     const idxName = alertIndexNames[elId];
     for (let i = alertHistory.length - 1; i >= 0; i--) {
@@ -3245,7 +3279,12 @@
           },
           scales: {
             x: { ticks: { maxTicksLimit: 6, color: '#667085', font: { size: 10 } }, grid: { display: false } },
-            y: { position: 'left', ticks: { color: '#667085', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
+            // FIX (2026-09-03): y-axis used to scale tight to exactly the plotted min/max, so a
+            // small ~40-point band could fill the whole chart height and make ordinary moves look
+            // dramatic. `grace` adds a 10% cushion above/below the real data range — doesn't
+            // change the data or reintroduce the old prevClose-stretch issue (prevClose is drawn
+            // by a separate plugin, not a dataset, so it still can't pull the axis wider).
+            y: { position: 'left', grace: '10%', ticks: { color: '#667085', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
           }
         },
         plugins: [{
