@@ -898,22 +898,28 @@
       <span class="hand-marker" id="nifty-hand"></span>
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-price">—</div>
-      <div id="nifty-expiry-tag" class="expiry-tag"></div>
+      <span id="nifty-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;">⚠ Stale — retrying</span>
       <div style="font-size:0.78rem; margin-top:4px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
+      <div id="nifty-duration" style="font-size:0.66rem; color:var(--muted); margin-top:2px;"></div>
+      <div id="nifty-expiry-tag" class="expiry-tag"></div>
     </div>
     <div class="price-box idx-banknifty" id="tile-banknifty" style="cursor:pointer;">
       <span class="hand-marker" id="banknifty-hand"></span>
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-price">—</div>
-      <div id="banknifty-expiry-tag" class="expiry-tag"></div>
+      <span id="banknifty-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;">⚠ Stale — retrying</span>
       <div style="font-size:0.78rem; margin-top:4px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
+      <div id="banknifty-duration" style="font-size:0.66rem; color:var(--muted); margin-top:2px;"></div>
+      <div id="banknifty-expiry-tag" class="expiry-tag"></div>
     </div>
     <div class="price-box idx-sensex" id="tile-sensex" style="cursor:pointer;">
       <span class="hand-marker" id="sensex-hand"></span>
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-price">—</div>
-      <div id="sensex-expiry-tag" class="expiry-tag"></div>
+      <span id="sensex-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;">⚠ Stale — retrying</span>
       <div style="font-size:0.78rem; margin-top:4px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
+      <div id="sensex-duration" style="font-size:0.66rem; color:var(--muted); margin-top:2px;"></div>
+      <div id="sensex-expiry-tag" class="expiry-tag"></div>
     </div>
   </div>
   <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin-top:8px;">Loading prices...</p>
@@ -1123,6 +1129,13 @@
   const BIG_MOVE_THRESHOLD = { "sensex-price": 100, "nifty-price": 50, "banknifty-price": 75 };
   const priceIndexNames = { "sensex-price": "SENSEX", "nifty-price": "NIFTY", "banknifty-price": "BANKNIFTY" };
 
+  // FEATURE (2026-09-03): live/stale data indicator — per-index consecutive-failure count. After
+  // 2 failed refreshes in a row (~60s+ of no real update) that tile shows a small "Stale" flag, so
+  // a silent Yahoo/proxy hiccup doesn't leave a stale number on screen with no sign of it.
+  const priceFailCount = {}; // elId -> consecutive fetch failures
+  const STALE_AFTER_FAILS = 2;
+  const staleFlagIds = { "nifty-price": "nifty-stale-flag", "banknifty-price": "banknifty-stale-flag", "sensex-price": "sensex-stale-flag" };
+
   // Today's Big Move Alert events per index — no longer drives the chart arrows (see
   // flipEventLog below for that), but still used for the Alerts card entries and Telegram — for
   // the whole trading day, surviving a page reload/reopen too (localStorage, not just an
@@ -1310,15 +1323,29 @@
         currentChange[elId] = change;
         cachePrice(elId, price, change);
         if (typeof refreshHandMarkers === 'function') refreshHandMarkers(); // paint this tile the moment ITS price lands, don't wait on the other two
+        // Live/stale indicator: a successful fetch clears this tile's fail count and hides its flag.
+        priceFailCount[elId] = 0;
+        const staleEl = document.getElementById(staleFlagIds[elId]);
+        if (staleEl) staleEl.classList.add('hidden');
         return true;
       } catch (err) {
+        priceFailCount[elId] = (priceFailCount[elId] || 0) + 1;
+        if (priceFailCount[elId] >= STALE_AFTER_FAILS) {
+          const staleEl = document.getElementById(staleFlagIds[elId]);
+          if (staleEl) staleEl.classList.remove('hidden');
+        }
         return false;
       }
     }));
     const anyError = results.some(ok => !ok);
-    statusEl.textContent = anyError
-      ? "Some prices failed to load — will retry in 30s"
-      : "Last updated: " + new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+    if (anyError) {
+      const failedIdx = Object.entries(symbols)
+        .filter((_, i) => !results[i])
+        .map(([elId]) => priceIndexNames[elId]);
+      statusEl.textContent = `${failedIdx.join(', ')} price${failedIdx.length > 1 ? 's' : ''} failed to load — will retry in 30s`;
+    } else {
+      statusEl.textContent = "Last updated: " + new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+    }
   }
 
   updatePrices();
@@ -1421,6 +1448,8 @@
   const currentDirection = {}; // elId -> "CE" | "PE"
   const currentStrength = {}; // elId -> "Strong" | "Bias"
   const currentZoneLevel = {}; // elId -> current Supertrend band level (the "zone" price), used in Feature 3's Telegram text
+  const currentDuration = {}; // elId -> consecutive 5-min candles the current trend has held (FEATURE 2026-09-03: shown under the badge as "held Xm", so admin doesn't have to guess conviction)
+  const durationElIds = { "nifty-zone": "nifty-duration", "banknifty-zone": "banknifty-duration", "sensex-zone": "sensex-duration" };
 
   // Official NSE/BSE 2026 trading holidays (source: NSE circular / Zerodha holiday calendar)
   const NSE_HOLIDAYS_2026 = [
@@ -1476,6 +1505,18 @@
     const mins = istDate.getHours() * 60 + istDate.getMinutes();
     const windowStart = 9 * 60 + 20, windowEnd = 15 * 60 + 35;
     return mins >= windowStart && mins <= windowEnd;
+  }
+
+  // FEATURE (2026-09-03): "choppy-market" flag for Strong alerts — a Strong signal fired during a
+  // known lower-conviction window still fires (nothing is suppressed, no alert is ever blocked),
+  // it just gets a small caption tagged on so admin can weigh it differently. The 9:15-9:20 open
+  // window is already excluded entirely by isWithinTradeWindow() above; this adds the lunch lull.
+  // Window (12:30-1:15 PM IST) is a reasonable default, not admin-confirmed — adjust if it
+  // doesn't match how the market actually behaves.
+  function isLunchLull() {
+    const istDate = getIstDate();
+    const mins = istDate.getHours() * 60 + istDate.getMinutes();
+    return mins >= (12 * 60 + 30) && mins <= (13 * 60 + 15);
   }
 
   // NSE cash market actual hours: 9:15 AM – 3:30 PM. Separate from your configured
@@ -1563,9 +1604,16 @@
         badgeEl.style.color = isCE ? "var(--green)" : "var(--red)";
         badgeEl.textContent = `${label}${icon}`;
 
+        // FEATURE (2026-09-03): signal duration, shown as a small muted line under the badge —
+        // "held Xm" so admin can see conviction at a glance instead of guessing. `duration` is a
+        // count of consecutive 5-min candles (fetchCandles uses interval=5m), so minutes = *5.
+        const durationEl = document.getElementById(durationElIds[elId]);
+        if (durationEl) durationEl.textContent = duration > 0 ? `held ${duration * 5}m` : '';
+
         currentDirection[elId] = direction;
         currentStrength[elId] = strength;
         currentZoneLevel[elId] = line;
+        currentDuration[elId] = duration;
         if (isWithinTradeWindow()) {
           checkAlertTrigger(elId, direction, strength);
           checkFlipAlert(elId, direction, stCode);
@@ -1910,10 +1958,13 @@
         </div>`;
       }
       const arrow = isCE ? "▲" : "▼";
+      const convictionCaption = a.lowConviction
+        ? `<span style="color:var(--muted); font-weight:400; font-size:0.78rem;"> (lunch lull — lower conviction)</span>`
+        : '';
       return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
         <span style="color:${color}; font-size:1.3rem; font-weight:800;">${arrow}</span>
         <div style="flex:1;">
-          <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">${a.direction} STRONG</span>
+          <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">${a.direction} STRONG</span>${convictionCaption}
         </div>
         <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
       </div>`;
@@ -1972,11 +2023,12 @@
     for (let i = alertHistory.length - 1; i >= 0; i--) {
       if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
     }
-    alertHistory.unshift({ index: idxName, direction, ts: Date.now() });
+    const lowConviction = isLunchLull(); // flag only — never suppresses the alert itself
+    alertHistory.unshift({ index: idxName, direction, ts: Date.now(), lowConviction });
     if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
     renderAlerts();
     playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
-    sendTelegramAlert(elId, direction);
+    sendTelegramAlert(elId, direction, lowConviction);
   }
 
   // ---- TELEGRAM ALERTS ----
@@ -1984,7 +2036,7 @@
   const TELEGRAM_CHAT_ID = "5802877879";
   const zoneToPriceEl = { "nifty-zone": "nifty-price", "banknifty-zone": "banknifty-price", "sensex-zone": "sensex-price" };
 
-  async function sendTelegramAlert(elId, direction) {
+  async function sendTelegramAlert(elId, direction, lowConviction) {
     const indexName = alertIndexNames[elId];
     const emoji = direction === "CE" ? "✅" : "🔻";
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -1997,7 +2049,10 @@
     // 15+ min...") — "STRONG ${direction}" on the line above already says the same thing. Plain
     // arrow instead (uncolored — Telegram can't color arbitrary text, only whole emoji).
     const dirArrow = direction === "CE" ? "▲" : "▼";
-    const text = `${emoji} ${indexName} STRONG ${direction} — ${spotStr} (${sideWord} zone ${zoneStr})\n${dirArrow} held 15+ min · ${timeStr} IST`;
+    // FEATURE (2026-09-03): lunch-lull tag — informational only, doesn't change whether this
+    // alert fires at all.
+    const convictionTag = lowConviction ? ' (lunch lull — lower conviction)' : '';
+    const text = `${emoji} ${indexName} STRONG ${direction} — ${spotStr} (${sideWord} zone ${zoneStr})\n${dirArrow} held 15+ min · ${timeStr} IST${convictionTag}`;
     sendTelegramText(text);
   }
 
