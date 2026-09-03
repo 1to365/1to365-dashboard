@@ -1867,10 +1867,17 @@
       if (a.isBigMove) {
         // FEATURE: Big Move now lives here instead of its own popup box — auto-clears itself
         // after ALERT_BIG_MOVE_TTL_MS (see pruneExpiredAlerts), unlike Strong Signal/Flip rows.
+        // FIX (2026-09-03): Big Move can legitimately fire in the opposite color from the current
+        // Supertrend trend (it measures the speed/size of a swing, not the trend itself) — that
+        // read as contradictory when it happened next to a same-colored trend. Chart arrows for
+        // Big Move were already removed in an earlier redesign (chart arrows are flip-only now),
+        // but the same confusion could still happen here in the list — added a short caption so
+        // it never reads as a trend/Zone change.
         return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
           <span style="font-size:1.3rem;">🚨</span>
           <div style="flex:1;">
             <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">BIG MOVE ${a.direction} ${a.ptsStr}${a.spanStr}</span>
+            <span style="color:var(--muted); font-weight:400; font-size:0.78rem;"> (swing, not a trend change — follow Zone)</span>
           </div>
           <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
         </div>`;
@@ -2832,6 +2839,14 @@
             ${[7, 30, 60, 90].map(d => `<option value="${d}" ${(u.pinValidityDays || DEFAULT_PIN_VALIDITY_DAYS) === d ? 'selected' : ''}>${d} days</option>`).join('')}
           </select>
         </div>
+        <!-- FEATURE (2026-09-03): a real login-username rename isn't safe (see admin note in
+             backlog — it's baked into that account's actual Firebase sign-in email, renaming it
+             here without a backend would break their login). This is a cosmetic label only, shown
+             next to the real username everywhere in the admin panel — doesn't touch login at all. -->
+        <div style="display:flex; gap:5px; margin-bottom:5px;">
+          <input type="text" data-displayname-uid="${u.uid}" value="${(u.displayName || '').replace(/"/g, '&quot;')}" placeholder="Display name (label only — doesn't change login)" style="flex:1; min-width:0; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
+          <button data-action="save-displayname" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
+        </div>
         <div style="display:flex; gap:5px;">
           <input type="text" data-note-uid="${u.uid}" value="${(u.adminNote || '').replace(/"/g, '&quot;')}" placeholder="Admin-only note (e.g. payment/renewal)" style="flex:1; min-width:0; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
           <button data-action="save-note" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
@@ -2950,6 +2965,14 @@
         fbDb.collection('users').doc(uid).update({ adminNote: note })
           .then(() => { const cached = adminUsersCache.find(u => u.uid === uid); if (cached) cached.adminNote = note; })
           .catch(err => { alert('Could not save note.'); console.warn(err); });
+      } else if (action === 'save-displayname') {
+        // FEATURE (2026-09-03): cosmetic label only — does NOT touch the real username or Firebase
+        // login email (see the comment above the input). Purely for admin's own readability.
+        const input = adminUserListEl.querySelector(`input[data-displayname-uid="${uid}"]`);
+        const displayName = input ? input.value.trim() : '';
+        fbDb.collection('users').doc(uid).update({ displayName: displayName })
+          .then(() => loadAdminUserList())
+          .catch(err => { alert('Could not save display name.'); console.warn(err); });
       }
       return;
     }
@@ -3262,10 +3285,9 @@
 
   function renderSpotResult(key, spot) {
     const meta = spotIndexMeta[key];
-    const ceLevel = spot + meta.offset;
-    const peLevel = spot - meta.offset;
     const strength = currentStrength[meta.zoneEl];
     const direction = currentDirection[meta.zoneEl];
+    const zoneLevel = currentZoneLevel[meta.zoneEl];
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     // FIX (2026-09-03): used to be two separate labeled segments, "Code: TNR   Zone: PE
@@ -3282,6 +3304,24 @@
       zoneLine = `<span style="color:${bColor}; font-weight:700;">${direction} ${strength}${bIcon} (${stCode})</span>`;
     }
 
+    // FIX (2026-09-03): the old "CE STRONG above / PE STRONG below" lines were just spot ± a
+    // fixed offset, recentered on every spot check — not a real threshold, and totally unrelated
+    // to the Zone line right below it (admin reported this as misleading: spot sitting "between"
+    // those two numbers didn't mean anything about what Zone actually showed). Replaced with the
+    // ONE real number that matters: the live Supertrend(7,3) band value itself
+    // (`currentZoneLevel`, already computed in updateZones() — same engine driving the actual
+    // Strong/Flip alerts). Supertrend is a single line, not two separate bands, so there's one
+    // genuinely actionable level, labeled by which way it would flip. Applies to all 3 indexes —
+    // one shared render function.
+    let levelLine;
+    if (zoneLevel == null || !direction) {
+      levelLine = `<span style="color:var(--muted);">Flip level: — (no live signal yet)</span>`;
+    } else if (direction === "PE") {
+      levelLine = `<span style="color:var(--green);">🟢 Flips to CE above: ${zoneLevel.toLocaleString('en-IN')}</span>`;
+    } else {
+      levelLine = `<span style="color:var(--red);">🔴 Flips to PE below: ${zoneLevel.toLocaleString('en-IN')}</span>`;
+    }
+
     // Animated flip badge — shows for 60s after a flip on this index
     const flipTs = recentFlipTs[meta.zoneEl];
     const flipBadge = (flipTs && Date.now() - flipTs < 60000)
@@ -3292,8 +3332,7 @@
     resultEl.innerHTML =
       `${flipBadge}⏰ ${timeStr} IST<br>` +
       `📍 ${meta.label}: ${spot.toLocaleString('en-IN')}<br>` +
-      `<span style="color:var(--green);">🟢 CE STRONG above: ${ceLevel.toLocaleString('en-IN')}</span><br>` +
-      `<span style="color:var(--red);">🔴 PE STRONG below: ${peLevel.toLocaleString('en-IN')}</span><br>` +
+      `${levelLine}<br>` +
       `Zone: ${zoneLine}`;
   }
 
