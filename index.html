@@ -933,22 +933,19 @@
 <!-- ST SIGNAL (now includes Strong Signal Alerts + CE/PE Zone wording) -->
 <div class="card theme-amber">
   <h2>⚡ Signal Command <button class="info-icon-btn" data-info="info-st">i</button></h2>
-  <div id="info-st" class="info-popover hidden">Shows your T-code (TNG/TNR = Nifty, TBG/TBR = BankNifty, TSG/TSR = Sensex) · G = CE, R = PE · Auto-calculated live from Supertrend(5m, 7, 3), updates automatically on flip — no manual input needed</div>
+  <div id="info-st" class="info-popover hidden">✅ = Strong CE · 🔻 = Strong PE · ⚠️ = Bias (not yet confirmed) · Auto-calculated live from Supertrend(5m, 7, 3), updates automatically on flip — no manual input needed</div>
   <div class="price-grid">
     <div class="price-box idx-nifty">
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
-      <div id="st-nifty-zone-label" style="font-size:0.65rem; margin-top:4px; font-weight:700; white-space:nowrap;"></div>
     </div>
     <div class="price-box idx-banknifty">
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
-      <div id="st-banknifty-zone-label" style="font-size:0.65rem; margin-top:4px; font-weight:700; white-space:nowrap;"></div>
     </div>
     <div class="price-box idx-sensex">
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
-      <div id="st-sensex-zone-label" style="font-size:0.65rem; margin-top:4px; font-weight:700; white-space:nowrap;"></div>
     </div>
   </div>
   <div style="display:flex; align-items:center; justify-content:space-between; margin-top:16px; margin-bottom:8px;">
@@ -1261,6 +1258,45 @@
     }
   }
 
+  // FIX (2026-09-03): Market Pulse tile font color was driven by `change = price -
+  // meta.chartPreviousClose` (see fetchViaProxy), and that Yahoo field was already found
+  // unreliable once before — off by 30-240+ points vs. the real previous close, which is why the
+  // Live Chart's own prev-close line was switched to a separate, more accurate source
+  // (fetchReliablePrevClose, reads real daily candles). That fix never reached tile colors —
+  // confirmed live: BANKNIFTY tile showed RED while genuinely up (+208.60 vs. Google Finance).
+  // Reused here, but fetched only ONCE per index per day (previous close doesn't change
+  // intraday) and cached day-scoped in localStorage, so this doesn't add 3 extra network calls
+  // every single 30s price refresh — only on the first refresh of the day per index.
+  const RELIABLE_PREVCLOSE_KEY = "signa365_reliable_prevclose";
+  function loadReliablePrevCloseCache() {
+    try {
+      const raw = localStorage.getItem(RELIABLE_PREVCLOSE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      if (parsed.dateKey !== todayIstKey()) return {};
+      return parsed.values || {};
+    } catch (e) { return {}; }
+  }
+  function saveReliablePrevCloseCache(values) {
+    try {
+      localStorage.setItem(RELIABLE_PREVCLOSE_KEY, JSON.stringify({ dateKey: todayIstKey(), values }));
+    } catch (e) { /* storage full/unavailable — just re-fetches next time, no crash */ }
+  }
+  const reliablePrevCloseCache = loadReliablePrevCloseCache(); // elId -> prevClose, day-scoped
+  async function ensureReliablePrevClose(elId, symbol) {
+    if (reliablePrevCloseCache[elId] != null) return reliablePrevCloseCache[elId];
+    try {
+      const val = await fetchReliablePrevClose(symbol);
+      if (val != null) {
+        reliablePrevCloseCache[elId] = val;
+        saveReliablePrevCloseCache(reliablePrevCloseCache);
+      }
+      return val;
+    } catch (e) {
+      return null; // caller falls back to fetchPrice's own (less reliable) change value
+    }
+  }
+
   async function updatePrices() {
     const statusEl = document.getElementById('price-status');
     // Fetch all three indices concurrently instead of one-after-another — requests still start
@@ -1270,7 +1306,12 @@
     const results = await Promise.all(Object.entries(symbols).map(async ([elId, symbol], i) => {
       await sleep(i * 250);
       try {
-        const { price, change } = await fetchPrice(symbol);
+        const { price, change: rawChange } = await fetchPrice(symbol);
+        // FIX (2026-09-03): prefer the reliable prevClose-derived change for color/points if
+        // available; fall back to fetchPrice's own (chartPreviousClose-based) value otherwise —
+        // never worse than before, just more accurate when the reliable fetch succeeds.
+        const reliablePC = await ensureReliablePrevClose(elId, symbol);
+        const change = reliablePC != null ? (price - reliablePC) : rawChange;
         const el = document.getElementById(elId);
         el.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
         checkBigMove(elId, currentPrice[elId], price); // FEATURE 1 — compare before overwriting
@@ -1384,11 +1425,6 @@
     "nifty-zone": "st-nifty-badge",
     "banknifty-zone": "st-banknifty-badge",
     "sensex-zone": "st-sensex-badge"
-  };
-  const zoneLabelIds = {
-    "nifty-zone": "st-nifty-zone-label",
-    "banknifty-zone": "st-banknifty-zone-label",
-    "sensex-zone": "st-sensex-zone-label"
   };
   const STRONG_THRESHOLD = 3; // consecutive 5-min candles to call it "Strong"
   const currentDirection = {}; // elId -> "CE" | "PE"
@@ -1521,25 +1557,20 @@
         const isCE = direction === "CE";
         const label = `${direction} ${strength}`;
         const icon = strength === "Strong" ? (isCE ? "✅" : "🔻") : "⚠️";
-        const stCode = stCodeMap[elId][direction];
+        const stCode = stCodeMap[elId][direction]; // still used internally by checkFlipAlert's flip-detection comparison, no longer displayed anywhere
 
         // Signal check card — updates automatically on flip. Color rule: CE always green, PE
         // always red — independent of Strong/Bias.
-        // FIX (2026-09-03): used to show the T-code + icon together (e.g. "TNR🔻") — admin found
-        // the code redundant (the plain "CE/PE Strong/Bias" text right below this badge already
-        // says the same thing) and asked to drop it, keeping just the icon (✅ Strong CE / 🔻
-        // Strong PE / ⚠️ Bias either side). `stCode` is kept computed just below (still used
-        // internally by checkFlipAlert's flip-detection comparison), just no longer displayed here.
+        // FIX (2026-09-03): used to be a two-line stack — a badge (T-code + icon, e.g. "TNR🔻")
+        // above a separate plain-text line ("PE Strong") — admin found this genuinely redundant
+        // (first the code got dropped from the badge, then admin's own mockup showed the badge
+        // and the text line merged into ONE pill: "PE Strong🔻"). The separate zone-label
+        // line/element is gone; its text now lives inside the badge itself.
         const badgeEl = document.getElementById(badgeIds[elId]);
         badgeEl.className = "badge";
         badgeEl.style.background = isCE ? "var(--green-soft)" : "var(--red-soft)";
         badgeEl.style.color = isCE ? "var(--green)" : "var(--red)";
-        badgeEl.textContent = icon;
-
-        // Secondary line: same CE/PE Bias/Strong wording shown in CE/PE Strong Zones card
-        const zoneLabelEl = document.getElementById(zoneLabelIds[elId]);
-        zoneLabelEl.textContent = label;
-        zoneLabelEl.style.color = isCE ? "var(--green)" : "var(--red)";
+        badgeEl.textContent = `${label}${icon}`;
 
         currentDirection[elId] = direction;
         currentStrength[elId] = strength;
@@ -1964,7 +1995,6 @@
 
   async function sendTelegramAlert(elId, direction) {
     const indexName = alertIndexNames[elId];
-    const stCode = stCodeMap[elId][direction];
     const emoji = direction === "CE" ? "✅" : "🔻";
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const spot = currentPrice[zoneToPriceEl[elId]];
@@ -1972,7 +2002,11 @@
     const spotStr = spot != null ? spot.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '—';
     const zoneStr = zone != null ? zone.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '—';
     const sideWord = direction === "CE" ? "above" : "below";
-    const text = `${emoji} ${indexName} STRONG ${direction} — ${spotStr} (${sideWord} zone ${zoneStr})\n${stCode} · held 15+ min · ${timeStr} IST`;
+    // FIX (2026-09-03, part 3 of T-code elimination): dropped the raw T-code (was "TNR · held
+    // 15+ min...") — "STRONG ${direction}" on the line above already says the same thing. Plain
+    // arrow instead (uncolored — Telegram can't color arbitrary text, only whole emoji).
+    const dirArrow = direction === "CE" ? "▲" : "▼";
+    const text = `${emoji} ${indexName} STRONG ${direction} — ${spotStr} (${sideWord} zone ${zoneStr})\n${dirArrow} held 15+ min · ${timeStr} IST`;
     sendTelegramText(text);
   }
 
@@ -3299,14 +3333,18 @@
     // Strong✅" — admin asked to combine them onto one Zone line with the code moved into
     // parens at the end instead: "Zone: PE Strong✅ (TNR)". Applies to all 3 indexes since this
     // is the one shared render function all of them go through.
+    // FIX (2026-09-03, part 2 of T-code elimination): the "(TNR)" parenthetical is gone too now
+    // — admin found the whole T-code system (TNG/TBG/TSG/TNR/TBR/TSR) unnecessary since the
+    // plain "PE Strong"/"CE Strong" text right before it already says the same thing. Replaced
+    // with a plain colored direction arrow (▲ green = CE, ▼ red = PE) instead of any code.
     let zoneLine;
     if (!strength || !direction) {
       zoneLine = "NEUTRAL➡️ (no live signal yet)";
     } else {
-      const stCode = stCodeMap[meta.zoneEl][direction];
       const bColor = direction === "CE" ? "var(--green)" : "var(--red)";
       const bIcon = strength === "Strong" ? "✅" : "⚠️";
-      zoneLine = `<span style="color:${bColor}; font-weight:700;">${direction} ${strength}${bIcon} (${stCode})</span>`;
+      const dirArrow = direction === "CE" ? "▲" : "▼";
+      zoneLine = `<span style="color:${bColor}; font-weight:700;">${direction} ${strength}${bIcon} ${dirArrow}</span>`;
     }
 
     // FIX (2026-09-03): the old "CE STRONG above / PE STRONG below" lines were just spot ± a
