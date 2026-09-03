@@ -782,13 +782,13 @@
     <span class="tagline">Live Mining</span>
   </div>
   <div style="display:flex; align-items:center; gap:10px; position:relative; flex-wrap:wrap;">
-    <button id="rules-toggle" class="ribbon-icon-btn" title="Rules">❔</button>
+    <button id="rules-toggle" class="ribbon-icon-btn" title="Discipline to Follow">❔</button>
     <div id="rules-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:14px 16px; z-index:300;">
-      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">📋 Rules</p>
+      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">📋 Discipline to Follow</p>
       <ul class="checklist" style="margin:0;">
         <li>Real trades allowed any trading day (Mon–Fri)</li>
         <li>Max ₹10–15K capital per trade</li>
-        <li>Daily stop: +₹10K profit or -₹5K loss</li>
+        <li>Daily stop: +₹20K profit or -₹5K loss</li>
         <li>Same day exit only — no overnight positions</li>
         <li>No averaging, no revenge trading</li>
       </ul>
@@ -802,7 +802,7 @@
       </div>
       <div style="margin-top:12px;">
         <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--muted); margin-bottom:3px;">
-          <span>-₹5K</span><span>Stop Loss / Target</span><span>+₹10K</span>
+          <span>-₹5K</span><span>Stop Loss / Target</span><span>+₹20K</span>
         </div>
         <div style="height:8px; background:var(--panel-alt); border:1px solid var(--border); border-radius:5px; overflow:hidden;">
           <div id="pnl-bar" style="height:100%; width:50%; background:var(--muted); transition: width 0.3s ease, background 0.3s ease;"></div>
@@ -1411,35 +1411,10 @@
   updateTimeWindow();
   setInterval(updateTimeWindow, 1000);
 
-  // ---- FEATURE 4: TIME WINDOW ALERTS (new, additive) ----
-  // Fires each listed IST time once per trading day via Telegram. Skips holidays/weekends
-  // (reuses the existing isTodayHoliday/isWeekend checks). Checked every 20s so an exact
-  // minute is never missed by drift, but each slot only ever fires once per calendar day.
-  const TIME_WINDOW_ALERTS = [
-    { h: 9,  m: 25, text: "Market opens in 5 mins. Be ready." },
-    { h: 9,  m: 30, text: "Market open. Watch for signals." },
-    { h: 10, m: 30, text: "Best entry window closing." },
-    { h: 14, m: 0,  text: "Expiry momentum window open." },
-    { h: 15, m: 0,  text: "Last 30 mins. No new entries." },
-    { h: 15, m: 15, text: "Market closing. Exit all positions." }
-  ];
-  const firedTimeAlerts = new Set(); // "YYYY-M-D-H:M" keys — grows unbounded only across a single day's slots, harmless
-
-  function checkTimeWindowAlerts() {
-    if (isTodayHoliday() || isWeekend()) return;
-    const istDate = getIstDate();
-    const h = istDate.getHours(), m = istDate.getMinutes();
-    const dayKey = `${istDate.getFullYear()}-${istDate.getMonth()}-${istDate.getDate()}`;
-    TIME_WINDOW_ALERTS.forEach(slot => {
-      if (h !== slot.h || m !== slot.m) return;
-      const key = `${dayKey}-${slot.h}:${slot.m}`;
-      if (firedTimeAlerts.has(key)) return;
-      firedTimeAlerts.add(key);
-      sendTelegramText(`⏰ ${String(slot.h).padStart(2, '0')}:${String(slot.m).padStart(2, '0')} IST — ${slot.text}`);
-    });
-  }
-  checkTimeWindowAlerts();
-  setInterval(checkTimeWindowAlerts, 20000);
+  // ---- FEATURE 4: TIME WINDOW ALERTS ---- (moved further down, after alertHistory/renderAlerts
+  // are declared — see below the Strong Signal section — since the new 3:16 PM slot needs to
+  // push into the Alerts card too, and doing that from here would risk a TDZ error on the
+  // immediate first call below if the page happened to load at exactly that minute.)
 
   // ---- EXPIRY DAY TAGS (checked once — the day doesn't change mid-session) ----
   ['nifty', 'banknifty', 'sensex'].forEach(key => {
@@ -1604,7 +1579,7 @@
   }
 
   // ---- DAILY P&L TRACKER ----
-  const DAILY_TARGET = 10000, DAILY_STOP = -5000;
+  const DAILY_TARGET = 20000, DAILY_STOP = -5000; // FEATURE (2026-09-03): admin raised the daily target 10K -> 20K; stop-loss unchanged
 
   function updatePnL() {
     const trades = tjLoad();
@@ -1698,6 +1673,51 @@
   const alertHistory = [];
   const MAX_ALERTS = 25;
 
+  // ---- FEATURE 4: TIME WINDOW ALERTS (new, additive) ----
+  // Fires each listed IST time once per trading day via Telegram. Skips holidays/weekends
+  // (reuses the existing isTodayHoliday/isWeekend checks). Checked every 20s so an exact
+  // minute is never missed by drift, but each slot only ever fires once per calendar day.
+  // Moved down here (was right after Feature 3 flip-guard code, much earlier in the file) so the
+  // new 3:16 PM slot below can safely push into alertHistory/renderAlerts — both are declared
+  // just above this point now, so no risk of referencing them before they exist.
+  const TIME_WINDOW_ALERTS = [
+    { h: 9,  m: 25, text: "Market opens in 5 mins. Be ready." },
+    { h: 9,  m: 30, text: "Market open. Watch for signals." },
+    { h: 10, m: 30, text: "Best entry window closing." },
+    { h: 14, m: 0,  text: "Expiry momentum window open." },
+    { h: 15, m: 0,  text: "Last 30 mins. No new entries." },
+    { h: 15, m: 15, text: "Market closing. Exit all positions." },
+    // FEATURE (2026-09-03): admin's "Try Dual Buy" alert, near close, one-month trial only —
+    // expiresAt makes it auto-stop firing on its own after 30 days, no manual step needed to
+    // remove it later. showInApp: true also pushes it into the Alerts card (unlike the slots
+    // above, which stay Telegram-only) since admin asked for this one in both "bot" and Telegram.
+    { h: 15, m: 16, text: "✌️⬆️Try Dual Buy⬇️🚀", expiresAt: "2026-10-03", showInApp: true }
+  ];
+  const firedTimeAlerts = new Set(); // "YYYY-M-D-H:M" keys — grows unbounded only across a single day's slots, harmless
+
+  function checkTimeWindowAlerts() {
+    if (isTodayHoliday() || isWeekend()) return;
+    const istDate = getIstDate();
+    const h = istDate.getHours(), m = istDate.getMinutes();
+    const dayKey = `${istDate.getFullYear()}-${istDate.getMonth()}-${istDate.getDate()}`;
+    const isoToday = `${istDate.getFullYear()}-${String(istDate.getMonth() + 1).padStart(2, '0')}-${String(istDate.getDate()).padStart(2, '0')}`;
+    TIME_WINDOW_ALERTS.forEach(slot => {
+      if (h !== slot.h || m !== slot.m) return;
+      if (slot.expiresAt && isoToday >= slot.expiresAt) return; // one-month trial slot — auto-stopped itself
+      const key = `${dayKey}-${slot.h}:${slot.m}`;
+      if (firedTimeAlerts.has(key)) return;
+      firedTimeAlerts.add(key);
+      sendTelegramText(`⏰ ${String(slot.h).padStart(2, '0')}:${String(slot.m).padStart(2, '0')} IST — ${slot.text}`);
+      if (slot.showInApp) {
+        alertHistory.unshift({ ts: Date.now(), isTimeWindow: true, text: slot.text });
+        if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
+        renderAlerts();
+      }
+    });
+  }
+  checkTimeWindowAlerts();
+  setInterval(checkTimeWindowAlerts, 20000);
+
   document.getElementById('sound-enable-btn').addEventListener('click', () => {
     const btn = document.getElementById('sound-enable-btn');
     if (!soundEnabled) {
@@ -1747,6 +1767,15 @@
       const isCE = a.direction === "CE";
       const color = isCE ? "var(--green)" : "var(--red)";
       const timeStr = new Date(a.ts).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      if (a.isTimeWindow) {
+        // FEATURE: time-window reminders (currently just the 3:16 PM "Try Dual Buy" slot) shown
+        // in the Alerts card too, not just Telegram — no index/direction, just the plain text.
+        return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
+          <span style="font-size:1.3rem;">⏰</span>
+          <div style="flex:1; font-weight:700;">${a.text}</div>
+          <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
+        </div>`;
+      }
       if (a.isFlip) {
         return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
           <span style="font-size:1.3rem;">🔄</span>
@@ -1783,6 +1812,7 @@
   // Signal Confirmed and Flip entries are untouched by this, they still stay until pushed off by
   // MAX_ALERTS like before.
   const ALERT_BIG_MOVE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+  const FLIP_SPIN_MS = 2 * 60 * 1000; // how long the revolving chart animation plays after a flip
   function pruneExpiredAlerts() {
     let changed = false;
     for (let i = alertHistory.length - 1; i >= 0; i--) {
@@ -1947,6 +1977,7 @@
       flipEventLog[flipPriceEl].push({ time: Date.now(), isUp: isCE });
       persistFlipLog();
     }
+    startFlipSpinLoop(); // FEATURE: keeps the chart's revolving flip animation actually spinning (see flipMarkers plugin)
 
     previousStCode[elId] = stCode;
   }
@@ -2909,19 +2940,18 @@
     const direction = currentDirection[meta.zoneEl];
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-    // Indicator 1: your T-code (TNG/TNR/TBG/TBR/TSG/TSR)
-    // Indicator 2: CE/PE Bias or Strong
-    let codeLine, biasLine;
+    // FIX (2026-09-03): used to be two separate labeled segments, "Code: TNR   Zone: PE
+    // Strong✅" — admin asked to combine them onto one Zone line with the code moved into
+    // parens at the end instead: "Zone: PE Strong✅ (TNR)". Applies to all 3 indexes since this
+    // is the one shared render function all of them go through.
+    let zoneLine;
     if (!strength || !direction) {
-      codeLine = "—";
-      biasLine = "NEUTRAL➡️ (no live signal yet)";
+      zoneLine = "NEUTRAL➡️ (no live signal yet)";
     } else {
       const stCode = stCodeMap[meta.zoneEl][direction];
-      const codeColor = direction === "CE" ? "var(--green)" : "var(--red)";
-      codeLine = `<span style="color:${codeColor}; font-weight:700;">${stCode}</span>`;
       const bColor = direction === "CE" ? "var(--green)" : "var(--red)";
       const bIcon = strength === "Strong" ? "✅" : "⚠️";
-      biasLine = `<span style="color:${bColor}; font-weight:700;">${direction} ${strength}${bIcon}</span>`;
+      zoneLine = `<span style="color:${bColor}; font-weight:700;">${direction} ${strength}${bIcon} (${stCode})</span>`;
     }
 
     // Animated flip badge — shows for 60s after a flip on this index
@@ -2936,7 +2966,7 @@
       `📍 ${meta.label}: ${spot.toLocaleString('en-IN')}<br>` +
       `<span style="color:var(--green);">🟢 CE STRONG above: ${ceLevel.toLocaleString('en-IN')}</span><br>` +
       `<span style="color:var(--red);">🔴 PE STRONG below: ${peLevel.toLocaleString('en-IN')}</span><br>` +
-      `Code: ${codeLine} &nbsp; Zone: ${biasLine}`;
+      `Zone: ${zoneLine}`;
   }
 
   document.getElementById('spot-set-btn').addEventListener('click', () => {
@@ -3107,6 +3137,29 @@
   let liveChart = null;
   let currentlyDisplayedKey = null; // which index's chart is actually on screen right now
 
+  // FEATURE (2026-09-03): keeps the flipMarkers plugin's revolving 🔄 icon actually spinning —
+  // Chart.js only redraws the canvas when told to, so without this the icon would just sit at
+  // whatever angle it was drawn at during the last normal 30s refresh. `update('none')` is a
+  // cheap redraw (skips animations/scale recompute, just repaints with the same data) called a
+  // few times a second while at least one flip anywhere is still inside its 2-minute window; the
+  // loop stops itself the moment nothing is left to animate, so it doesn't run all session.
+  let flipSpinTimer = null;
+  function startFlipSpinLoop() {
+    if (flipSpinTimer) return; // already running
+    flipSpinTimer = setInterval(() => {
+      if (liveChart) liveChart.update('none');
+      const stillSpinning = Object.values(flipEventLog).some(list =>
+        list.some(mk => Date.now() - mk.time < FLIP_SPIN_MS)
+      );
+      if (!stillSpinning) { clearInterval(flipSpinTimer); flipSpinTimer = null; }
+    }, 150);
+  }
+  // Resume the spin on page load too, in case a flip from just before a reload/reopen is still
+  // inside its 2-minute window — flipEventLog survives reloads via localStorage, so it knows.
+  if (Object.values(flipEventLog).some(list => list.some(mk => Date.now() - mk.time < FLIP_SPIN_MS))) {
+    startFlipSpinLoop();
+  }
+
   async function updateLiveChart() {
     const placeholderEl = document.getElementById('chart-placeholder');
     const wrapEl = document.getElementById('chart-wrap');
@@ -3226,7 +3279,7 @@
         const mins = ist.getHours() * 60 + ist.getMinutes();
         const slotIdx = Math.round((mins - SESSION_START_MIN) / SLOT_STEP_MIN);
         if (slotIdx < 0 || slotIdx >= slotCount) return;
-        flipMarkers.push({ slotIdx, isUp: ev.isUp });
+        flipMarkers.push({ slotIdx, isUp: ev.isUp, time: ev.time });
       });
 
       const ctx = document.getElementById('live-chart').getContext('2d');
@@ -3347,6 +3400,23 @@
               c.font = '8px -apple-system, Segoe UI, sans-serif';
               const labelY = mk.isUp ? arrowY - 12 : arrowY + 11;
               c.fillText(mk.isUp ? '(Call-CE)' : '(Put-PE)', x, labelY);
+              // FEATURE (2026-09-03): a small revolving icon above the flip point for 2 minutes
+              // after a flip, separate from the (Call-CE)/(Put-PE) arrow above which stays
+              // permanently — purely a temporary "something just happened here" flourish.
+              // Rotation angle is driven by real elapsed time, and the animation loop that keeps
+              // this redrawing (see checkFlipAlert) stops itself once nothing is left to animate.
+              if (mk.time != null && Date.now() - mk.time < FLIP_SPIN_MS) {
+                const spinY = (mk.isUp ? labelY - 16 : labelY + 16);
+                const angle = ((Date.now() - mk.time) / 1000) * (Math.PI * 1.2); // ~1 turn per ~5s
+                c.save();
+                c.translate(x, spinY);
+                c.rotate(angle);
+                c.font = '14px -apple-system, Segoe UI, sans-serif';
+                c.textAlign = 'center';
+                c.textBaseline = 'middle';
+                c.fillText('🔄', 0, 0);
+                c.restore();
+              }
             });
             c.restore();
           }
