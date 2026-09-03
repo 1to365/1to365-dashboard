@@ -460,24 +460,6 @@
     padding: 14px 0 6px;
   }
 
-  #big-move-toast {
-    position: fixed;
-    top: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 500;
-    padding: 10px 18px;
-    border-radius: 12px;
-    font-weight: 800;
-    font-size: 0.88rem;
-    color: #fff;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-    max-width: calc(100vw - 24px);
-    text-align: center;
-  }
-  #big-move-toast.hidden { display: none; }
-  #big-move-toast.ce { background: var(--green); }
-  #big-move-toast.pe { background: var(--red); }
 
   /* ---- MARKET CLOSED WATERMARK ---- */
   #market-closed-overlay {
@@ -849,7 +831,6 @@
 </header>
 
 <div id="market-closed-overlay" class="hidden">Market Closed</div>
-<div id="big-move-toast" class="hidden"></div>
 
 <div class="dashboard">
 
@@ -1075,10 +1056,11 @@
   const BIG_MOVE_THRESHOLD = { "sensex-price": 100, "nifty-price": 50, "banknifty-price": 75 };
   const priceIndexNames = { "sensex-price": "SENSEX", "nifty-price": "NIFTY", "banknifty-price": "BANKNIFTY" };
 
-  // Today's Big Move Alert events per index, kept so the live chart can mark where they fired
-  // (see the bigMoveMarkers chart plugin below) — for the whole trading day, surviving a page
-  // reload/reopen too (localStorage, not just an in-memory array), keyed to today's IST date so
-  // it naturally starts empty again the next day without growing forever.
+  // Today's Big Move Alert events per index — no longer drives the chart arrows (see
+  // flipEventLog below for that), but still used for the Alerts card entries and Telegram — for
+  // the whole trading day, surviving a page reload/reopen too (localStorage, not just an
+  // in-memory array), keyed to today's IST date so it naturally starts empty again the next day
+  // without growing forever.
   const BIG_MOVE_LOG_KEY = "signa365_bigmove_log";
   function todayIstKey() {
     const d = getIstDate();
@@ -1103,6 +1085,31 @@
     try {
       localStorage.setItem(BIG_MOVE_LOG_KEY, JSON.stringify({ dateKey: todayIstKey(), log: bigMoveAlertLog }));
     } catch (e) { /* storage full/unavailable — chart markers just won't survive a reload today */ }
+  }
+
+  // Today's confirmed Code-flip events per index (TG<->TR) — same day-scoped, localStorage-backed
+  // pattern as bigMoveAlertLog above, but this is what the chart arrows are now driven by instead
+  // of Big Move Alert (see checkFlipAlert below, which pushes into this on every confirmed flip).
+  const FLIP_LOG_KEY = "signa365_flip_log";
+  function emptyFlipLog() {
+    return { "sensex-price": [], "nifty-price": [], "banknifty-price": [] };
+  }
+  function loadFlipLog() {
+    try {
+      const raw = localStorage.getItem(FLIP_LOG_KEY);
+      if (!raw) return emptyFlipLog();
+      const parsed = JSON.parse(raw);
+      if (parsed.dateKey !== todayIstKey()) return emptyFlipLog();
+      return Object.assign(emptyFlipLog(), parsed.log || {});
+    } catch (e) {
+      return emptyFlipLog();
+    }
+  }
+  const flipEventLog = loadFlipLog();
+  function persistFlipLog() {
+    try {
+      localStorage.setItem(FLIP_LOG_KEY, JSON.stringify({ dateKey: todayIstKey(), log: flipEventLog }));
+    } catch (e) { /* storage full/unavailable — chart arrows just won't survive a reload today */ }
   }
 
   // FIX (Big Move blind spot on gradual moves): the original check only ever compared this
@@ -1155,22 +1162,17 @@
     const spanStr = isRolling ? " (15-min)" : "";
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     sendTelegramText(`🚨 ${priceIndexNames[elId]} BIG MOVE${spanStr} ${sideIcon} ${sideWord} ${ptsStr} · ${timeStr} IST`);
-    showBigMoveToast(`🚨 ${priceIndexNames[elId]} BIG MOVE${spanStr} ${sideIcon} ${sideWord} ${ptsStr}`, isUp);
+    // FEATURE: Big Move used to pop up as its own big banner box on top of the dashboard — that's
+    // gone now. It shows as an entry in the regular Alerts card instead (same list Strong Signal
+    // and Flip use), and auto-clears itself after ALERT_BIG_MOVE_TTL_MS (see pruneExpiredAlerts)
+    // instead of staying in the list indefinitely like Strong Signal/Flip entries do.
+    alertHistory.unshift({ index: priceIndexNames[elId], direction: isUp ? "CE" : "PE", ts: Date.now(), isBigMove: true, ptsStr, spanStr });
+    if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
+    renderAlerts();
     if (bigMoveAlertLog[elId]) {
       bigMoveAlertLog[elId].push({ time: Date.now(), isUp });
       persistBigMoveLog();
     }
-  }
-
-  // Same alert, shown inside the dashboard itself (not just Telegram) — auto-hides after 6s.
-  let bigMoveToastTimer = null;
-  function showBigMoveToast(text, isUp) {
-    const el = document.getElementById('big-move-toast');
-    el.textContent = text;
-    el.classList.remove('ce', 'pe', 'hidden');
-    el.classList.add(isUp ? 'ce' : 'pe');
-    clearTimeout(bigMoveToastTimer);
-    bigMoveToastTimer = setTimeout(() => el.classList.add('hidden'), 6000);
   }
 
   async function updatePrices() {
@@ -1713,6 +1715,17 @@
           <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
         </div>`;
       }
+      if (a.isBigMove) {
+        // FEATURE: Big Move now lives here instead of its own popup box — auto-clears itself
+        // after ALERT_BIG_MOVE_TTL_MS (see pruneExpiredAlerts), unlike Strong Signal/Flip rows.
+        return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
+          <span style="font-size:1.3rem;">🚨</span>
+          <div style="flex:1;">
+            <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">BIG MOVE ${a.direction} ${a.ptsStr}${a.spanStr}</span>
+          </div>
+          <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
+        </div>`;
+      }
       const arrow = isCE ? "▲" : "▼";
       return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
         <span style="color:${color}; font-size:1.3rem; font-weight:800;">${arrow}</span>
@@ -1723,6 +1736,24 @@
       </div>`;
     }).join('');
   }
+
+  // FEATURE: Big Move Alerts clear themselves out of the Alerts card after a set time (admin
+  // asked for this to keep the list from accumulating every Big Move for the whole day) — Strong
+  // Signal Confirmed and Flip entries are untouched by this, they still stay until pushed off by
+  // MAX_ALERTS like before.
+  const ALERT_BIG_MOVE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+  function pruneExpiredAlerts() {
+    let changed = false;
+    for (let i = alertHistory.length - 1; i >= 0; i--) {
+      const a = alertHistory[i];
+      if (a.isBigMove && (Date.now() - a.ts > ALERT_BIG_MOVE_TTL_MS)) {
+        alertHistory.splice(i, 1);
+        changed = true;
+      }
+    }
+    if (changed) renderAlerts();
+  }
+  setInterval(pruneExpiredAlerts, 30000);
 
   // ---- FEATURE 3: STRONG SIGNAL CONFIRMATION (new) ----
   // Same pattern as the flip-confirmation fix: a direction must show "Strong" on 2 consecutive
@@ -1855,6 +1886,16 @@
     if (lastSpotKey && spotIndexMeta[lastSpotKey].zoneEl === elId) {
       renderSpotResult(lastSpotKey, currentPrice[spotIndexMeta[lastSpotKey].priceEl]);
     }
+
+    // FEATURE: chart arrows are keyed to actual Code flips now (TG<->TR), not Big Move Alert —
+    // this is what the (Call-CE)/(Put-PE) chart markers read from, so they always agree with the
+    // ST line's own color instead of sometimes showing the opposite side mid-trend.
+    const flipPriceEl = zoneToPriceEl[elId];
+    if (flipPriceEl && flipEventLog[flipPriceEl]) {
+      flipEventLog[flipPriceEl].push({ time: Date.now(), isUp: isCE });
+      persistFlipLog();
+    }
+
     previousStCode[elId] = stCode;
   }
 
@@ -3093,18 +3134,20 @@
         trendBySlot[slotIdx] = trend[i];
       });
 
-      // Big Move Alert markers — same idea as the flip arrows above, but placed at the exact
-      // time(s) a BIG MOVE ALERT actually fired for this index today (from bigMoveAlertLog,
-      // populated by checkBigMove), plotted against the price line rather than the Supertrend
-      // line since a Big Move is a price event, not a trend-color event.
-      const bigMoveMarkers = [];
-      (bigMoveAlertLog[meta.priceEl] || []).forEach(ev => {
+      // Chart arrow markers — placed at the exact time(s) the Code actually flipped (TG<->TR) for
+      // this index today (from flipEventLog, populated by checkFlipAlert), plotted against the
+      // price line. FEATURE: these used to be driven by Big Move Alert instead, which could show
+      // an arrow in the opposite color from the ST line mid-trend (a big pullback that didn't
+      // actually flip the trend) — confusing at a glance. Now an arrow only appears when the
+      // trend itself genuinely changes color, so it always agrees with the ST line.
+      const flipMarkers = [];
+      (flipEventLog[meta.priceEl] || []).forEach(ev => {
         const ist = toIstDate(ev.time);
         if (ist.getFullYear() !== today.getFullYear() || ist.getMonth() !== today.getMonth() || ist.getDate() !== today.getDate()) return;
         const mins = ist.getHours() * 60 + ist.getMinutes();
         const slotIdx = Math.round((mins - SESSION_START_MIN) / SLOT_STEP_MIN);
         if (slotIdx < 0 || slotIdx >= slotCount) return;
-        bigMoveMarkers.push({ slotIdx, isUp: ev.isUp });
+        flipMarkers.push({ slotIdx, isUp: ev.isUp });
       });
 
       const ctx = document.getElementById('live-chart').getContext('2d');
@@ -3197,15 +3240,15 @@
             c.restore();
           }
         }, {
-          id: 'bigMoveMarkers',
+          id: 'flipMarkers',
           afterDraw(chart) {
-            if (!bigMoveMarkers.length) return;
+            if (!flipMarkers.length) return;
             const xScale = chart.scales.x;
             const yScale = chart.scales.y;
             const c = chart.ctx;
             c.save();
             c.textAlign = 'center';
-            bigMoveMarkers.forEach(mk => {
+            flipMarkers.forEach(mk => {
               const yVal = priceData[mk.slotIdx];
               if (yVal == null) return;
               const x = xScale.getPixelForValue(mk.slotIdx);
@@ -3214,9 +3257,9 @@
               c.font = 'bold 20px -apple-system, Segoe UI, sans-serif';
               const arrowY = mk.isUp ? yPixel - 14 : yPixel + 26;
               c.fillText(mk.isUp ? '▲' : '▼', x, arrowY);
-              // FEATURE: (Call-CE)/(Put-PE) label paired with each Big Move arrow, same isUp
-              // flag the arrow itself already uses — smallest font that still reads clearly next
-              // to the arrow, same side offset (above for CE, below for PE).
+              // (Call-CE)/(Put-PE) label paired with each flip arrow, same isUp flag the arrow
+              // itself already uses — smallest font that still reads clearly next to the arrow,
+              // same side offset (above for CE, below for PE).
               c.font = '8px -apple-system, Segoe UI, sans-serif';
               const labelY = mk.isUp ? arrowY - 12 : arrowY + 11;
               c.fillText(mk.isUp ? '(Call-CE)' : '(Put-PE)', x, labelY);
