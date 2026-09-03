@@ -160,6 +160,49 @@
     gap: 16px;
   }
 
+  /* PAGE NAV (2026-09-03): admin's "page 1 / page 2" split — page 1 keeps the existing dashboard,
+     page 2 holds the Admin tile only, moved off page 1. Swipe left/right or tap a tab to switch.
+     Only shown at all when logged in as admin (page 2 has nothing for a non-admin user). */
+  #page-nav {
+    display: none;
+    gap: 8px;
+    margin: 0 0 14px;
+  }
+  #page-nav.show { display: flex; }
+  #page-nav button {
+    flex: 1;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #page-nav button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  #pages-viewport {
+    overflow: hidden;
+    position: relative;
+  }
+  #pages-track {
+    display: flex;
+    width: 200%;
+    transition: transform 0.25s ease;
+  }
+  #pages-track .page {
+    width: 50%;
+    flex-shrink: 0;
+    min-width: 0;
+  }
+  #pages-track .page + .page {
+    padding-left: 16px;
+  }
+
   .card {
     background: #f3f4f6;
     border: 1px solid var(--border);
@@ -832,6 +875,17 @@
 
 <div id="market-closed-overlay" class="hidden">Market Closed</div>
 
+<!-- PAGE NAV (2026-09-03): admin-only tab strip to switch between page 1 (dashboard) and page 2
+     (admin tools). Swipe on #pages-viewport works too — see goToPage()/swipe handlers below. -->
+<div id="page-nav">
+  <button id="page-nav-1" class="active" type="button">📊 Dashboard</button>
+  <button id="page-nav-2" type="button">👑 Admin</button>
+</div>
+
+<div id="pages-viewport">
+<div id="pages-track">
+
+<div class="page" id="page-1">
 <div class="dashboard">
 
 <!-- LIVE PRICES -->
@@ -916,9 +970,15 @@
   </div>
 </div>
 
+</div>
+</div>
+
+<div class="page" id="page-2">
+<div class="dashboard">
+
 <!-- ACCOUNTS: admin-only card — hidden by default, shown/hidden by applyRoleUI() once role is
-     known. Used to be a floating dropdown off a header button; moved here so it's just a
-     normal tile at the bottom of the dashboard, always visible while logged in as admin. -->
+     known. Moved to Page 2 (2026-09-03) — page 1 stays the day-to-day dashboard, page 2 is where
+     all admin activity happens, per admin's request to park admin-only work off the main page. -->
 <div class="card hidden" id="admin-panel" style="grid-column: 1 / -1;">
   <h2 id="admin-panel-toggle" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
     <span>👑 Admin</span>
@@ -928,17 +988,35 @@
     <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
     <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
     <input id="admin-new-pin" type="text" inputmode="numeric" maxlength="4" placeholder="Starter PIN (4 digits)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+    <!-- FEATURE (2026-09-03): per-user PIN validity (was a flat 30 days for everyone) — pick it
+         at creation time, e.g. a 7-day trial vs a 60/90-day paid plan. Stored as pinValidityDays
+         on the user doc; defaults to 30 if a doc from before this feature has none. -->
+    <select id="admin-new-pin-validity" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+      <option value="7">PIN valid 7 days (trial)</option>
+      <option value="30" selected>PIN valid 30 days</option>
+      <option value="60">PIN valid 60 days</option>
+      <option value="90">PIN valid 90 days</option>
+    </select>
     <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
     <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
 
     <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
       <p style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin:0;">👥 Manage Users</p>
+      <button id="admin-export-csv-btn" style="padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; font-weight:700; cursor:pointer;">⬇️ Export CSV</button>
     </div>
+    <!-- FEATURE (2026-09-03): summary strip (active/expiring/expired/disabled counts) + search box,
+         both driven off the same users array loadAdminUserList() already fetches. -->
+    <div id="admin-user-summary" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; font-size:0.7rem;"></div>
+    <input id="admin-user-search" type="text" placeholder="🔍 Search by username…" style="width:100%; box-sizing:border-box; margin-bottom:8px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
     <div id="admin-user-list"></div>
   </div>
 </div>
 
+</div>
+</div>
+
+</div>
 </div>
 
 <footer>Signa365 · Personal Trading System · Not financial advice</footer>
@@ -1482,6 +1560,7 @@
   // ACCOUNTS: each signed-in user gets their own localStorage bucket and Firestore subcollection,
   // so P&L stays private per account instead of one shared "trades" collection.
   let currentUid = null, currentRole = null, currentUsername = null;
+  let mySessionStartedAt = null; // FEATURE (2026-09-03): see the Force Logout comment near onAuthStateChanged
   function currentTjKey() {
     return currentUid ? ("signa365_trades_" + currentUid) : TJ_KEY;
   }
@@ -2021,7 +2100,15 @@
   // user set a fresh PIN. This stays true even on expiry, on purpose, so a user can't just tap
   // through and mint themselves a new PIN unsupervised. serverPinCode/serverPinIssuedAt hold the
   // local PIN hash + set-timestamp; pinResetUnlockedAt holds the admin's most recent unlock.
-  const PIN_VALID_MS = 30 * 24 * 60 * 60 * 1000; // one month
+  const PIN_VALID_DAYS_FALLBACK = 30; // used only if this account has no pinValidityDays of its own
+  // FEATURE (2026-09-03): per-user PIN validity (was a flat 30 days for everyone) — set by admin
+  // per account (7-day trial vs 60/90-day paid etc.), read from Firestore at login. Kept as its
+  // own variable rather than referencing the admin panel's constant of the same idea, since that's
+  // declared much later in the file and this code path runs before it would exist.
+  let myPinValidityDays = null;
+  function myPinValidMs() {
+    return (myPinValidityDays || PIN_VALID_DAYS_FALLBACK) * 24 * 60 * 60 * 1000;
+  }
   let serverPinCode = null;
   let serverPinIssuedAt = null;
   let pinResetUnlockedAt = null;
@@ -2034,7 +2121,7 @@
 
   function pinDaysLeft() {
     if (!serverPinIssuedAt) return null;
-    const msLeft = (serverPinIssuedAt + PIN_VALID_MS) - Date.now();
+    const msLeft = (serverPinIssuedAt + myPinValidMs()) - Date.now();
     return Math.ceil(msLeft / (24 * 60 * 60 * 1000));
   }
 
@@ -2084,7 +2171,7 @@
       lockErrorEl.textContent = "";
       return;
     }
-    const expired = Date.now() - serverPinIssuedAt > PIN_VALID_MS;
+    const expired = Date.now() - serverPinIssuedAt > myPinValidMs();
     if (expired && !pinResetIsUnlocked()) {
       showPinExpiredScreen();
     } else if (expired) {
@@ -2134,6 +2221,10 @@
           localStorage.setItem(userPinSetKey(currentUid), String(setAt));
           serverPinCode = hash;
           serverPinIssuedAt = setAt;
+          // FEATURE (2026-09-03): also sync pinSetAt to Firestore — this used to live only in
+          // this device's own localStorage, invisible to admin. Best-effort; a failed write just
+          // means admin's PIN-status view lags until the next successful sync, nothing breaks.
+          if (fbDb) fbDb.collection('users').doc(currentUid).update({ pinSetAt: setAt }).catch(() => {});
         } else {
           localStorage.setItem(PIN_KEY, hash);
         }
@@ -2376,8 +2467,14 @@
   const adminUserListEl = document.getElementById('admin-user-list');
   const adminNewUsernameEl = document.getElementById('admin-new-username');
   const adminNewPinEl = document.getElementById('admin-new-pin');
+  const adminNewPinValidityEl = document.getElementById('admin-new-pin-validity');
   const adminAddUserBtn = document.getElementById('admin-add-user-btn');
   const adminAddStatusEl = document.getElementById('admin-add-status');
+  const adminExportCsvBtn = document.getElementById('admin-export-csv-btn');
+  const adminUserSummaryEl = document.getElementById('admin-user-summary');
+  const adminUserSearchEl = document.getElementById('admin-user-search');
+  let adminUsersCache = []; // last list fetched by loadAdminUserList() — reused by search filter and CSV export
+  const DEFAULT_PIN_VALIDITY_DAYS = 30; // fallback for accounts created before per-user validity existed
 
   // Admin tile is collapsible — collapsed by default so it doesn't dominate the bottom of the
   // page; tap the header to expand/collapse.
@@ -2388,6 +2485,42 @@
     const collapsed = adminPanelBodyEl.classList.toggle('hidden');
     adminPanelCaretEl.textContent = collapsed ? '▸' : '▾';
   });
+
+  // PAGE NAV (2026-09-03): page 1 = dashboard (as before), page 2 = Admin tile only. Tab buttons
+  // and swipe both call goToPage(); nav strip itself only shows for admin (see applyRoleUI below —
+  // page 2 has nothing for a non-admin user, so there's nothing to swipe to).
+  const pageNavEl = document.getElementById('page-nav');
+  const pageNavBtns = [document.getElementById('page-nav-1'), document.getElementById('page-nav-2')];
+  const pagesViewportEl = document.getElementById('pages-viewport');
+  const pagesTrackEl = document.getElementById('pages-track');
+  let currentPageIdx = 0;
+  function goToPage(idx) {
+    currentPageIdx = idx === 1 ? 1 : 0;
+    pagesTrackEl.style.transform = `translateX(-${currentPageIdx * 50}%)`;
+    pageNavBtns.forEach((btn, i) => btn.classList.toggle('active', i === currentPageIdx));
+  }
+  pageNavBtns[0].addEventListener('click', () => goToPage(0));
+  pageNavBtns[1].addEventListener('click', () => goToPage(1));
+
+  // Swipe left/right on the pages area. Simple threshold-based touch handler — ignores mostly-
+  // vertical swipes (normal scrolling) and only acts once per gesture.
+  let swipeStartX = null, swipeStartY = null;
+  pagesViewportEl.addEventListener('touchstart', (e) => {
+    if (!e.touches || e.touches.length !== 1) return;
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+  }, { passive: true });
+  pagesViewportEl.addEventListener('touchend', (e) => {
+    if (swipeStartX == null) return;
+    const touch = e.changedTouches && e.changedTouches[0];
+    if (!touch) { swipeStartX = null; return; }
+    const dx = touch.clientX - swipeStartX;
+    const dy = touch.clientY - swipeStartY;
+    swipeStartX = null; swipeStartY = null;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return; // too short, or more vertical than horizontal
+    if (!pageNavEl.classList.contains('show')) return; // no page 2 to swipe to (non-admin)
+    if (dx < 0) goToPage(1); else goToPage(0);
+  }, { passive: true });
 
   const logoutBtn = document.getElementById('logout-btn');
   const currentUsernameEl = document.getElementById('current-username');
@@ -2446,7 +2579,12 @@
     // else based on role. Refresh its contents the moment admin status is established instead
     // of waiting for a toggle click that no longer exists.
     adminPanelEl.classList.toggle('hidden', !isAdmin);
-    if (isAdmin) { loadAdminUserList(); computeNextUsername(); }
+    if (isAdmin) { loadAdminUserList(); computeNextUsername(); startAdminExpiryPingLoop(); }
+    else { stopAdminExpiryPingLoop(); }
+    // PAGE NAV: only admin has anything on page 2 — show the tab strip only for admin, and if a
+    // non-admin somehow ends up on page 2 (e.g. role changes mid-session), snap back to page 1.
+    pageNavEl.classList.toggle('show', isAdmin);
+    if (!isAdmin) goToPage(0);
     logoutBtn.style.display = loggedIn ? '' : 'none';
     currentUsernameEl.style.display = loggedIn ? '' : 'none';
     currentUsernameEl.textContent = loggedIn ? (currentUsername || '') : '';
@@ -2608,6 +2746,14 @@
           forceSignOutWithMessage('This account has been disabled. Contact your admin.');
           return;
         }
+        // FEATURE (2026-09-03): admin's "Force Logout" — kicks only an already-open, currently
+        // live session. A request from before this session started is stale and ignored (that's
+        // what lets a normal next login through unaffected — Force Logout never blocks future
+        // logins, only ends a session that's open right now).
+        if (data.forceLogoutRequestedAt && mySessionStartedAt && data.forceLogoutRequestedAt > mySessionStartedAt) {
+          forceSignOutWithMessage('You were logged out by your admin.');
+          return;
+        }
         if (currentRole === 'user') {
           pinResetUnlockedAt = data.pinResetUnlockedAt || null;
           if (!lockScreenEl.classList.contains('hidden')) {
@@ -2628,28 +2774,92 @@
     return u.deviceId ? '🔒 Locked to a device' : '🔓 Not yet logged in anywhere';
   }
 
+  // FEATURE (2026-09-03): PIN status for a user, from Firestore-synced pinSetAt (written the
+  // moment a non-admin sets/changes their PIN — see handlePinComplete) + their own pinValidityDays
+  // (defaults to 30 for older accounts created before this existed). Admin previously had no way
+  // to see this at all — it used to live only in that user's own browser localStorage.
+  function userPinStatus(u) {
+    if (!u.pinSetAt) return { label: 'No PIN set yet', bucket: 'nopin' };
+    const validDays = u.pinValidityDays || DEFAULT_PIN_VALIDITY_DAYS;
+    const msLeft = (u.pinSetAt + validDays * 24 * 60 * 60 * 1000) - Date.now();
+    const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
+    if (daysLeft <= 0) return { label: 'PIN expired', bucket: 'expired', daysLeft };
+    if (daysLeft <= 2) return { label: `PIN expires in ${daysLeft}d`, bucket: 'expiring', daysLeft };
+    return { label: `PIN active (${daysLeft}d left)`, bucket: 'active', daysLeft };
+  }
+
+  function formatAdminDate(ms) {
+    if (!ms) return 'Never';
+    return new Date(ms).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function renderUserSummary(users) {
+    let active = 0, expiring = 0, expired = 0, disabled = 0;
+    users.forEach(u => {
+      if (u.disabled) { disabled++; return; }
+      const status = userPinStatus(u).bucket;
+      if (status === 'expired') expired++;
+      else if (status === 'expiring') expiring++;
+      else active++;
+    });
+    const chip = (label, n, color) => `<span style="padding:3px 8px; border-radius:12px; background:${color}22; color:${color}; font-weight:700;">${label}: ${n}</span>`;
+    adminUserSummaryEl.innerHTML =
+      chip('Active', active, 'var(--green)') +
+      chip('Expiring', expiring, 'var(--amber)') +
+      chip('Expired', expired, 'var(--red)') +
+      chip('Disabled', disabled, 'var(--muted)');
+  }
+
+  function renderUserRow(u) {
+    const pinStatus = userPinStatus(u);
+    const pinColor = { active: 'var(--green)', expiring: 'var(--amber)', expired: 'var(--red)', nopin: 'var(--muted)' }[pinStatus.bucket];
+    return `
+      <div style="border-bottom:1px solid var(--border); padding:8px 0;">
+        <div style="font-size:0.85rem; font-weight:700;">${u.username || '(no name)'}${u.displayName ? ` <span style="color:var(--muted); font-weight:400;">(${u.displayName})</span>` : ''}</div>
+        <div style="font-size:0.72rem; color:var(--muted); margin-bottom:2px;">${renderDeviceStatus(u)} · <span style="color:${pinColor};">${pinStatus.label}</span></div>
+        <div style="font-size:0.68rem; color:var(--muted); margin-bottom:5px;">Created: ${formatAdminDate(u.createdAt)} · Last login: ${formatAdminDate(u.lastLoginAt)}</div>
+        <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:5px;">
+          <button data-action="send-reset-email" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Send Reset Email</button>
+          <button data-action="allow-pin-reset" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Allow PIN Reset</button>
+          <button data-action="clear-device" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Clear Device</button>
+          <button data-action="toggle-disable" data-uid="${u.uid}" data-disabled="${!!u.disabled}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">${u.disabled ? 'Enable' : 'Disable'}</button>
+          <button data-action="force-logout" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Force Logout</button>
+          <button data-action="delete-account" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--red-soft); background:var(--red-soft); color:var(--red); font-size:0.72rem; font-weight:700; cursor:pointer;">Delete Account</button>
+        </div>
+        <div style="display:flex; gap:5px; align-items:center; margin-bottom:5px;">
+          <label style="font-size:0.68rem; color:var(--muted); white-space:nowrap;">PIN validity:</label>
+          <select data-action="set-validity" data-uid="${u.uid}" style="flex:1; padding:4px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
+            ${[7, 30, 60, 90].map(d => `<option value="${d}" ${(u.pinValidityDays || DEFAULT_PIN_VALIDITY_DAYS) === d ? 'selected' : ''}>${d} days</option>`).join('')}
+          </select>
+        </div>
+        <div style="display:flex; gap:5px;">
+          <input type="text" data-note-uid="${u.uid}" value="${(u.adminNote || '').replace(/"/g, '&quot;')}" placeholder="Admin-only note (e.g. payment/renewal)" style="flex:1; min-width:0; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
+          <button data-action="save-note" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderFilteredUserList() {
+    const q = (adminUserSearchEl.value || '').trim().toLowerCase();
+    const filtered = q ? adminUsersCache.filter(u => (u.username || '').toLowerCase().includes(q) || (u.displayName || '').toLowerCase().includes(q)) : adminUsersCache;
+    if (filtered.length === 0) {
+      adminUserListEl.innerHTML = `<p style="font-size:0.8rem; color:var(--muted); font-style:italic;">${q ? 'No matching accounts' : 'No non-admin accounts yet'}</p>`;
+      return;
+    }
+    adminUserListEl.innerHTML = filtered.map(renderUserRow).join('');
+  }
+
   function loadAdminUserList() {
     if (!fbDb) return;
     adminUserListEl.innerHTML = '<p style="font-size:0.8rem; color:var(--muted); font-style:italic;">Loading…</p>';
     fbDb.collection('users').where('role', '==', 'user').get()
       .then(snapshot => {
         const users = snapshot.docs.map(d => ({ uid: d.id, ...d.data() }));
-        if (users.length === 0) {
-          adminUserListEl.innerHTML = '<p style="font-size:0.8rem; color:var(--muted); font-style:italic;">No non-admin accounts yet</p>';
-          return;
-        }
-        adminUserListEl.innerHTML = users.map(u => `
-          <div style="border-bottom:1px solid var(--border); padding:8px 0;">
-            <div style="font-size:0.85rem; font-weight:700;">${u.username || '(no name)'}</div>
-            <div style="font-size:0.72rem; color:var(--muted); margin-bottom:5px;">${renderDeviceStatus(u)}</div>
-            <div style="display:flex; gap:5px; flex-wrap:wrap;">
-              <button data-action="send-reset-email" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Send Reset Email</button>
-              <button data-action="allow-pin-reset" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Allow PIN Reset</button>
-              <button data-action="clear-device" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Clear Device</button>
-              <button data-action="toggle-disable" data-uid="${u.uid}" data-disabled="${!!u.disabled}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">${u.disabled ? 'Enable' : 'Disable'}</button>
-            </div>
-          </div>
-        `).join('');
+        adminUsersCache = users;
+        renderUserSummary(users);
+        renderFilteredUserList();
+        checkPinExpiryPings(users); // FEATURE: Telegram ping admin for PINs expiring soon/expired
       })
       .catch(err => {
         adminUserListEl.innerHTML = '<p style="font-size:0.8rem; color:var(--red);">Couldn\'t load users.</p>';
@@ -2657,35 +2867,140 @@
       });
   }
 
+  adminUserSearchEl.addEventListener('input', renderFilteredUserList);
+
+  // FEATURE (2026-09-03): CSV export of the currently-loaded (and currently-filtered) user list.
+  // Client-side only — this file runs in admin's own browser, so a normal download link is fine.
+  adminExportCsvBtn.addEventListener('click', () => {
+    const q = (adminUserSearchEl.value || '').trim().toLowerCase();
+    const rows = q ? adminUsersCache.filter(u => (u.username || '').toLowerCase().includes(q) || (u.displayName || '').toLowerCase().includes(q)) : adminUsersCache;
+    if (rows.length === 0) { alert('No accounts to export.'); return; }
+    const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const header = ['Username', 'Display Name', 'Status', 'PIN Status', 'Created', 'Last Login', 'Admin Note'];
+    const lines = [header.map(esc).join(',')];
+    rows.forEach(u => {
+      lines.push([
+        u.username || '', u.displayName || '', u.disabled ? 'Disabled' : 'Enabled',
+        userPinStatus(u).label, formatAdminDate(u.createdAt), formatAdminDate(u.lastLoginAt), u.adminNote || ''
+      ].map(esc).join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `signa365-users-${todayIstKey()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
   adminUserListEl.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-    const action = btn.getAttribute('data-action');
-    const uid = btn.getAttribute('data-uid');
-    if (action === 'send-reset-email') {
-      // ACCOUNTS: this user has no real email — their account's address is a hidden alias of
-      // the admin's own inbox, so this reset link lands there, not with the end user. For the
-      // fully-locked-out case (can't sign in at all, so "Allow PIN Reset" can't reach them).
-      const username = btn.getAttribute('data-username') || '';
-      if (!username || !fbAuth) return;
-      fbAuth.sendPasswordResetEmail(usernameToEmail(username))
-        .then(() => alert(`Reset link sent to your own inbox (${ADMIN_EMAIL}) for ${username}. Open it, set the password field to "sg365_" + a new 4-digit PIN, then tell ${username} that PIN.`))
-        .catch(err => { alert('Could not send reset email.'); console.warn(err); });
-    } else if (action === 'allow-pin-reset') {
-      fbDb.collection('users').doc(uid).update({ pinResetUnlockedAt: Date.now() })
-        .then(() => alert('PIN reset unlocked — they can now set a new PIN next time they open the app (or right away if they\'re already stuck on the expired screen).'))
-        .catch(err => { alert('Could not unlock PIN reset.'); console.warn(err); });
-    } else if (action === 'clear-device') {
-      fbDb.collection('users').doc(uid).update({ deviceId: null })
-        .then(() => loadAdminUserList())
-        .catch(err => { alert('Could not clear device.'); console.warn(err); });
-    } else if (action === 'toggle-disable') {
-      const isDisabled = btn.getAttribute('data-disabled') === 'true';
-      fbDb.collection('users').doc(uid).update({ disabled: !isDisabled })
-        .then(() => loadAdminUserList())
-        .catch(err => { alert('Could not update account.'); console.warn(err); });
+    if (btn) {
+      const action = btn.getAttribute('data-action');
+      const uid = btn.getAttribute('data-uid');
+      if (action === 'send-reset-email') {
+        // ACCOUNTS: this user has no real email — their account's address is a hidden alias of
+        // the admin's own inbox, so this reset link lands there, not with the end user. For the
+        // fully-locked-out case (can't sign in at all, so "Allow PIN Reset" can't reach them).
+        const username = btn.getAttribute('data-username') || '';
+        if (!username || !fbAuth) return;
+        fbAuth.sendPasswordResetEmail(usernameToEmail(username))
+          .then(() => alert(`Reset link sent to your own inbox (${ADMIN_EMAIL}) for ${username}. Open it, set the password field to "sg365_" + a new 4-digit PIN, then tell ${username} that PIN.`))
+          .catch(err => { alert('Could not send reset email.'); console.warn(err); });
+      } else if (action === 'allow-pin-reset') {
+        fbDb.collection('users').doc(uid).update({ pinResetUnlockedAt: Date.now() })
+          .then(() => alert('PIN reset unlocked — they can now set a new PIN next time they open the app (or right away if they\'re already stuck on the expired screen).'))
+          .catch(err => { alert('Could not unlock PIN reset.'); console.warn(err); });
+      } else if (action === 'clear-device') {
+        fbDb.collection('users').doc(uid).update({ deviceId: null })
+          .then(() => loadAdminUserList())
+          .catch(err => { alert('Could not clear device.'); console.warn(err); });
+      } else if (action === 'toggle-disable') {
+        const isDisabled = btn.getAttribute('data-disabled') === 'true';
+        fbDb.collection('users').doc(uid).update({ disabled: !isDisabled })
+          .then(() => loadAdminUserList())
+          .catch(err => { alert('Could not update account.'); console.warn(err); });
+      } else if (action === 'force-logout') {
+        // FEATURE (2026-09-03): kicks an active session without disabling the account — only
+        // works while that user's tab is actually open right now (see subscribeToOwnUserDoc's
+        // forceLogoutRequestedAt check). If they're offline/app closed, there's nothing live to
+        // kick; this does NOT block their next login (that's what Disable is for).
+        if (!confirm('Force-logout this user\'s current session? Only works if they have the app open right now — it does not block future logins.')) return;
+        fbDb.collection('users').doc(uid).update({ forceLogoutRequestedAt: Date.now() })
+          .then(() => alert('Logout requested — takes effect immediately if they\'re currently online.'))
+          .catch(err => { alert('Could not request logout.'); console.warn(err); });
+      } else if (action === 'delete-account') {
+        // FEATURE (2026-09-03): "hard delete." Deletes the Firestore account record, which is
+        // what the app actually checks on every login (see the auth gate above) — so this blocks
+        // sign-in exactly like Disable does, but also removes them from the list entirely and
+        // can't be undone with "Enable". Caveat, stated plainly rather than silently glossed
+        // over: the underlying Firebase Auth login record itself can only be deleted by a backend
+        // with the Admin SDK, which this client-only app doesn't have — it's left behind, orphaned
+        // and harmless (no Firestore doc means it can never sign in again).
+        const username = btn.getAttribute('data-username') || 'this account';
+        if (!confirm(`Permanently delete ${username}? This can't be undone — they'll never be able to sign in again, and all trace of the account (except an inert login record) is removed.`)) return;
+        fbDb.collection('users').doc(uid).delete()
+          .then(() => loadAdminUserList())
+          .catch(err => { alert('Could not delete account.'); console.warn(err); });
+      } else if (action === 'save-note') {
+        const input = adminUserListEl.querySelector(`input[data-note-uid="${uid}"]`);
+        const note = input ? input.value : '';
+        fbDb.collection('users').doc(uid).update({ adminNote: note })
+          .then(() => { const cached = adminUsersCache.find(u => u.uid === uid); if (cached) cached.adminNote = note; })
+          .catch(err => { alert('Could not save note.'); console.warn(err); });
+      }
+      return;
     }
   });
+
+  adminUserListEl.addEventListener('change', (e) => {
+    const sel = e.target.closest('select[data-action="set-validity"]');
+    if (!sel) return;
+    const uid = sel.getAttribute('data-uid');
+    const days = parseInt(sel.value, 10);
+    fbDb.collection('users').doc(uid).update({ pinValidityDays: days })
+      .then(() => loadAdminUserList())
+      .catch(err => { alert('Could not update PIN validity.'); console.warn(err); });
+  });
+
+  // FEATURE (2026-09-03): proactive Telegram ping to admin when a non-admin's PIN is expiring
+  // soon (≤2 days) or has just expired — runs whenever the admin user list loads (panel opened,
+  // or the periodic refresh below) since that's the only place this client-only app has a
+  // moment to check. Dedup'd per user per day via a Firestore field so it doesn't spam every
+  // time the panel happens to reload the same day.
+  function checkPinExpiryPings(users) {
+    if (!Array.isArray(users) || users.length === 0) return;
+    const today = todayIstKey();
+    users.forEach(u => {
+      if (u.disabled) return;
+      const status = userPinStatus(u);
+      if (status.bucket !== 'expiring' && status.bucket !== 'expired') return;
+      if (u.expiryPingedDate === today) return; // already pinged today
+      const text = status.bucket === 'expired'
+        ? `⚠️ ${u.username}'s PIN has expired.`
+        : `⏳ ${u.username}'s PIN expires in ${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'}.`;
+      sendTelegramText(text);
+      fbDb.collection('users').doc(u.uid).update({ expiryPingedDate: today }).catch(() => {});
+    });
+  }
+
+  // Re-checks expiry pings every 15 min while admin is logged in, even if the panel itself is
+  // collapsed/not reopened — otherwise a ping could be missed on a day the panel never reopens.
+  let adminExpiryPingInterval = null;
+  function startAdminExpiryPingLoop() {
+    if (adminExpiryPingInterval) return;
+    adminExpiryPingInterval = setInterval(() => {
+      if (!fbDb) return;
+      fbDb.collection('users').where('role', '==', 'user').get()
+        .then(users => checkPinExpiryPings(users.docs.map(d => ({ uid: d.id, ...d.data() }))))
+        .catch(() => {});
+    }, 15 * 60 * 1000);
+  }
+  function stopAdminExpiryPingLoop() {
+    if (adminExpiryPingInterval) { clearInterval(adminExpiryPingInterval); adminExpiryPingInterval = null; }
+  }
 
   // ACCOUNTS: usernames are system-generated (S365D1, S365D2, ...) — never typed by admin or
   // user — so there's no risk of typos, duplicates, or someone picking something confusing.
@@ -2755,6 +3070,7 @@
       adminAddUserBtn.disabled = false;
       return;
     }
+    const pinValidityDays = parseInt(adminNewPinValidityEl.value, 10) || DEFAULT_PIN_VALIDITY_DAYS;
     secondaryApp.auth().createUserWithEmailAndPassword(syntheticEmail, syntheticPassword)
       .then(cred => {
         const newUid = cred.user.uid;
@@ -2764,13 +3080,15 @@
           deviceId: null,
           disabled: false,
           createdAt: Date.now(),
-          createdBy: currentUid
+          createdBy: currentUid,
+          pinValidityDays: pinValidityDays // FEATURE (2026-09-03): per-user PIN validity, picked at creation
         }).then(() => secondaryApp.auth().signOut()).then(() => secondaryApp.delete());
       })
       .then(() => {
-        adminAddStatusEl.textContent = `✅ Account created — username ${username}, starter PIN ${starterPin}. Share both with them; they'll set their own permanent PIN on first login.`;
+        adminAddStatusEl.textContent = `✅ Account created — username ${username}, starter PIN ${starterPin}, PIN validity ${pinValidityDays} days. Share the username/PIN with them; they'll set their own permanent PIN on first login.`;
         adminAddStatusEl.style.color = 'var(--green)';
         adminNewPinEl.value = '';
+        adminNewPinValidityEl.value = String(DEFAULT_PIN_VALIDITY_DAYS);
         computeNextUsername();
         loadAdminUserList();
       })
@@ -2826,18 +3144,28 @@
         fbMigratedOnce = false;
         migrateLegacyTradesIfNeeded();
 
-        // ACCOUNTS: PIN expiry (30 days) only applies to non-admin — admin keeps the original
-        // fully-local, self-service PIN with no expiry. Both are self-chosen and local-only;
-        // nothing PIN-related is read from or written to this account's email/Firestore doc.
+        // FEATURE (2026-09-03): marks the moment THIS session's login finished — used only to
+        // decide whether a later forceLogoutRequestedAt (admin's "Force Logout" button) applies
+        // to this session or is stale from before it started. See subscribeToOwnUserDoc below.
+        mySessionStartedAt = Date.now();
+
+        // ACCOUNTS: PIN expiry only applies to non-admin — admin keeps the original fully-local,
+        // self-service PIN with no expiry. The actual gate still runs off this device's own
+        // localStorage copy (unchanged, low-risk); pinValidityDays/pinSetAt are also mirrored to
+        // Firestore (see handlePinComplete) purely so admin's panel can show PIN status remotely.
         if (currentRole === 'user') {
           serverPinCode = localStorage.getItem(userPinKey(user.uid));
           serverPinIssuedAt = parseInt(localStorage.getItem(userPinSetKey(user.uid)) || '', 10) || null;
           pinResetUnlockedAt = data.pinResetUnlockedAt || null;
+          myPinValidityDays = data.pinValidityDays || null;
           refreshPinLockMode();
+          // Best-effort "last login" stamp for the admin panel's Created/Last Login columns.
+          fbDb.collection('users').doc(user.uid).update({ lastLoginAt: Date.now() }).catch(() => {});
         } else {
           serverPinCode = null;
           serverPinIssuedAt = null;
           pinResetUnlockedAt = null;
+          myPinValidityDays = null;
           hidePinExpiredScreen();
           lockForgotBtn.style.display = '';
         }
