@@ -890,26 +890,30 @@
 
 <!-- LIVE PRICES -->
 <div class="card theme-blue">
-  <h2>📈 Market Pulse <button class="info-icon-btn" data-info="info-prices">i</button></h2>
+  <h2>📈 Market Pulse <button class="info-icon-btn" data-info="info-prices">i</button> <button class="info-icon-btn" data-info="info-st">⚡</button></h2>
   <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Tiles always show the real live price. Tap a tile, or type a spot below, to run the CE/PE zone calculator for that index — it never changes what's shown on the tile.</div>
+  <div id="info-st" class="info-popover hidden">✅ = Strong CE · 🔻 = Strong PE · ⚠️ = Bias (not yet confirmed) · ▲/▼ = direction (CE/PE) · Auto-calculated live from ST 5M (7,3), updates automatically on flip — no manual input needed</div>
   <div class="price-grid">
     <div class="price-box idx-nifty" id="tile-nifty" style="cursor:pointer;">
       <span class="hand-marker" id="nifty-hand"></span>
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-price">—</div>
       <div id="nifty-expiry-tag" class="expiry-tag"></div>
+      <div style="font-size:0.78rem; margin-top:4px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
     </div>
     <div class="price-box idx-banknifty" id="tile-banknifty" style="cursor:pointer;">
       <span class="hand-marker" id="banknifty-hand"></span>
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-price">—</div>
       <div id="banknifty-expiry-tag" class="expiry-tag"></div>
+      <div style="font-size:0.78rem; margin-top:4px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
     </div>
     <div class="price-box idx-sensex" id="tile-sensex" style="cursor:pointer;">
       <span class="hand-marker" id="sensex-hand"></span>
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-price">—</div>
       <div id="sensex-expiry-tag" class="expiry-tag"></div>
+      <div style="font-size:0.78rem; margin-top:4px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
     </div>
   </div>
   <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin-top:8px;">Loading prices...</p>
@@ -930,25 +934,12 @@
   <div id="spot-result" style="margin-top:10px; font-size:0.8rem; line-height:1.6; font-family:ui-monospace, monospace;"></div>
 </div>
 
-<!-- ST SIGNAL (now includes Strong Signal Alerts + CE/PE Zone wording) -->
+<!-- ST SIGNAL (now Alerts-only — the per-index badges moved to Market Pulse, 2026-09-03, per admin:
+     "signal command section remain dedicated for Alerts to display with Enable/disable sound
+     button" — badges were duplicate display alongside Market Pulse) -->
 <div class="card theme-amber">
-  <h2>⚡ Signal Command <button class="info-icon-btn" data-info="info-st">i</button></h2>
-  <div id="info-st" class="info-popover hidden">✅ = Strong CE · 🔻 = Strong PE · ⚠️ = Bias (not yet confirmed) · Auto-calculated live from Supertrend(5m, 7, 3), updates automatically on flip — no manual input needed</div>
-  <div class="price-grid">
-    <div class="price-box idx-nifty">
-      <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
-      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
-    </div>
-    <div class="price-box idx-banknifty">
-      <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
-      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
-    </div>
-    <div class="price-box idx-sensex">
-      <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
-      <div class="value" style="font-size:0.85rem; margin-top:6px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
-    </div>
-  </div>
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-top:16px; margin-bottom:8px;">
+  <h2>⚡ Signal Command</h2>
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px; margin-bottom:8px;">
     <span style="font-size:0.85rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em;">🔔 Alerts</span>
     <button id="sound-enable-btn" style="padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem; font-weight:700; cursor:pointer;">🔊 Enable Sound</button>
   </div>
@@ -960,7 +951,7 @@
 <!-- LIVE INTRADAY CHART -->
 <div class="card" id="live-chart-card" style="grid-column: 1 / -1;">
   <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button> <span id="chart-price-line" style="font-weight:700; text-transform:none; font-size:0.85em;"></span></h2>
-  <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = Supertrend(7,3) · Dotted = prev. close</div>
+  <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = ST 5M (7,3) · Dotted = prev. close</div>
   <div id="chart-placeholder" class="placeholder" style="font-size:0.9rem;">Tap a tile above or set a spot to see its live chart here</div>
   <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
     <canvas id="live-chart"></canvas>
@@ -3301,7 +3292,7 @@
     const priceStr = price.toLocaleString('en-IN', { maximumFractionDigits: 2 });
     const pctStr = `${isUp ? '+' : ''}${pct.toFixed(2)}%`;
     const ptsStr = `${isUp ? '+' : ''}${change.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
-    lineEl.innerHTML = `${priceStr} <span style="color:${color};">${arrow} ${pctStr} (${ptsStr})</span> <span style="color:var(--muted); font-weight:600;">Today</span>`;
+    lineEl.innerHTML = `${priceStr} <span style="color:${color};">${arrow} ${pctStr} (${ptsStr})</span> <span style="color:var(--muted); font-weight:700;">Today</span>`;
   }
 
   // Brings the Live Chart card into view when the user actively selects/switches an index in
