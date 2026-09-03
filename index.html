@@ -1523,13 +1523,18 @@
         const icon = strength === "Strong" ? (isCE ? "✅" : "🔻") : "⚠️";
         const stCode = stCodeMap[elId][direction];
 
-        // Signal check card — shows your own T-code (TNG/TNR/TSG/TSR/TBG/TBR), updates automatically on flip
-        // Color rule: G-codes (CE) always green, R-codes (PE) always red — independent of Strong/Bias
+        // Signal check card — updates automatically on flip. Color rule: CE always green, PE
+        // always red — independent of Strong/Bias.
+        // FIX (2026-09-03): used to show the T-code + icon together (e.g. "TNR🔻") — admin found
+        // the code redundant (the plain "CE/PE Strong/Bias" text right below this badge already
+        // says the same thing) and asked to drop it, keeping just the icon (✅ Strong CE / 🔻
+        // Strong PE / ⚠️ Bias either side). `stCode` is kept computed just below (still used
+        // internally by checkFlipAlert's flip-detection comparison), just no longer displayed here.
         const badgeEl = document.getElementById(badgeIds[elId]);
         badgeEl.className = "badge";
         badgeEl.style.background = isCE ? "var(--green-soft)" : "var(--red-soft)";
         badgeEl.style.color = isCE ? "var(--green)" : "var(--red)";
-        badgeEl.textContent = `${stCode}${icon}`;
+        badgeEl.textContent = icon;
 
         // Secondary line: same CE/PE Bias/Strong wording shown in CE/PE Strong Zones card
         const zoneLabelEl = document.getElementById(zoneLabelIds[elId]);
