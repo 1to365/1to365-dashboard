@@ -2757,13 +2757,12 @@
       authErrorEl.textContent = 'Enter your username.';
       return;
     }
-    // ACCOUNTS: user (non-admin) login is paused while it's redesigned — only "admin" can
-    // proceed to the PIN step for now. Everything else about this screen (layout, logo,
-    // keypad) is unchanged; this is the one gate that was added back in.
-    if (username.trim().toLowerCase() !== 'admin') {
-      authErrorEl.textContent = 'User login is temporarily unavailable — please contact admin.';
-      return;
-    }
+    // ACCOUNTS: RE-ENABLED (2026-09-04) — non-admin login had been paused ("temporarily
+    // unavailable") while it was redesigned; admin asked to test end-to-end with a freshly
+    // created user, which needs this open again. The gate that blocked every username but
+    // "admin" is removed. Any other Firestore-based restriction (Disabled account, no account
+    // found, wrong PIN, device lock) is still enforced further down the login flow — this only
+    // removes the blanket block.
     authPendingUsername = username;
     authErrorEl.textContent = '';
     authUsernameStepEl.classList.add('hidden');
@@ -3071,12 +3070,17 @@
       const uid = btn.getAttribute('data-uid');
       if (action === 'send-reset-email') {
         // ACCOUNTS: this user has no real email — their account's address is a hidden alias of
-        // the admin's own inbox, so this reset link lands there, not with the end user. For the
-        // fully-locked-out case (can't sign in at all, so "Allow PIN Reset" can't reach them).
+        // the admin's own inbox, so this reset link lands there, not with the end user. Originally
+        // documented as the fully-locked-out path ("Allow PIN Reset" can't reach a user who can't
+        // sign in at all) — CLARIFIED (2026-09-04): this also doubles as "admin picks the exact
+        // new PIN, right now" for an account that's still active/mid-duration, since the PIN IS
+        // the Firebase password (sg365_<PIN>) — nothing here restricts it to locked-out accounts
+        // only. Alert text updated to say so, since admin asked for a way to change any user's PIN
+        // mid-duration and this already does it, just not as a single in-panel field.
         const username = btn.getAttribute('data-username') || '';
         if (!username || !fbAuth) return;
         fbAuth.sendPasswordResetEmail(usernameToEmail(username))
-          .then(() => alert(`Reset link sent to your own inbox (${ADMIN_EMAIL}) for ${username}. Open it, set the password field to "sg365_" + a new 4-digit PIN, then tell ${username} that PIN.`))
+          .then(() => alert(`Reset link sent to your own inbox (${ADMIN_EMAIL}) for ${username}. Open it, set the password field to "sg365_" + any 4-digit PIN you choose, then tell ${username} that PIN. Works any time — doesn't have to be expired/locked out first.`))
           .catch(err => { alert('Could not send reset email.'); console.warn(err); });
       } else if (action === 'allow-pin-reset') {
         fbDb.collection('users').doc(uid).update({ pinResetUnlockedAt: Date.now() })
