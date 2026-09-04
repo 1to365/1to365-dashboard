@@ -1513,6 +1513,12 @@
     return false;
   }
 
+  // FEATURE (2026-09-04): used to gate the 2 PM "Expiry momentum window open" time-window alert
+  // so it only fires on an actual expiry day for one of the 3 indexes, not every trading day.
+  function isAnyIndexExpiryDay() {
+    return ['nifty', 'banknifty', 'sensex'].some(isExpiryDay);
+  }
+
   function isWeekend() {
     const day = getIstDate().getDay();
     return day === 0 || day === 6;
@@ -1526,12 +1532,13 @@
     return mins >= windowStart && mins <= windowEnd;
   }
 
-  // FEATURE (2026-09-03): "choppy-market" flag for Strong alerts — a Strong signal fired during a
-  // known lower-conviction window still fires (nothing is suppressed, no alert is ever blocked),
-  // it just gets a small caption tagged on so admin can weigh it differently. The 9:15-9:20 open
-  // window is already excluded entirely by isWithinTradeWindow() above; this adds the lunch lull.
-  // Window (12:30-1:15 PM IST) is a reasonable default, not admin-confirmed — adjust if it
-  // doesn't match how the market actually behaves.
+  // FEATURE (2026-09-03), CHANGED (2026-09-04): originally a flag-only "choppy-market" caption —
+  // a Strong signal in this window still fired, just tagged "(lunch lull — lower conviction)".
+  // Admin reported a burst of SENSEX flip/Strong alerts inside this window (2026-09-04) and asked
+  // to stop lunch-lull Strong alerts entirely instead of tagging them — see checkAlertTrigger()
+  // below, which now returns early during this window instead of tagging. Window (12:30-1:15 PM
+  // IST) is still a reasonable default, not admin-confirmed — adjust if it doesn't match how the
+  // market actually behaves.
   function isLunchLull() {
     const istDate = getIstDate();
     const mins = istDate.getHours() * 60 + istDate.getMinutes();
@@ -1882,7 +1889,14 @@
     { h: 9,  m: 25, text: "Market opens in 5 mins. Be ready." },
     { h: 9,  m: 30, text: "Market open. Watch for signals." },
     { h: 10, m: 30, text: "Best entry window closing." },
-    { h: 14, m: 0,  text: "Expiry momentum window open." },
+    // FEATURE CHANGE (2026-09-04): this used to fire every trading day; admin asked it to only
+    // fire on an actual expiry day for any of the 3 indexes (Nifty=Tue weekly, Sensex=Thu weekly,
+    // BankNifty=last Tue of the month), not a regular day. requiresExpiryDay checked below via
+    // isAnyIndexExpiryDay() — reuses the same isExpiryDay() the Market Pulse "🔥 EXPIRY" tile tag
+    // already runs off, so no separate expiry-date source was added. Fires once (not once per
+    // index) if ANY of the 3 has expiry today — my best read of the ask, since the alert text
+    // doesn't name a specific index; flag if you wanted it split per-index instead.
+    { h: 14, m: 0,  text: "Expiry momentum window open.", requiresExpiryDay: true },
     { h: 15, m: 0,  text: "Last 30 mins. No new entries." },
     { h: 15, m: 15, text: "Market closing. Exit all positions." },
     // FEATURE (2026-09-03): admin's "Try Dual Buy" alert, near close, one-month trial only —
@@ -1902,6 +1916,7 @@
     TIME_WINDOW_ALERTS.forEach(slot => {
       if (h !== slot.h || m !== slot.m) return;
       if (slot.expiresAt && isoToday >= slot.expiresAt) return; // one-month trial slot — auto-stopped itself
+      if (slot.requiresExpiryDay && !isAnyIndexExpiryDay()) return; // skip on a non-expiry day
       const key = `${dayKey}-${slot.h}:${slot.m}`;
       if (firedTimeAlerts.has(key)) return;
       firedTimeAlerts.add(key);
@@ -2003,13 +2018,13 @@
         </div>`;
       }
       const arrow = isCE ? "▲" : "▼";
-      const convictionCaption = a.lowConviction
-        ? `<span style="color:var(--muted); font-weight:400; font-size:0.78rem;"> (lunch lull — lower conviction)</span>`
-        : '';
+      // FEATURE CHANGE (2026-09-04): the lunch-lull caption is gone — Strong alerts no longer
+      // fire at all during lunch lull (see checkAlertTrigger), so a.lowConviction is never set
+      // anymore. Nothing left here to caption.
       return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
         <span style="color:${color}; font-size:1.3rem; font-weight:800;">${arrow}</span>
         <div style="flex:1;">
-          <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">${a.direction} STRONG</span>${convictionCaption}
+          <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">${a.direction} STRONG</span>
         </div>
         <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
       </div>`;
@@ -2051,6 +2066,16 @@
       // The gate only re-opens on an actual CE<->PE flip, handled below.
       return;
     }
+    // FEATURE CHANGE (2026-09-04): lunch lull (12:30-1:15 PM IST) used to just tag Strong alerts
+    // as lower-conviction and still fire them; admin asked to stop them firing at all during this
+    // window instead (Telegram + Alerts card), after a burst of SENSEX flip/Strong alerts landed
+    // in it. Returns here BEFORE touching pendingStrong/lastAlertedDirection on purpose, so no
+    // mid-lull state carries over — once the window closes, a still-active signal has to
+    // reconfirm over 2 fresh refreshes before it fires, same as a cold start, instead of firing
+    // instantly off stale state. Flip alerts are untouched — admin didn't ask for those to stop.
+    if (isLunchLull()) {
+      return;
+    }
     if (lastAlertedDirection[elId] === direction) {
       return; // already alerted for this side — only a flip to the other side fires again
     }
@@ -2068,12 +2093,11 @@
     for (let i = alertHistory.length - 1; i >= 0; i--) {
       if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
     }
-    const lowConviction = isLunchLull(); // flag only — never suppresses the alert itself
-    alertHistory.unshift({ index: idxName, direction, ts: Date.now(), lowConviction });
+    alertHistory.unshift({ index: idxName, direction, ts: Date.now() });
     if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
     renderAlerts();
     playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
-    sendTelegramAlert(elId, direction, lowConviction);
+    sendTelegramAlert(elId, direction);
   }
 
   // ---- TELEGRAM ALERTS ----
@@ -2081,7 +2105,7 @@
   const TELEGRAM_CHAT_ID = "5802877879";
   const zoneToPriceEl = { "nifty-zone": "nifty-price", "banknifty-zone": "banknifty-price", "sensex-zone": "sensex-price" };
 
-  async function sendTelegramAlert(elId, direction, lowConviction) {
+  async function sendTelegramAlert(elId, direction) {
     const indexName = alertIndexNames[elId];
     const emoji = direction === "CE" ? "✅" : "🔻";
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -2094,10 +2118,10 @@
     // 15+ min...") — "STRONG ${direction}" on the line above already says the same thing. Plain
     // arrow instead (uncolored — Telegram can't color arbitrary text, only whole emoji).
     const dirArrow = direction === "CE" ? "▲" : "▼";
-    // FEATURE (2026-09-03): lunch-lull tag — informational only, doesn't change whether this
-    // alert fires at all.
-    const convictionTag = lowConviction ? ' (lunch lull — lower conviction)' : '';
-    const text = `${emoji} ${indexName} STRONG ${direction} — ${spotStr} (${sideWord} zone ${zoneStr})\n${dirArrow} held 15+ min · ${timeStr} IST${convictionTag}`;
+    // FEATURE CHANGE (2026-09-04): the lunch-lull tag is gone — this function is now never
+    // called during lunch lull at all (checkAlertTrigger suppresses it upstream), so there's
+    // nothing left to tag.
+    const text = `${emoji} ${indexName} STRONG ${direction} — ${spotStr} (${sideWord} zone ${zoneStr})\n${dirArrow} held 15+ min · ${timeStr} IST`;
     sendTelegramText(text);
   }
 
