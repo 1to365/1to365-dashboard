@@ -883,11 +883,9 @@
     </div>
 
     <span id="current-username" style="font-size:0.7rem; color:rgba(255,255,255,0.85); display:none;"></span>
-    <!-- FEATURE (2026-09-04): self-service display name — non-admin only (admin already has a
-         full "Display Name" field in their own admin panel). Prompts for a name, writes it to
-         this account's own users/{uid}.displayName — same field admin's panel already reads/
-         edits, so either side stays in sync and either side can change it. -->
-    <button id="edit-displayname-btn" class="ribbon-icon-btn" title="Set your display name" style="display:none;">✏️</button>
+    <!-- REMOVED (2026-09-04): self-service display name edit button — admin decided users should
+         just keep remembering their username instead. Admin's own Display Name field in the
+         admin panel (per-user row) is untouched — that's a separate, admin-only feature. -->
     <button id="logout-btn" class="ribbon-icon-btn" title="Logout" style="display:none;">🚪</button>
 
     <span id="time-window-dot" class="status-dot" title="Checking..."></span>
@@ -2823,22 +2821,9 @@
 
   const logoutBtn = document.getElementById('logout-btn');
   const currentUsernameEl = document.getElementById('current-username');
-  const editDisplayNameBtn = document.getElementById('edit-displayname-btn');
-  // FEATURE (2026-09-04): self-service display name for non-admin users — admin already has a
-  // full "Display Name" field/editor in their own panel; this lets the account owner set/change
-  // the same field themselves. Writes straight to this account's own users/{uid}.displayName —
-  // the exact field admin's panel already reads and can also edit, so either side changing it
-  // just works, no separate copy to keep in sync.
-  let myDisplayName = "";
-  editDisplayNameBtn.addEventListener('click', () => {
-    if (!fbDb || !currentUid) return;
-    const next = prompt("Your display name (shown to admin, doesn't change your login):", myDisplayName || "");
-    if (next === null) return; // cancelled
-    const trimmed = next.trim().slice(0, 40);
-    fbDb.collection('users').doc(currentUid).update({ displayName: trimmed })
-      .then(() => { myDisplayName = trimmed; })
-      .catch(err => { alert('Could not save display name — check your connection and try again.'); console.warn(err); });
-  });
+  // REMOVED (2026-09-04): self-service display-name edit button + handler — admin decided users
+  // should just keep remembering their username instead. Admin's own Display Name field/editor in
+  // the admin panel (per-user row) is untouched.
 
   let pendingAuthMessage = ""; // survives the signOut() round-trip so the real reason still shows
   let authEnteredDigits = "";
@@ -2903,9 +2888,6 @@
     logoutBtn.style.display = loggedIn ? '' : 'none';
     currentUsernameEl.style.display = loggedIn ? '' : 'none';
     currentUsernameEl.textContent = loggedIn ? (currentUsername || '') : '';
-    // FEATURE (2026-09-04): self-service display name — non-admin only, admin already has this
-    // in the admin panel.
-    editDisplayNameBtn.style.display = (loggedIn && !isAdmin) ? '' : 'none';
     if (!loggedIn) updateExpiryBanner();
   }
 
@@ -3497,7 +3479,6 @@
         currentUid = user.uid;
         currentRole = data.role;
         currentUsername = data.username || user.email;
-        myDisplayName = data.displayName || ""; // FEATURE (2026-09-04): pre-fills the self-service rename prompt
         fbMigratedOnce = false;
         migrateLegacyTradesIfNeeded();
 
