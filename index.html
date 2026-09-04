@@ -1271,14 +1271,28 @@
   // Reused here, but fetched only ONCE per index per day (previous close doesn't change
   // intraday) and cached day-scoped in localStorage, so this doesn't add 3 extra network calls
   // every single 30s price refresh — only on the first refresh of the day per index.
+  //
+  // FIX (2026-09-04): that "once per day, never revisited" cache turned out to have its own
+  // failure mode — reported live: NIFTY and SENSEX tiles/Live-Chart-header showed the wrong
+  // color/sign for 12+ minutes, disagreeing with Google Finance AND with the Live Chart's own
+  // "Prev close" line right below them (which fetches fresh, uncached, every chart load and was
+  // correct the whole time). Root cause: whatever the very first fetch of the day returned for
+  // that index — even if it happened to be a bad/off value — stuck in the cache for the rest of
+  // the session with nothing to correct it. Two fixes, no extra 30s-cycle network calls added:
+  // (1) the cache now expires after 1 hour instead of the whole day, so a bad value self-corrects
+  // within an hour instead of lasting all session; (2) whenever the Live Chart's own always-fresh
+  // fetch succeeds for an index (fetchChartCandles), that known-good value immediately overwrites
+  // this cache too — free self-heal the moment that index's chart is viewed, reusing a fetch that
+  // was already happening rather than adding a new one.
   const RELIABLE_PREVCLOSE_KEY = "signa365_reliable_prevclose";
+  const RELIABLE_PREVCLOSE_TTL_MS = 60 * 60 * 1000; // 1 hour
   function loadReliablePrevCloseCache() {
     try {
       const raw = localStorage.getItem(RELIABLE_PREVCLOSE_KEY);
       if (!raw) return {};
       const parsed = JSON.parse(raw);
       if (parsed.dateKey !== todayIstKey()) return {};
-      return parsed.values || {};
+      return parsed.values || {}; // elId -> { value, ts }
     } catch (e) { return {}; }
   }
   function saveReliablePrevCloseCache(values) {
@@ -1286,18 +1300,23 @@
       localStorage.setItem(RELIABLE_PREVCLOSE_KEY, JSON.stringify({ dateKey: todayIstKey(), values }));
     } catch (e) { /* storage full/unavailable — just re-fetches next time, no crash */ }
   }
-  const reliablePrevCloseCache = loadReliablePrevCloseCache(); // elId -> prevClose, day-scoped
+  const reliablePrevCloseCache = loadReliablePrevCloseCache(); // elId -> { value, ts }, day-scoped
+  function setReliablePrevClose(elId, value) {
+    reliablePrevCloseCache[elId] = { value, ts: Date.now() };
+    saveReliablePrevCloseCache(reliablePrevCloseCache);
+  }
   async function ensureReliablePrevClose(elId, symbol) {
-    if (reliablePrevCloseCache[elId] != null) return reliablePrevCloseCache[elId];
+    const cached = reliablePrevCloseCache[elId];
+    if (cached != null && (Date.now() - cached.ts) < RELIABLE_PREVCLOSE_TTL_MS) return cached.value;
     try {
       const val = await fetchReliablePrevClose(symbol);
       if (val != null) {
-        reliablePrevCloseCache[elId] = val;
-        saveReliablePrevCloseCache(reliablePrevCloseCache);
+        setReliablePrevClose(elId, val);
+        return val;
       }
-      return val;
+      return cached ? cached.value : null; // refetch failed — keep serving the last known value rather than nothing
     } catch (e) {
-      return null; // caller falls back to fetchPrice's own (less reliable) change value
+      return cached ? cached.value : null; // same here — an old value beats falling back to the unreliable raw field
     }
   }
 
@@ -3581,12 +3600,16 @@
     return null; // caller falls back to meta.chartPreviousClose if this fully fails
   }
 
-  async function fetchChartCandles(symbol) {
+  async function fetchChartCandles(symbol, priceElId) {
     // Run both fetches in parallel — total wait is whichever is slower, not the sum of both.
     const [{ candles, fallbackPrevClose }, reliablePrevClose] = await Promise.all([
       fetchIntradayCandles(symbol),
       fetchReliablePrevClose(symbol).catch(() => null)
     ]);
+    // FIX (2026-09-04): this fetch is already fresh/uncached every time — feed it straight into
+    // the Market Pulse tile's cache too, so viewing an index's chart immediately self-heals that
+    // tile if its cached value was stale/wrong. See the FIX comment above ensureReliablePrevClose.
+    if (reliablePrevClose != null && priceElId) setReliablePrevClose(priceElId, reliablePrevClose);
     return { candles, prevClose: reliablePrevClose != null ? reliablePrevClose : fallbackPrevClose };
   }
 
@@ -3645,7 +3668,7 @@
     }
 
     try {
-      const { candles: allCandles, prevClose } = await fetchChartCandles(symbol);
+      const { candles: allCandles, prevClose } = await fetchChartCandles(symbol, meta.priceEl);
 
       // If focus moved to a different index while this fetch was in flight, this response
       // is stale — discard it instead of overwriting whatever's now actually selected.
