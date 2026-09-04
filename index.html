@@ -944,7 +944,7 @@
      "signal command section remain dedicated for Alerts to display with Enable/disable sound
      button" — badges were duplicate display alongside Market Pulse) -->
 <div class="card theme-amber">
-  <h2>⚡ Signal Command</h2>
+  <h2>👀 Watch Me</h2>
   <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px; margin-bottom:8px;">
     <span style="font-size:0.85rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em;">🔔 Alerts</span>
     <button id="sound-enable-btn" style="padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem; font-weight:700; cursor:pointer;">🔊 Enable Sound</button>
@@ -1843,8 +1843,33 @@
       localStorage.setItem(STRONG_DIR_KEY, JSON.stringify({ dateKey: todayIstKey(), dir: lastAlertedDirection }));
     } catch (e) { /* storage full/unavailable — dedup just won't survive a reload today */ }
   }
-  const alertHistory = [];
+  // FIX (2026-09-04): the Alerts card used to be in-memory only — a reload (or a second
+  // device/tab opened later in the day) showed "Waiting for a Strong signal..." even on a day
+  // with real signals already fired, because the dedup guards above (persisted) correctly
+  // stopped a re-fire, but nothing was left to redraw the visible list. Reported live: mobile's
+  // tab (open since before the alerts fired) still showed them, desktop's (reloaded since) didn't.
+  // Persisted here the same day-scoped way as bigMoveAlertLog/flipEventLog/lastAlertedDirection
+  // above, so any tab/device now shows today's full alert history regardless of when it opened.
+  const ALERT_HISTORY_KEY = "signa365_alert_history";
+  function loadAlertHistory() {
+    try {
+      const raw = localStorage.getItem(ALERT_HISTORY_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (parsed.dateKey !== todayIstKey()) return [];
+      return parsed.log || [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function persistAlertHistory() {
+    try {
+      localStorage.setItem(ALERT_HISTORY_KEY, JSON.stringify({ dateKey: todayIstKey(), log: alertHistory }));
+    } catch (e) { /* storage full/unavailable — this tab just won't survive a reload today */ }
+  }
+  const alertHistory = loadAlertHistory();
   const MAX_ALERTS = 25;
+  renderAlerts(); // draw whatever survived from today's storage immediately, instead of waiting for the next event
 
   // ---- FEATURE 4: TIME WINDOW ALERTS (new, additive) ----
   // Fires each listed IST time once per trading day via Telegram. Skips holidays/weekends
@@ -1931,6 +1956,7 @@
   };
 
   function renderAlerts() {
+    persistAlertHistory(); // every render = the list just changed — keep storage in sync, single choke point
     const listEl = document.getElementById('alerts-list');
     if (alertHistory.length === 0) {
       listEl.innerHTML = '<p class="placeholder" style="font-size:0.92rem;">Waiting for a Strong signal…</p>';
