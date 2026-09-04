@@ -504,6 +504,17 @@
   }
 
 
+  /* ---- ACCOUNT EXPIRY BANNER (2026-09-04) ---- */
+  #expiry-banner {
+    background: var(--amber);
+    color: #1a1200;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 8px 14px;
+  }
+  #expiry-banner.hidden { display: none; }
+
   /* ---- MARKET CLOSED WATERMARK ---- */
   #market-closed-overlay {
     position: fixed;
@@ -529,10 +540,13 @@
   }
 
   /* ---- LOGIN / ACCOUNT SCREEN ---- */
+  /* CHANGED (2026-09-04): theme swapped from blue to light grey per admin request — tone matches
+     the muted watermark font color. Scoped to just these login/lock elements; rest of the app
+     (charts, buttons, admin panel etc.) is untouched. */
   #auth-screen {
     position: fixed;
     inset: 0;
-    background: linear-gradient(160deg, rgba(219,235,255,0.95) 0%, rgba(228,238,252,0.92) 45%, rgba(238,244,249,0.95) 100%);
+    background: linear-gradient(160deg, #f4f5f7 0%, #ececef 45%, #f7f8f9 100%);
     z-index: 10000;
     display: flex;
     flex-direction: column;
@@ -545,18 +559,18 @@
     width: 56px;
     height: 56px;
     border-radius: 16px;
-    background: linear-gradient(135deg, var(--orange) 0%, var(--accent) 100%);
+    background: linear-gradient(135deg, #9aa1ac 0%, #667085 100%);
     color: #fff;
     font-size: 1.6rem;
     font-weight: 900;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 18px rgba(29,78,216,0.25);
+    box-shadow: 0 6px 18px rgba(102,112,133,0.25);
     margin-bottom: 12px;
     letter-spacing: -0.02em;
   }
-  #auth-brand { color: var(--accent); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+  #auth-brand { color: #667085; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
   #auth-subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; text-align: center; }
   #auth-screen input {
     width: min(280px, 100%);
@@ -575,7 +589,7 @@
     margin-top: 4px;
     border: none;
     border-radius: 10px;
-    background: var(--accent);
+    background: #667085;
     color: #fff;
     font-size: 0.95rem;
     font-weight: 700;
@@ -615,10 +629,10 @@
     position: fixed;
     inset: 0;
     background:
-      linear-gradient(160deg, rgba(219,235,255,0.88) 0%, rgba(228,238,252,0.80) 45%, rgba(238,244,249,0.85) 100%),
-      repeating-linear-gradient(0deg, rgba(29,78,216,0.06) 0px, rgba(29,78,216,0.06) 1px, transparent 1px, transparent 34px),
-      repeating-linear-gradient(90deg, rgba(29,78,216,0.06) 0px, rgba(29,78,216,0.06) 1px, transparent 1px, transparent 34px),
-      #eef2f7;
+      linear-gradient(160deg, rgba(236,238,241,0.88) 0%, rgba(242,243,245,0.80) 45%, rgba(247,248,249,0.85) 100%),
+      repeating-linear-gradient(0deg, rgba(102,112,133,0.06) 0px, rgba(102,112,133,0.06) 1px, transparent 1px, transparent 34px),
+      repeating-linear-gradient(90deg, rgba(102,112,133,0.06) 0px, rgba(102,112,133,0.06) 1px, transparent 1px, transparent 34px),
+      #f2f3f5;
     background-size: cover, 34px 34px, 34px 34px, cover;
     background-position: center;
     z-index: 9999;
@@ -654,19 +668,19 @@
     width: 56px;
     height: 56px;
     border-radius: 16px;
-    background: linear-gradient(135deg, var(--orange) 0%, var(--accent) 100%);
+    background: linear-gradient(135deg, #9aa1ac 0%, #667085 100%);
     color: #fff;
     font-size: 1.6rem;
     font-weight: 900;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 18px rgba(29,78,216,0.25);
+    box-shadow: 0 6px 18px rgba(102,112,133,0.25);
     margin-bottom: 12px;
     letter-spacing: -0.02em;
   }
   #lock-brand {
-    color: var(--accent);
+    color: #667085;
     font-size: 1.4rem;
     font-weight: 800;
     letter-spacing: 0.01em;
@@ -715,7 +729,7 @@
     border: 1px solid var(--border);
     background: var(--panel);
     box-shadow: var(--shadow);
-    color: var(--accent);
+    color: #667085;
     font-size: 1.3rem;
     font-weight: 700;
     cursor: pointer;
@@ -777,18 +791,21 @@
 
   <div id="auth-error"></div>
   <button id="auth-hint">Forgot your PIN?</button>
-  <button id="auth-legacy-toggle" style="margin-top:8px; color:var(--muted); font-size:0.68rem; text-decoration:underline; background:none; border:none; cursor:pointer;">Admin — first time? Use email + password</button>
-  <div id="auth-legacy-step" class="hidden">
-    <input id="auth-legacy-email" type="email" placeholder="Email" autocomplete="username">
-    <input id="auth-legacy-password" type="password" placeholder="Password" autocomplete="current-password">
-    <button id="auth-legacy-login-btn">Log In</button>
-  </div>
+  <!-- REMOVED (2026-09-04, admin request): the one-time "Admin — first time? Use email +
+       password" migration toggle + its email/password fields (#auth-legacy-toggle /
+       #auth-legacy-step). Admin's account already migrated to username+PIN login, so this
+       was no longer needed. The JS handlers for these ids were left as dead code rather than
+       deleted, since they no-op harmlessly with the elements gone — see accounts JS section. -->
 </div>
 
 <div id="lock-screen">
   <div id="lock-logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 17 L8 11 L12 14 L16 7 L22 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="3" r="2.4" fill="#fff"/></svg></div>
   <div id="lock-brand">Signa365</div>
   <div id="lock-subtitle">Enter PIN</div>
+  <!-- FEATURE (2026-09-04): one-device policy notice — only shown during first-time PIN setup
+       (see refreshPinLockMode/renderLockSubtitle), so a brand-new user sees this right when
+       their account first locks itself to this device. -->
+  <div id="lock-device-notice" class="hidden" style="max-width:260px; text-align:center; font-size:0.72rem; color:var(--muted); margin:-8px 0 16px;">This account can only be used on ONE device at a time — the one you finish setup on now. To switch devices later, contact your admin.</div>
   <div id="lock-dots">
     <div class="lock-dot"></div>
     <div class="lock-dot"></div>
@@ -866,12 +883,25 @@
     </div>
 
     <span id="current-username" style="font-size:0.7rem; color:rgba(255,255,255,0.85); display:none;"></span>
+    <!-- FEATURE (2026-09-04): self-service display name — non-admin only (admin already has a
+         full "Display Name" field in their own admin panel). Prompts for a name, writes it to
+         this account's own users/{uid}.displayName — same field admin's panel already reads/
+         edits, so either side stays in sync and either side can change it. -->
+    <button id="edit-displayname-btn" class="ribbon-icon-btn" title="Set your display name" style="display:none;">✏️</button>
     <button id="logout-btn" class="ribbon-icon-btn" title="Logout" style="display:none;">🚪</button>
 
     <span id="time-window-dot" class="status-dot" title="Checking..."></span>
     <p id="clock">Loading time...</p>
   </div>
 </header>
+
+<!-- FEATURE (2026-09-04): account-expiry banner — non-admin only, shown once pinDaysLeft() <= 2.
+     Covers "after login landing page" (shown right after sign-in resolves) and "during login
+     page" as far as that's feasible (the PIN-entry/lock screen, once the app already knows which
+     account is signing in — see renderLockSubtitle). Showing this before a username is even
+     typed isn't safely buildable without a pre-auth account lookup — flagged separately, not
+     attempted here. -->
+<div id="expiry-banner" class="hidden"></div>
 
 <div id="market-closed-overlay" class="hidden">Market Closed</div>
 
@@ -982,17 +1012,25 @@
     <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
     <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
     <input id="admin-new-pin" type="text" inputmode="numeric" maxlength="4" placeholder="Starter PIN (4 digits)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
-    <!-- FEATURE (2026-09-03): per-user PIN validity (was a flat 30 days for everyone) — pick it
-         at creation time, e.g. a 7-day trial vs a 60/90-day paid plan. Stored as pinValidityDays
-         on the user doc; defaults to 30 if a doc from before this feature has none. -->
-    <select id="admin-new-pin-validity" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
-      <option value="7">PIN valid 7 days (trial)</option>
-      <option value="30" selected>PIN valid 30 days</option>
-      <option value="60">PIN valid 60 days</option>
-      <option value="90">PIN valid 90 days</option>
-    </select>
+    <!-- FEATURE (2026-09-03), CHANGED (2026-09-04): per-user PIN validity — was a flat 30 days
+         for everyone, then a fixed 7/30/60/90 dropdown. Admin asked for any custom number (e.g.
+         2, 4, 7, 11) — swapped for a free-entry number field. Stored as pinValidityDays on the
+         user doc; defaults to 30 if a doc from before this feature has none. -->
+    <label style="font-size:0.68rem; color:var(--muted); display:block; margin-bottom:3px;">PIN valid for how many days?</label>
+    <input id="admin-new-pin-validity" type="number" min="1" max="3650" value="30" placeholder="e.g. 2, 7, 30, 90..." style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
     <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
     <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
+
+    <!-- FEATURE (2026-09-04): bulk-change PIN validity for every existing user at once — admin:
+         "in middle I might recreate the PIN with a shorter or larger duration for all existing
+         users." Separate from the per-user field further down, which still edits one at a time. -->
+    <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
+    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">🔁 Set PIN Validity for ALL Users</p>
+    <div style="display:flex; gap:6px;">
+      <input id="admin-bulk-validity" type="number" min="1" max="3650" placeholder="days" style="flex:1; min-width:0; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+      <button id="admin-bulk-validity-btn" style="flex:0 0 auto; padding:7px 12px; border-radius:8px; border:none; background:var(--red); color:#fff; font-size:0.8rem; font-weight:700; cursor:pointer;">Apply to All</button>
+    </div>
+    <div id="admin-bulk-validity-status" style="font-size:0.72rem; margin-top:6px; min-height:1.1em;"></div>
 
     <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
@@ -1903,7 +1941,11 @@
     // expiresAt makes it auto-stop firing on its own after 30 days, no manual step needed to
     // remove it later. showInApp: true also pushes it into the Alerts card (unlike the slots
     // above, which stay Telegram-only) since admin asked for this one in both "bot" and Telegram.
-    { h: 15, m: 16, text: "✌️⬆️Try Dual Buy⬇️🚀", expiresAt: "2026-10-03", showInApp: true }
+    // CHANGED (2026-09-04): arrows (⬆️/⬇️) dropped so this fits on one line for admin, per
+    // request ("keep it one in one line for Admins, if there is space constrain remove arrows").
+    // adminOnly: true added the same day — admin wants this hidden from non-admin users entirely
+    // (Telegram send AND Alerts card), see the role check below.
+    { h: 15, m: 16, text: "✌️Try Dual Buy🚀", expiresAt: "2026-10-03", showInApp: true, adminOnly: true }
   ];
   const firedTimeAlerts = new Set(); // "YYYY-M-D-H:M" keys — grows unbounded only across a single day's slots, harmless
 
@@ -1917,6 +1959,7 @@
       if (h !== slot.h || m !== slot.m) return;
       if (slot.expiresAt && isoToday >= slot.expiresAt) return; // one-month trial slot — auto-stopped itself
       if (slot.requiresExpiryDay && !isAnyIndexExpiryDay()) return; // skip on a non-expiry day
+      if (slot.adminOnly && currentRole !== 'admin') return; // FEATURE (2026-09-04): admin-only slot
       const key = `${dayKey}-${slot.h}:${slot.m}`;
       if (firedTimeAlerts.has(key)) return;
       firedTimeAlerts.add(key);
@@ -2245,6 +2288,7 @@
   let lockMode = localStorage.getItem(PIN_KEY) ? "unlock" : "setup-new";
   let enteredDigits = "";
   let firstPinBuffer = "";
+  let isFirstEverPinSetup = false; // FEATURE (2026-09-04): true only for a brand-new account's very first PIN
 
   const lockSubtitleEl = document.getElementById('lock-subtitle');
   const lockErrorEl = document.getElementById('lock-error');
@@ -2253,6 +2297,7 @@
   const lockExpiredEl = document.getElementById('lock-expired');
   const lockKeypadEl = document.getElementById('lock-keypad');
   const lockForgotBtn = document.getElementById('lock-forgot');
+  const lockDeviceNoticeEl = document.getElementById('lock-device-notice');
 
   // ACCOUNTS: non-admin PINs are self-chosen, exactly like admin's, with a 30-day expiry that
   // admin's PIN doesn't have. Unlike admin, replacing a non-admin PIN — whether it expired or
@@ -2286,6 +2331,23 @@
     return Math.ceil(msLeft / (24 * 60 * 60 * 1000));
   }
 
+  // FEATURE (2026-09-04): account-expiry banner — shows/hides the header banner from wherever
+  // pinDaysLeft() is known: right after login resolves (onAuthStateChanged) and every time this
+  // PIN-entry screen's own subtitle re-renders (covers the lock/PIN screen itself, the closest
+  // safely-buildable stand-in for "during login page" — see the HTML comment above the banner
+  // element for why the true pre-auth login screen isn't covered).
+  function updateExpiryBanner() {
+    const bannerEl = document.getElementById('expiry-banner');
+    if (!bannerEl) return;
+    if (currentRole !== 'user' || !serverPinCode) { bannerEl.classList.add('hidden'); return; }
+    const daysLeft = pinDaysLeft();
+    if (daysLeft === null || daysLeft > 2) { bannerEl.classList.add('hidden'); return; }
+    bannerEl.textContent = daysLeft <= 0
+      ? '⚠️ Your account access has expired — contact admin to continue.'
+      : `⚠️ Account expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'} — contact admin to renew.`;
+    bannerEl.classList.remove('hidden');
+  }
+
   function renderLockSubtitle() {
     if (lockMode === "setup-new") lockSubtitleEl.textContent = "Set a 4-digit PIN";
     else if (lockMode === "setup-confirm") lockSubtitleEl.textContent = "Confirm your PIN";
@@ -2296,6 +2358,7 @@
         : "Enter PIN";
     }
     else lockSubtitleEl.textContent = "Enter PIN";
+    updateExpiryBanner();
   }
   renderLockSubtitle();
 
@@ -2316,39 +2379,65 @@
     lockExpiredEl.classList.add('hidden');
   }
 
+  // FEATURE (2026-09-04): "ask for PIN again next calendar day" — admin: "once login, it
+  // shouldn't logout until they press logout button for that day, next day it should ask for pin
+  // to login." Tracks the IST calendar date this account's PIN was last successfully entered
+  // (day-scoped, per uid) — independent of the PIN's own multi-day validity window. A day change
+  // forces the lock screen to show again even though the account is nowhere near actually
+  // expired; entering the PIN correctly (or setting one) re-arms it for the rest of that day.
+  function lastPinDayKey(uid) { return "signa365_last_pin_day_" + uid; }
+  function needsDailyPinReentry() {
+    if (!currentUid) return false;
+    return localStorage.getItem(lastPinDayKey(currentUid)) !== todayIstKey();
+  }
+  function markPinVerifiedToday() {
+    if (currentUid) localStorage.setItem(lastPinDayKey(currentUid), todayIstKey());
+  }
+
   // Re-evaluates the lock screen for the current account's own (self-chosen) PIN. Called once
   // right after login resolves, and again live if admin unlocks a reset while this user is
-  // stuck on the expired dead-end screen (see subscribeToOwnUserDoc).
+  // stuck on the expired dead-end screen (see subscribeToOwnUserDoc). Returns true if the lock
+  // screen needs to be visible right now — the caller (onAuthStateChanged) uses this instead of
+  // blindly hiding it (see the 2026-09-04 fix note there for why that mattered).
   function refreshPinLockMode() {
     if (!serverPinCode) {
       // First-ever PIN for this account/device — always allowed, no admin gate (the account
       // itself was already admin-created, that's gate enough for the very first PIN).
       hidePinExpiredScreen();
       lockMode = "setup-new";
+      isFirstEverPinSetup = true; // FEATURE (2026-09-04): drives the one-device-policy notice below
       firstPinBuffer = "";
       enteredDigits = "";
       updateDots();
       lockSubtitleEl.textContent = "Set a 4-digit PIN";
       lockErrorEl.textContent = "";
-      return;
+      lockDeviceNoticeEl.classList.remove('hidden');
+      return true;
     }
     const expired = Date.now() - serverPinIssuedAt > myPinValidMs();
     if (expired && !pinResetIsUnlocked()) {
       showPinExpiredScreen();
+      lockDeviceNoticeEl.classList.add('hidden');
+      return true;
     } else if (expired) {
       hidePinExpiredScreen();
       lockMode = "setup-new";
+      isFirstEverPinSetup = false; // resetting an existing account, not first-ever setup
       firstPinBuffer = "";
       enteredDigits = "";
       updateDots();
       lockSubtitleEl.textContent = "PIN expired — set a new one";
       lockErrorEl.textContent = "";
+      lockDeviceNoticeEl.classList.add('hidden');
+      return true;
     } else {
       hidePinExpiredScreen();
       lockMode = "unlock";
       enteredDigits = "";
       updateDots();
+      lockDeviceNoticeEl.classList.add('hidden');
       renderLockSubtitle();
+      return needsDailyPinReentry();
     }
   }
 
@@ -2400,6 +2489,8 @@
             }
           });
         }
+        markPinVerifiedToday(); // FEATURE (2026-09-04): setting a PIN counts as today's re-entry too
+        lockDeviceNoticeEl.classList.add('hidden');
         lockScreenEl.classList.add('hidden');
       } else {
         lockErrorEl.textContent = "";
@@ -2411,6 +2502,7 @@
     } else if (currentRole === 'user' && serverPinCode) {
       // ACCOUNTS: non-admin — self-chosen PIN, compared against the locally-stored hash.
       if (simpleHash(enteredDigits) === serverPinCode) {
+        markPinVerifiedToday(); // FEATURE (2026-09-04): re-arms the daily re-entry gate for today
         lockScreenEl.classList.add('hidden');
       } else {
         lockShakeError("Wrong PIN, try again");
@@ -2634,8 +2726,54 @@
   const adminExportCsvBtn = document.getElementById('admin-export-csv-btn');
   const adminUserSummaryEl = document.getElementById('admin-user-summary');
   const adminUserSearchEl = document.getElementById('admin-user-search');
+  const adminBulkValidityEl = document.getElementById('admin-bulk-validity');
+  const adminBulkValidityBtn = document.getElementById('admin-bulk-validity-btn');
+  const adminBulkValidityStatusEl = document.getElementById('admin-bulk-validity-status');
   let adminUsersCache = []; // last list fetched by loadAdminUserList() — reused by search filter and CSV export
   const DEFAULT_PIN_VALIDITY_DAYS = 30; // fallback for accounts created before per-user validity existed
+
+  // FEATURE (2026-09-04): bulk-apply PIN validity to every existing user at once.
+  adminBulkValidityBtn.addEventListener('click', () => {
+    const days = parseInt(adminBulkValidityEl.value, 10);
+    if (!Number.isFinite(days) || days < 1) {
+      adminBulkValidityStatusEl.textContent = 'Enter a valid number of days (1 or more).';
+      adminBulkValidityStatusEl.style.color = 'var(--red)';
+      return;
+    }
+    const count = adminUsersCache.length;
+    if (count === 0) {
+      adminBulkValidityStatusEl.textContent = 'No users to update yet — open Manage Users first.';
+      adminBulkValidityStatusEl.style.color = 'var(--muted)';
+      return;
+    }
+    if (!confirm(`Set PIN validity to ${days} day${days === 1 ? '' : 's'} for ALL ${count} user${count === 1 ? '' : 's'}? This overwrites each user's current validity setting.`)) return;
+    adminBulkValidityStatusEl.textContent = 'Updating...';
+    adminBulkValidityStatusEl.style.color = 'var(--muted)';
+    // Firestore caps a single batch at 500 writes — chunk so this keeps working past 500 users.
+    const CHUNK = 450;
+    const chunks = [];
+    for (let i = 0; i < adminUsersCache.length; i += CHUNK) chunks.push(adminUsersCache.slice(i, i + CHUNK));
+    let chain = Promise.resolve();
+    chunks.forEach(chunk => {
+      chain = chain.then(() => {
+        const batch = fbDb.batch();
+        chunk.forEach(u => batch.update(fbDb.collection('users').doc(u.uid), { pinValidityDays: days }));
+        return batch.commit();
+      });
+    });
+    chain
+      .then(() => {
+        adminBulkValidityStatusEl.textContent = `Done — ${count} user${count === 1 ? '' : 's'} updated.`;
+        adminBulkValidityStatusEl.style.color = 'var(--green)';
+        adminBulkValidityEl.value = '';
+        loadAdminUserList();
+      })
+      .catch(err => {
+        adminBulkValidityStatusEl.textContent = 'Could not update all users — try again.';
+        adminBulkValidityStatusEl.style.color = 'var(--red)';
+        console.warn(err);
+      });
+  });
 
   // Admin tile is collapsible — collapsed by default so it doesn't dominate the bottom of the
   // page; tap the header to expand/collapse.
@@ -2685,6 +2823,22 @@
 
   const logoutBtn = document.getElementById('logout-btn');
   const currentUsernameEl = document.getElementById('current-username');
+  const editDisplayNameBtn = document.getElementById('edit-displayname-btn');
+  // FEATURE (2026-09-04): self-service display name for non-admin users — admin already has a
+  // full "Display Name" field/editor in their own panel; this lets the account owner set/change
+  // the same field themselves. Writes straight to this account's own users/{uid}.displayName —
+  // the exact field admin's panel already reads and can also edit, so either side changing it
+  // just works, no separate copy to keep in sync.
+  let myDisplayName = "";
+  editDisplayNameBtn.addEventListener('click', () => {
+    if (!fbDb || !currentUid) return;
+    const next = prompt("Your display name (shown to admin, doesn't change your login):", myDisplayName || "");
+    if (next === null) return; // cancelled
+    const trimmed = next.trim().slice(0, 40);
+    fbDb.collection('users').doc(currentUid).update({ displayName: trimmed })
+      .then(() => { myDisplayName = trimmed; })
+      .catch(err => { alert('Could not save display name — check your connection and try again.'); console.warn(err); });
+  });
 
   let pendingAuthMessage = ""; // survives the signOut() round-trip so the real reason still shows
   let authEnteredDigits = "";
@@ -2749,6 +2903,10 @@
     logoutBtn.style.display = loggedIn ? '' : 'none';
     currentUsernameEl.style.display = loggedIn ? '' : 'none';
     currentUsernameEl.textContent = loggedIn ? (currentUsername || '') : '';
+    // FEATURE (2026-09-04): self-service display name — non-admin only, admin already has this
+    // in the admin panel.
+    editDisplayNameBtn.style.display = (loggedIn && !isAdmin) ? '' : 'none';
+    if (!loggedIn) updateExpiryBanner();
   }
 
   authContinueBtn.addEventListener('click', () => {
@@ -2832,36 +2990,12 @@
     });
   });
 
-  // ACCOUNTS: one-time bootstrap for the admin's existing Firebase account (set up with a real
-  // email+password in the Firebase console, before this PIN-only scheme existed). Signing in
-  // here the old way, once, lets the app migrate that account's password to the PIN scheme (see
-  // handlePinComplete) — after which "admin" + PIN works like everyone else, on any device.
-  const authLegacyToggleBtn = document.getElementById('auth-legacy-toggle');
-  const authLegacyStepEl = document.getElementById('auth-legacy-step');
-  const authLegacyEmailEl = document.getElementById('auth-legacy-email');
-  const authLegacyPasswordEl = document.getElementById('auth-legacy-password');
-  const authLegacyLoginBtn = document.getElementById('auth-legacy-login-btn');
-  authLegacyToggleBtn.addEventListener('click', () => authLegacyStepEl.classList.toggle('hidden'));
-  authLegacyLoginBtn.addEventListener('click', () => {
-    const email = authLegacyEmailEl.value.trim();
-    const password = authLegacyPasswordEl.value;
-    if (!email || !password) {
-      authErrorEl.textContent = 'Enter your email and password.';
-      return;
-    }
-    if (!fbAuth) {
-      authErrorEl.textContent = "Can't connect right now — check your internet and reload.";
-      return;
-    }
-    authLegacyLoginBtn.disabled = true;
-    authErrorEl.textContent = '';
-    fbAuth.signInWithEmailAndPassword(email, password)
-      .catch(err => {
-        authErrorEl.textContent = 'Login failed — check your email and password.';
-        console.warn('Signa365: legacy login failed:', err);
-      })
-      .finally(() => { authLegacyLoginBtn.disabled = false; });
-  });
+  // REMOVED (2026-09-04, admin request): the one-time admin email+password migration toggle and
+  // its handlers (#auth-legacy-toggle/#auth-legacy-step and friends) — admin's account already
+  // migrated to username+PIN login this session, so this was no longer needed. The HTML elements
+  // are gone (see the login screen markup); this JS block that used to bind them is removed too,
+  // rather than left as a null-element reference, which would have thrown and broken every
+  // script statement after it.
 
   logoutBtn.addEventListener('click', () => {
     if (fbAuth) fbAuth.signOut();
@@ -2930,8 +3064,16 @@
   // account/device now (see refreshPinLockMode etc. above), so admin has no PIN to see or reset.
 
   function renderDeviceStatus(u) {
-    if (u.disabled) return '🚫 Disabled';
-    return u.deviceId ? '🔒 Locked to a device' : '🔓 Not yet logged in anywhere';
+    let base;
+    if (u.disabled) base = '🚫 Disabled';
+    else base = u.deviceId ? '🔒 Locked to a device' : '🔓 Not yet logged in anywhere';
+    // FEATURE (2026-09-04): Clear Device audit trail — shows how many times this account's device
+    // lock has been cleared, and when it last was, so admin can spot an account being handed off
+    // between devices unusually often.
+    if (u.deviceClearCount) {
+      base += ` · Cleared ${u.deviceClearCount}× (last: ${formatAdminDate(u.lastDeviceClearAt)})`;
+    }
+    return base;
   }
 
   // FEATURE (2026-09-03): PIN status for a user, from Firestore-synced pinSetAt (written the
@@ -2987,10 +3129,9 @@
           <button data-action="delete-account" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--red-soft); background:var(--red-soft); color:var(--red); font-size:0.72rem; font-weight:700; cursor:pointer;">Delete Account</button>
         </div>
         <div style="display:flex; gap:5px; align-items:center; margin-bottom:5px;">
-          <label style="font-size:0.68rem; color:var(--muted); white-space:nowrap;">PIN validity:</label>
-          <select data-action="set-validity" data-uid="${u.uid}" style="flex:1; padding:4px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
-            ${[7, 30, 60, 90].map(d => `<option value="${d}" ${(u.pinValidityDays || DEFAULT_PIN_VALIDITY_DAYS) === d ? 'selected' : ''}>${d} days</option>`).join('')}
-          </select>
+          <label style="font-size:0.68rem; color:var(--muted); white-space:nowrap;">PIN validity (days):</label>
+          <input type="number" min="1" max="3650" data-validity-uid="${u.uid}" value="${u.pinValidityDays || DEFAULT_PIN_VALIDITY_DAYS}" style="flex:1; min-width:0; padding:4px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
+          <button data-action="save-validity" data-uid="${u.uid}" style="flex:0 0 auto; padding:4px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
         </div>
         <!-- FEATURE (2026-09-03): a real login-username rename isn't safe (see admin note in
              backlog — it's baked into that account's actual Firebase sign-in email, renaming it
@@ -3087,7 +3228,14 @@
           .then(() => alert('PIN reset unlocked — they can now set a new PIN next time they open the app (or right away if they\'re already stuck on the expired screen).'))
           .catch(err => { alert('Could not unlock PIN reset.'); console.warn(err); });
       } else if (action === 'clear-device') {
-        fbDb.collection('users').doc(uid).update({ deviceId: null })
+        // FEATURE (2026-09-04): audit trail — every Clear Device is logged (count + last-cleared
+        // time) so admin can see how often a given account has switched devices, per the
+        // one-device-at-a-time-but-freely-switchable policy.
+        fbDb.collection('users').doc(uid).update({
+          deviceId: null,
+          deviceClearCount: firebase.firestore.FieldValue.increment(1),
+          lastDeviceClearAt: Date.now()
+        })
           .then(() => loadAdminUserList())
           .catch(err => { alert('Could not clear device.'); console.warn(err); });
       } else if (action === 'toggle-disable') {
@@ -3131,19 +3279,18 @@
         fbDb.collection('users').doc(uid).update({ displayName: displayName })
           .then(() => loadAdminUserList())
           .catch(err => { alert('Could not save display name.'); console.warn(err); });
+      } else if (action === 'save-validity') {
+        // FEATURE (2026-09-04): custom/any-number PIN validity (replaces the old fixed 7/30/60/90
+        // dropdown) — admin can type any whole number of days.
+        const input = adminUserListEl.querySelector(`input[data-validity-uid="${uid}"]`);
+        const days = input ? parseInt(input.value, 10) : NaN;
+        if (!Number.isFinite(days) || days < 1) { alert('Enter a valid number of days (1 or more).'); return; }
+        fbDb.collection('users').doc(uid).update({ pinValidityDays: days })
+          .then(() => loadAdminUserList())
+          .catch(err => { alert('Could not update PIN validity.'); console.warn(err); });
       }
       return;
     }
-  });
-
-  adminUserListEl.addEventListener('change', (e) => {
-    const sel = e.target.closest('select[data-action="set-validity"]');
-    if (!sel) return;
-    const uid = sel.getAttribute('data-uid');
-    const days = parseInt(sel.value, 10);
-    fbDb.collection('users').doc(uid).update({ pinValidityDays: days })
-      .then(() => loadAdminUserList())
-      .catch(err => { alert('Could not update PIN validity.'); console.warn(err); });
   });
 
   // FEATURE (2026-09-03): proactive Telegram ping to admin when a non-admin's PIN is expiring
@@ -3187,18 +3334,39 @@
   // user — so there's no risk of typos, duplicates, or someone picking something confusing.
   // Re-run any time the admin panel opens and right after each account is created, so the
   // field always shows the next one ready to go.
+  //
+  // FIX (2026-09-04): this used to live-scan existing user docs every time and take max+1 —
+  // which meant that hard-deleting the highest-numbered account (Delete Account) would free up
+  // its number for reuse on the very next account created, so two different people could end up
+  // sharing a username over time. Now it's backed by a persistent counter doc (meta/
+  // usernameCounter) that only ever counts up: the scan below runs at most once, ever, just to
+  // seed that counter from whatever accounts already existed before this fix shipped.
+  function usernameCounterRef() {
+    return fbDb.collection('meta').doc('usernameCounter');
+  }
   function computeNextUsername() {
     adminNewUsernameEl.value = '';
     adminNewUsernameEl.placeholder = 'Generating username…';
     if (!fbDb) return;
-    fbDb.collection('users').where('role', '==', 'user').get()
-      .then(snapshot => {
-        let maxN = 0;
-        snapshot.docs.forEach(doc => {
-          const m = /^S365D(\d+)$/i.exec((doc.data().username || '').trim());
-          if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+    usernameCounterRef().get()
+      .then(doc => {
+        if (doc.exists && Number.isFinite(doc.data().nextN)) {
+          adminNewUsernameEl.value = 'S365D' + doc.data().nextN;
+          return;
+        }
+        // No counter doc yet — one-time seed from existing accounts, then persist it so this
+        // scan never has to run again.
+        return fbDb.collection('users').where('role', '==', 'user').get().then(snapshot => {
+          let maxN = 0;
+          snapshot.docs.forEach(d => {
+            const m = /^S365D(\d+)$/i.exec((d.data().username || '').trim());
+            if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+          });
+          const seedN = maxN + 1;
+          return usernameCounterRef().set({ nextN: seedN }, { merge: true }).then(() => {
+            adminNewUsernameEl.value = 'S365D' + seedN;
+          });
         });
-        adminNewUsernameEl.value = 'S365D' + (maxN + 1);
       })
       .catch(err => {
         adminNewUsernameEl.placeholder = "Couldn't generate — reopen panel to retry";
@@ -3270,7 +3438,14 @@
         adminAddStatusEl.style.color = 'var(--green)';
         adminNewPinEl.value = '';
         adminNewPinValidityEl.value = String(DEFAULT_PIN_VALIDITY_DAYS);
-        computeNextUsername();
+        // Persist the counter forward past the number just used, so it's never handed out again
+        // even if this account is later hard-deleted (see computeNextUsername comment above).
+        const usedN = parseInt((/^S365D(\d+)$/i.exec(username) || [])[1], 10);
+        const advance = Number.isFinite(usedN)
+          ? usernameCounterRef().set({ nextN: usedN + 1 }, { merge: true })
+          : Promise.resolve();
+        advance.catch(err => console.warn('Signa365: could not advance username counter:', err))
+          .then(() => computeNextUsername());
         loadAdminUserList();
       })
       .catch(err => {
@@ -3314,7 +3489,7 @@
           if (!data.deviceId) {
             await fbDb.collection('users').doc(user.uid).update({ deviceId: myDevice });
           } else if (data.deviceId !== myDevice) {
-            forceSignOutWithMessage('This account is already active on another device. Ask your admin to clear device access.');
+            forceSignOutWithMessage('One device at a time for this account. It\'s active elsewhere — ask your admin to clear device access.');
             return;
           }
         }
@@ -3322,6 +3497,7 @@
         currentUid = user.uid;
         currentRole = data.role;
         currentUsername = data.username || user.email;
+        myDisplayName = data.displayName || ""; // FEATURE (2026-09-04): pre-fills the self-service rename prompt
         fbMigratedOnce = false;
         migrateLegacyTradesIfNeeded();
 
@@ -3334,12 +3510,13 @@
         // self-service PIN with no expiry. The actual gate still runs off this device's own
         // localStorage copy (unchanged, low-risk); pinValidityDays/pinSetAt are also mirrored to
         // Firestore (see handlePinComplete) purely so admin's panel can show PIN status remotely.
+        let needsLocalPinScreen = false;
         if (currentRole === 'user') {
           serverPinCode = localStorage.getItem(userPinKey(user.uid));
           serverPinIssuedAt = parseInt(localStorage.getItem(userPinSetKey(user.uid)) || '', 10) || null;
           pinResetUnlockedAt = data.pinResetUnlockedAt || null;
           myPinValidityDays = data.pinValidityDays || null;
-          refreshPinLockMode();
+          needsLocalPinScreen = refreshPinLockMode();
           // Best-effort "last login" stamp for the admin panel's Created/Last Login columns.
           fbDb.collection('users').doc(user.uid).update({ lastLoginAt: Date.now() }).catch(() => {});
         } else {
@@ -3352,12 +3529,16 @@
         }
 
         hideAuthScreen();
-        // FIX: "PIN asking twice" — the local lock-screen (a separate, device-only PIN check,
-        // originally meant for re-locking the app after it's already open) was left visible by
-        // default underneath the login screen, so it always surfaced immediately after every
-        // Firebase login and asked for the PIN a second time. The Firebase login you just
-        // completed already verified the real PIN, so skip this redundant second prompt.
-        lockScreenEl.classList.add('hidden');
+        // FIX (2026-09-03, CORRECTED 2026-09-04): the original "PIN asking twice" fix hid this
+        // screen unconditionally after every login — that stopped the redundant second prompt for
+        // a user who already had a valid, same-day PIN, but it ALSO silently hid the legitimate
+        // first-time-PIN-setup screen, the "PIN expired — set a new one" screen, and (new) the
+        // "new calendar day, re-enter your PIN" screen. A brand-new user's starter PIN was
+        // becoming their permanent password with no prompt to ever change it. Admin (non-admin
+        // accounts specifically) now trusts what refreshPinLockMode() just decided instead of
+        // blindly hiding; admin's own login is untouched (was never gated by this system).
+        lockScreenEl.classList.toggle('hidden', !(currentRole === 'user' && needsLocalPinScreen));
+        if (currentRole === 'user') updateExpiryBanner();
         applyRoleUI(currentRole);
         subscribeToTrades();
         subscribeToOwnUserDoc(user.uid);
