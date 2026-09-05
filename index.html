@@ -590,7 +590,7 @@
     color: var(--text);
     font-size: 0.92rem;
   }
-  #auth-continue-btn, #auth-legacy-login-btn {
+  #auth-continue-btn, #auth-legacy-login-btn, #auth-admin-password-btn {
     width: min(280px, 100%);
     padding: 11px 14px;
     margin-top: 4px;
@@ -602,8 +602,8 @@
     font-weight: 700;
     cursor: pointer;
   }
-  #auth-pin-subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; text-align: center; }
-  #auth-switch-user-btn {
+  #auth-pin-subtitle, .auth-subtitle-text { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; text-align: center; }
+  #auth-switch-user-btn, #auth-admin-switch-user-btn {
     margin-top: 18px;
     color: var(--muted);
     font-size: 0.72rem;
@@ -794,6 +794,21 @@
       <button class="lock-key" data-key="back">⌫</button>
     </div>
     <button id="auth-switch-user-btn">← Not you? Switch user</button>
+  </div>
+
+  <!-- FEATURE (2026-09-05): admin's own login now uses a real password, not the shared 4-digit-
+       PIN scheme every other account uses — flagged as the #1 security risk (admin was reachable
+       with only 10,000 possible PINs over a publicly-known email). Only the "admin" username
+       routes here (see authContinueBtn below); every non-admin username still goes through the
+       PIN keypad above, completely unchanged. Submits the typed password straight to Firebase, no
+       pinToPassword() transform — so this is backward-compatible with admin's current credential
+       (still "sg365_<old PIN>" until changed) and works with any new password set via the "Change
+       My Password" section in the Admin panel. -->
+  <div id="auth-admin-password-step" class="hidden">
+    <div id="auth-admin-password-subtitle" class="auth-subtitle-text">Enter your password</div>
+    <input id="auth-admin-password" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="auth-admin-password-btn">Sign In</button>
+    <button id="auth-admin-switch-user-btn">← Not you? Switch user</button>
   </div>
 
   <div id="auth-error"></div>
@@ -1026,6 +1041,18 @@
     <div id="admin-presence-list" style="max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:1px;"></div>
   </div>
   <div id="admin-panel-body" class="hidden">
+    <!-- FEATURE (2026-09-05): lets admin set a real password for their own login, replacing the
+         shared 4-digit-PIN scheme every other account still uses (flagged as the #1 login-
+         security risk — see backlog). Calls Firebase's own updatePassword() directly; any length/
+         characters accepted beyond Firebase's own 6-character minimum. Takes effect immediately —
+         next login, use the new password on the "Enter your password" screen. -->
+    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">🔑 Change My Password</p>
+    <input id="admin-change-password" type="password" placeholder="New password (6+ characters)" autocomplete="new-password" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+    <input id="admin-change-password-confirm" type="password" placeholder="Confirm new password" autocomplete="new-password" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+    <button id="admin-change-password-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:#667085; color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Update Password</button>
+    <div id="admin-change-password-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
+
+    <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
     <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
     <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
     <!-- FEATURE (2026-09-05): default starter PIN pre-filled as "2026" for every new account, per
@@ -2717,6 +2744,11 @@
   const authDotsEl = document.getElementById('auth-dots');
   const authSwitchUserBtn = document.getElementById('auth-switch-user-btn');
   const authErrorEl = document.getElementById('auth-error');
+  const authAdminPasswordStepEl = document.getElementById('auth-admin-password-step');
+  const authAdminPasswordEl = document.getElementById('auth-admin-password');
+  const authAdminPasswordBtn = document.getElementById('auth-admin-password-btn');
+  const authAdminSwitchUserBtn = document.getElementById('auth-admin-switch-user-btn');
+  const authHintEl = document.getElementById('auth-hint');
 
   // ACCOUNTS: username + PIN only, everywhere — nothing on screen ever says "email" or
   // "password". Under the hood, Firebase still needs an email+password pair per account, so:
@@ -2754,12 +2786,56 @@
   const adminBulkValidityEl = document.getElementById('admin-bulk-validity');
   const adminBulkValidityBtn = document.getElementById('admin-bulk-validity-btn');
   const adminBulkValidityStatusEl = document.getElementById('admin-bulk-validity-status');
+  const adminChangePasswordEl = document.getElementById('admin-change-password');
+  const adminChangePasswordConfirmEl = document.getElementById('admin-change-password-confirm');
+  const adminChangePasswordBtn = document.getElementById('admin-change-password-btn');
+  const adminChangePasswordStatusEl = document.getElementById('admin-change-password-status');
   const adminPresenceListEl = document.getElementById('admin-presence-list');
   const adminPresenceSearchEl = document.getElementById('admin-presence-search');
   let adminUsersCache = []; // last list fetched by loadAdminUserList() — reused by search filter and CSV export
   const DEFAULT_PIN_VALIDITY_DAYS = 30; // fallback for accounts created before per-user validity existed
 
   // FEATURE (2026-09-04): bulk-apply PIN validity to every existing user at once.
+  // FEATURE (2026-09-05): admin sets their own real password here, replacing the shared 4-digit-
+  // PIN scheme for their own login (see #auth-admin-password-step for the sign-in side of this).
+  // Firebase's updatePassword() only works on the currently-signed-in user, which is exactly who
+  // this panel is for, so no extra re-auth step is needed here.
+  adminChangePasswordBtn.addEventListener('click', () => {
+    const newPassword = adminChangePasswordEl.value;
+    const confirmPassword = adminChangePasswordConfirmEl.value;
+    if (newPassword.length < 6) {
+      adminChangePasswordStatusEl.textContent = 'Password must be at least 6 characters.';
+      adminChangePasswordStatusEl.style.color = 'var(--red)';
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      adminChangePasswordStatusEl.textContent = "Passwords don't match.";
+      adminChangePasswordStatusEl.style.color = 'var(--red)';
+      return;
+    }
+    adminChangePasswordBtn.disabled = true;
+    adminChangePasswordStatusEl.textContent = 'Updating...';
+    adminChangePasswordStatusEl.style.color = 'var(--muted)';
+    fbAuth.currentUser.updatePassword(newPassword)
+      .then(() => {
+        adminChangePasswordStatusEl.textContent = '✅ Password updated — use it next time you sign in.';
+        adminChangePasswordStatusEl.style.color = 'var(--green)';
+        adminChangePasswordEl.value = '';
+        adminChangePasswordConfirmEl.value = '';
+        adminChangePasswordBtn.disabled = false;
+      })
+      .catch(err => {
+        // Firebase requires a "recent" sign-in for security-sensitive changes like this one — if
+        // admin's session is old, it asks for a fresh sign-in rather than silently failing.
+        adminChangePasswordStatusEl.textContent = (err && err.code === 'auth/requires-recent-login')
+          ? 'For security, please sign out and back in, then try again.'
+          : 'Could not update password. Try again.';
+        adminChangePasswordStatusEl.style.color = 'var(--red)';
+        adminChangePasswordBtn.disabled = false;
+        console.warn('Signa365: admin password update failed:', err);
+      });
+  });
+
   adminBulkValidityBtn.addEventListener('click', () => {
     const days = parseInt(adminBulkValidityEl.value, 10);
     if (!Number.isFinite(days) || days < 1) {
@@ -2863,6 +2939,9 @@
   }
   function resetAuthToUsernameStep() {
     authPinStepEl.classList.add('hidden');
+    authAdminPasswordStepEl.classList.add('hidden'); // FEATURE (2026-09-05): admin's own password step
+    authAdminPasswordEl.value = '';
+    authHintEl.classList.remove('hidden');
     authUsernameStepEl.classList.remove('hidden');
     authEnteredDigits = "";
     updateAuthDots();
@@ -2935,6 +3014,16 @@
     authPendingUsername = username;
     authErrorEl.textContent = '';
     authUsernameStepEl.classList.add('hidden');
+    // FEATURE (2026-09-05): admin's own login now uses a real password, not the shared 4-digit-PIN
+    // keypad every other account uses — see the HTML comment above #auth-admin-password-step for
+    // why. Every other username is completely unaffected, still goes to the PIN keypad below.
+    if (username.toLowerCase() === 'admin') {
+      authHintEl.classList.add('hidden'); // "Forgot your PIN?" doesn't apply to a real password
+      authAdminPasswordStepEl.classList.remove('hidden');
+      authAdminPasswordEl.value = '';
+      authAdminPasswordEl.focus();
+      return;
+    }
     authPinStepEl.classList.remove('hidden');
     authEnteredDigits = '';
     updateAuthDots();
@@ -2957,10 +3046,42 @@
   })();
 
   authSwitchUserBtn.addEventListener('click', resetAuthToUsernameStep);
+  authAdminSwitchUserBtn.addEventListener('click', resetAuthToUsernameStep);
 
-  document.getElementById('auth-hint').addEventListener('click', () => {
+  authHintEl.addEventListener('click', () => {
     alert("Contact your admin — they'll reset your PIN and send you the new one.");
   });
+
+  // FEATURE (2026-09-05): admin's own sign-in — a real password straight to Firebase, no
+  // pinToPassword() transform, no 4-digit limit. Deliberately backward-compatible: admin's
+  // existing credential (still "sg365_<old PIN>" until changed) keeps working here unchanged;
+  // set a new one any time via "Change My Password" in the Admin panel (see below).
+  function attemptAdminSignIn() {
+    if (!fbAuth) {
+      authErrorEl.style.color = '';
+      authErrorEl.textContent = "Can't connect right now — check your internet and reload.";
+      authAdminPasswordBtn.disabled = false;
+      return;
+    }
+    const typedPassword = authAdminPasswordEl.value;
+    fbAuth.signInWithEmailAndPassword(ADMIN_EMAIL, typedPassword)
+      .catch(err => {
+        authErrorEl.style.color = '';
+        authErrorEl.textContent = 'Wrong password.';
+        console.warn('Signa365: admin login failed:', err);
+        authAdminPasswordBtn.disabled = false;
+      });
+      // Success path intentionally does nothing here — onAuthStateChanged picks it up, same as
+      // the non-admin PIN flow.
+  }
+  authAdminPasswordBtn.addEventListener('click', () => {
+    if (!authAdminPasswordEl.value) { authErrorEl.textContent = 'Enter your password.'; return; }
+    authErrorEl.style.color = 'var(--muted)';
+    authErrorEl.textContent = 'Verifying…';
+    authAdminPasswordBtn.disabled = true;
+    attemptAdminSignIn();
+  });
+  authAdminPasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') authAdminPasswordBtn.click(); });
 
   // FIX (PIN lag): signing in is a real Firebase network round trip — on a slow connection
   // (mobile especially) that can take a second or more, and with nothing on screen saying so it
