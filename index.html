@@ -67,7 +67,11 @@
     flex-wrap: wrap;
     gap: 8px;
     padding: 12px 16px;
-    background: linear-gradient(90deg, var(--orange) 0%, var(--accent) 100%);
+    /* CHANGED (2026-09-05): header + dashboard "brand" accent swapped blue → grey, per admin
+       request. Scoped to purely decorative brand color only — CE/PE signal colors, P&L green/red,
+       flip-badge, index tile identity colors (N/B/S), and the lock-screen's own dot/keypad accents
+       are all left exactly as they were, since those carry real meaning, not just branding. */
+    background: linear-gradient(90deg, #8a94a3 0%, #667085 100%);
     border: none;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -181,8 +185,8 @@
     cursor: pointer;
   }
   #page-nav button.active {
-    background: var(--accent);
-    border-color: var(--accent);
+    background: #667085;
+    border-color: #667085;
     color: #fff;
   }
   #pages-viewport {
@@ -303,13 +307,13 @@
   }
   .card.theme-blue h2, .card.theme-mint h2, .card.theme-amber h2,
   .card.theme-teal h2, .card.theme-rose h2, .card.theme-lavender h2 {
-    color: var(--accent);
+    color: #667085;
   }
   .card .price-box { background: var(--panel); }
   .card h2 {
     font-size: 0.92rem;
     font-weight: 800;
-    color: var(--accent);
+    color: #667085;
     letter-spacing: 0.02em;
     text-transform: uppercase;
     margin-bottom: 12px;
@@ -365,7 +369,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .gfinance-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .gfinance-btn:hover { color: #667085; border-color: #667085; }
   .price-box.idx-nifty     { background: var(--nifty-soft);     border-top-color: var(--nifty); }
   .price-box.idx-banknifty { background: var(--banknifty-soft); border-top-color: var(--banknifty); }
   .price-box.idx-sensex    { background: var(--sensex-soft);    border-top-color: var(--sensex); }
@@ -870,7 +874,7 @@
       </div>
       <div style="display:flex; gap:6px; margin-top:12px;">
         <input id="quick-pnl-amount" type="number" placeholder="e.g. 1200 or -800" style="flex:1; min-width:0; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem;">
-        <button id="quick-pnl-btn" style="flex:0 0 auto; padding:8px 14px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer;">+ Log</button>
+        <button id="quick-pnl-btn" style="flex:0 0 auto; padding:8px 14px; border-radius:8px; border:none; background:#667085; color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer;">+ Log</button>
       </div>
 
       <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
@@ -962,7 +966,7 @@
 
   <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
     <input id="spot-input" type="text" inputmode="decimal" placeholder="Or type spot to override" style="flex:1 1 160px; min-width:140px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.95rem;">
-    <button id="spot-set-btn" style="flex:0 0 auto; padding:10px 20px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
+    <button id="spot-set-btn" style="flex:0 0 auto; padding:10px 20px; border-radius:8px; border:none; background:#667085; color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer; white-space:nowrap;">Set</button>
     <button id="spot-resume-btn" class="hidden" style="flex:0 0 auto; padding:6px 12px; border-radius:16px; border:1px solid var(--red-soft); background:var(--red-soft); color:var(--red); font-size:0.72rem; font-weight:700; cursor:pointer; white-space:nowrap;">✕ Reset</button>
   </div>
   <div id="spot-result" style="margin-top:10px; font-size:0.8rem; line-height:1.6; font-family:ui-monospace, monospace;"></div>
@@ -1016,7 +1020,7 @@
          user doc; defaults to 30 if a doc from before this feature has none. -->
     <label style="font-size:0.68rem; color:var(--muted); display:block; margin-bottom:3px;">PIN valid for how many days?</label>
     <input id="admin-new-pin-validity" type="number" min="1" max="3650" value="30" placeholder="e.g. 2, 7, 30, 90..." style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
-    <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
+    <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:#667085; color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
     <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
 
     <!-- FEATURE (2026-09-04): bulk-change PIN validity for every existing user at once — admin:
@@ -2912,6 +2916,21 @@
   });
   authUsernameEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') authContinueBtn.click(); });
 
+  // FEATURE (2026-09-05): shareable per-user login link — admin can copy a link like
+  // "<site>?u=S365D2" from the admin panel and send it directly; opening it pre-fills the
+  // username and jumps straight to the PIN step, so the user only has to type their PIN. Doesn't
+  // change how login itself works otherwise — same username+PIN check either way.
+  (function prefillUsernameFromUrl() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const u = (params.get('u') || '').trim();
+      if (u) {
+        authUsernameEl.value = u;
+        authContinueBtn.click();
+      }
+    } catch (err) { /* malformed URL params — just fall back to the normal manual login */ }
+  })();
+
   authSwitchUserBtn.addEventListener('click', resetAuthToUsernameStep);
 
   document.getElementById('auth-hint').addEventListener('click', () => {
@@ -3108,12 +3127,15 @@
           <button data-action="clear-device" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Clear Device</button>
           <button data-action="toggle-disable" data-uid="${u.uid}" data-disabled="${!!u.disabled}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">${u.disabled ? 'Enable' : 'Disable'}</button>
           <button data-action="force-logout" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Force Logout</button>
+          <button data-action="copy-link" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">🔗 Copy Link</button>
+          <button data-action="view-pnl" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">📊 View P&L</button>
+          <button data-action="reset-pnl" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--amber); background:var(--amber); color:#fff; font-size:0.72rem; cursor:pointer;">Reset P&L</button>
           <button data-action="delete-account" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--red-soft); background:var(--red-soft); color:var(--red); font-size:0.72rem; font-weight:700; cursor:pointer;">Delete Account</button>
         </div>
         <div style="display:flex; gap:5px; align-items:center; margin-bottom:5px;">
           <label style="font-size:0.68rem; color:var(--muted); white-space:nowrap;">PIN validity (days):</label>
           <input type="number" min="1" max="3650" data-validity-uid="${u.uid}" value="${u.pinValidityDays || DEFAULT_PIN_VALIDITY_DAYS}" style="flex:1; min-width:0; padding:4px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
-          <button data-action="save-validity" data-uid="${u.uid}" style="flex:0 0 auto; padding:4px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
+          <button data-action="save-validity" data-uid="${u.uid}" style="flex:0 0 auto; padding:4px 10px; border-radius:6px; border:none; background:#667085; color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
         </div>
         <!-- FEATURE (2026-09-03): a real login-username rename isn't safe (see admin note in
              backlog — it's baked into that account's actual Firebase sign-in email, renaming it
@@ -3121,11 +3143,18 @@
              next to the real username everywhere in the admin panel — doesn't touch login at all. -->
         <div style="display:flex; gap:5px; margin-bottom:5px;">
           <input type="text" data-displayname-uid="${u.uid}" value="${(u.displayName || '').replace(/"/g, '&quot;')}" placeholder="Display name (label only — doesn't change login)" style="flex:1; min-width:0; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
-          <button data-action="save-displayname" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
+          <button data-action="save-displayname" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:#667085; color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
+        </div>
+        <!-- FEATURE (2026-09-05): which trading app/broker platform this user actually trades on —
+             admin-only, kept as evidence tied to the account. Same free-text + Save pattern as the
+             admin note field right below it. -->
+        <div style="display:flex; gap:5px; margin-bottom:5px;">
+          <input type="text" data-tradingapp-uid="${u.uid}" value="${(u.tradingApp || '').replace(/"/g, '&quot;')}" placeholder="Trading app/platform (e.g. Zerodha, Upstox)" style="flex:1; min-width:0; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
+          <button data-action="save-tradingapp" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:#667085; color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
         </div>
         <div style="display:flex; gap:5px;">
           <input type="text" data-note-uid="${u.uid}" value="${(u.adminNote || '').replace(/"/g, '&quot;')}" placeholder="Admin-only note (e.g. payment/renewal)" style="flex:1; min-width:0; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
-          <button data-action="save-note" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:var(--accent); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
+          <button data-action="save-note" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:#667085; color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
         </div>
       </div>
     `;
@@ -3234,6 +3263,82 @@
         fbDb.collection('users').doc(uid).update({ forceLogoutRequestedAt: Date.now() })
           .then(() => alert('Logout requested — takes effect immediately if they\'re currently online.'))
           .catch(err => { alert('Could not request logout.'); console.warn(err); });
+      } else if (action === 'copy-link') {
+        // FEATURE (2026-09-05): shareable per-user login link — "<site>?u=<username>" pre-fills
+        // the username on the login screen (see prefillUsernameFromUrl above), so the user only
+        // has to type their PIN. Doesn't change login itself, just skips retyping the username.
+        const username = btn.getAttribute('data-username') || '';
+        if (!username) return;
+        const link = `${window.location.origin}${window.location.pathname}?u=${encodeURIComponent(username)}`;
+        const done = () => alert(`Link copied for ${username}:\n${link}`);
+        const fallback = () => { prompt(`Copy this link for ${username}:`, link); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(done).catch(fallback);
+        } else {
+          fallback();
+        }
+      } else if (action === 'view-pnl') {
+        // FEATURE (2026-09-05): admin-side P&L visibility — reads straight from that user's own
+        // users/{uid}/trades subcollection (the same data their own device syncs from), so this
+        // works regardless of which device admin is on. Read-only, one-off fetch — not a live
+        // subscription, since this is only opened occasionally per user.
+        const username = btn.getAttribute('data-username') || 'this user';
+        btn.disabled = true;
+        const originalLabel = btn.textContent;
+        btn.textContent = 'Loading…';
+        fbDb.collection('users').doc(uid).collection('trades').get()
+          .then(snapshot => {
+            btn.disabled = false;
+            btn.textContent = originalLabel;
+            if (snapshot.empty) { alert(`${username} has no logged trades yet.`); return; }
+            const trades = snapshot.docs.map(d => d.data());
+            const todayStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+            const monthKey = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', year: 'numeric' });
+            let today = 0, month = 0, allTime = 0;
+            trades.forEach(t => {
+              const pnl = Number(t.pnl) || 0;
+              allTime += pnl;
+              const d = new Date(t.ts);
+              if (d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) === todayStr) today += pnl;
+              if (d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', year: 'numeric' }) === monthKey) month += pnl;
+            });
+            const fmt = (n) => `₹${n >= 0 ? '+' : ''}${n.toFixed(0)}`;
+            alert(`${username}'s P&L —\nToday: ${fmt(today)}\n${monthKey}: ${fmt(month)}\nAll-time (${trades.length} trade${trades.length === 1 ? '' : 's'}): ${fmt(allTime)}`);
+          })
+          .catch(err => {
+            btn.disabled = false;
+            btn.textContent = originalLabel;
+            alert('Could not load P&L — check your connection and try again.');
+            console.warn(err);
+          });
+      } else if (action === 'reset-pnl') {
+        // FEATURE (2026-09-05): wipe one user's logged trades back to zero — explicitly NOT edit
+        // or delete-the-account, just clears users/{uid}/trades. Firestore's client SDK has no
+        // "delete this whole subcollection" call, so this reads every trade doc's id first, then
+        // batch-deletes them (chunked at 450 per batch, same pattern as the bulk PIN validity
+        // update, so it still works even for a user with a very long trade history).
+        const username = btn.getAttribute('data-username') || 'this user';
+        if (!confirm(`Reset ${username}'s P&L to zero? This permanently deletes all of their logged trades — this can't be undone.`)) return;
+        const tradesRef = fbDb.collection('users').doc(uid).collection('trades');
+        tradesRef.get().then(snapshot => {
+          if (snapshot.empty) { alert(`${username} has no logged trades — nothing to reset.`); return; }
+          const CHUNK = 450;
+          const docs = snapshot.docs;
+          const chunks = [];
+          for (let i = 0; i < docs.length; i += CHUNK) chunks.push(docs.slice(i, i + CHUNK));
+          let chain = Promise.resolve();
+          chunks.forEach(chunk => {
+            chain = chain.then(() => {
+              const batch = fbDb.batch();
+              chunk.forEach(d => batch.delete(d.ref));
+              return batch.commit();
+            });
+          });
+          return chain.then(() => alert(`${username}'s P&L has been reset to zero (${docs.length} trade${docs.length === 1 ? '' : 's'} removed).`));
+        }).catch(err => {
+          alert('Could not reset P&L — check your connection and try again.');
+          console.warn(err);
+        });
       } else if (action === 'delete-account') {
         // FEATURE (2026-09-03): "hard delete." Deletes the Firestore account record, which is
         // what the app actually checks on every login (see the auth gate above) — so this blocks
@@ -3261,6 +3366,14 @@
         fbDb.collection('users').doc(uid).update({ displayName: displayName })
           .then(() => loadAdminUserList())
           .catch(err => { alert('Could not save display name.'); console.warn(err); });
+      } else if (action === 'save-tradingapp') {
+        // FEATURE (2026-09-05): which trading app/broker platform this user actually trades on —
+        // admin-only evidence field, same pattern as the admin note.
+        const input = adminUserListEl.querySelector(`input[data-tradingapp-uid="${uid}"]`);
+        const tradingApp = input ? input.value.trim() : '';
+        fbDb.collection('users').doc(uid).update({ tradingApp: tradingApp })
+          .then(() => { const cached = adminUsersCache.find(u => u.uid === uid); if (cached) cached.tradingApp = tradingApp; })
+          .catch(err => { alert('Could not save trading app.'); console.warn(err); });
       } else if (action === 'save-validity') {
         // FEATURE (2026-09-04): custom/any-number PIN validity (replaces the old fixed 7/30/60/90
         // dropdown) — admin can type any whole number of days.
