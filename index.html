@@ -1010,6 +1010,16 @@
     <span>👑 Admin</span>
     <span id="admin-panel-caret" style="color:var(--muted); font-size:0.8em;">▸</span>
   </h2>
+  <!-- FEATURE (2026-09-05): compact "who's active right now" view — admin asked to see this in the
+       empty space under the collapsed Admin tile, so it stays visible whether the tile is expanded
+       or not. Grey dot = not currently online, green = online (see startPresenceHeartbeat/
+       renderPresenceList below for how that's determined). Search matches username/phone/display
+       name, same 3 fields Manage Users already searches. Clicking a row or a search result expands
+       the Admin tile (if collapsed) and jumps to/highlights that user's full row below. -->
+  <div id="admin-presence-panel" style="margin:4px 0 10px;">
+    <input id="admin-presence-search" type="text" placeholder="🔍 Search username / phone / name…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:6px 8px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.75rem;">
+    <div id="admin-presence-list" style="max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:1px;"></div>
+  </div>
   <div id="admin-panel-body" class="hidden">
     <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
     <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
@@ -2731,6 +2741,8 @@
   const adminBulkValidityEl = document.getElementById('admin-bulk-validity');
   const adminBulkValidityBtn = document.getElementById('admin-bulk-validity-btn');
   const adminBulkValidityStatusEl = document.getElementById('admin-bulk-validity-status');
+  const adminPresenceListEl = document.getElementById('admin-presence-list');
+  const adminPresenceSearchEl = document.getElementById('admin-presence-search');
   let adminUsersCache = []; // last list fetched by loadAdminUserList() — reused by search filter and CSV export
   const DEFAULT_PIN_VALIDITY_DAYS = 30; // fallback for accounts created before per-user validity existed
 
@@ -2883,8 +2895,8 @@
     // else based on role. Refresh its contents the moment admin status is established instead
     // of waiting for a toggle click that no longer exists.
     adminPanelEl.classList.toggle('hidden', !isAdmin);
-    if (isAdmin) { loadAdminUserList(); computeNextUsername(); startAdminExpiryPingLoop(); }
-    else { stopAdminExpiryPingLoop(); }
+    if (isAdmin) { loadAdminUserList(); computeNextUsername(); startAdminExpiryPingLoop(); startPresenceRefreshLoop(); }
+    else { stopAdminExpiryPingLoop(); stopPresenceRefreshLoop(); }
     // PAGE NAV: only admin has anything on page 2 — show the tab strip only for admin, and if a
     // non-admin somehow ends up on page 2 (e.g. role changes mid-session), snap back to page 1.
     pageNavEl.classList.toggle('show', isAdmin);
@@ -3121,7 +3133,7 @@
     // as "Loading…" for a moment, same button still opens the fuller Today/month/all-time popup
     // on click.
     return `
-      <div style="border-bottom:1px solid var(--border); padding:8px 0;">
+      <div data-row-uid="${u.uid}" style="border-bottom:1px solid var(--border); padding:8px 0; transition:outline 0.2s;">
         <div style="font-size:0.85rem; font-weight:700;">${u.username || '(no name)'}${u.displayName ? ` <span style="color:var(--muted); font-weight:400;">(${u.displayName})</span>` : ''}</div>
         <div style="font-size:0.72rem; color:var(--muted); margin-bottom:2px;">${renderDeviceStatus(u)} · <span style="color:${pinColor};">${pinStatus.label}</span></div>
         <div style="font-size:0.68rem; color:var(--muted); margin-bottom:5px;">Created: ${formatAdminDate(u.createdAt)} · Last login: ${formatAdminDate(u.lastLoginAt)}</div>
@@ -3215,6 +3227,7 @@
         adminUsersCache = users;
         renderUserSummary(users);
         renderFilteredUserList();
+        renderPresenceList(); // FEATURE (2026-09-05): who's-active dot list under the Admin tile
         checkPinExpiryPings(users); // FEATURE: Telegram ping admin for PINs expiring soon/expired
       })
       .catch(err => {
@@ -3422,6 +3435,94 @@
     if (adminExpiryPingInterval) { clearInterval(adminExpiryPingInterval); adminExpiryPingInterval = null; }
   }
 
+  // FEATURE (2026-09-05): "who's active right now" list under the Admin tile — admin: "give the
+  // list of usernames and a small dot in color grey (not logged in)/green (logged in) indicators,
+  // so admin can know how many are active on bot." There was no "online right now" signal before
+  // this — the device-lock field only records that a device is bound, not that the app is open at
+  // this exact moment — so this adds a lightweight heartbeat: every non-admin session stamps its
+  // own lastSeenAt every 60s while its tab stays open, and a user counts as "online" if that stamp
+  // is recent enough to survive one missed heartbeat.
+  const PRESENCE_HEARTBEAT_MS = 60 * 1000;
+  const PRESENCE_ONLINE_MS = 90 * 1000; // one heartbeat (60s) + slack, so a single missed beat doesn't flash offline
+  let presenceHeartbeatInterval = null;
+  function startPresenceHeartbeat(uid) {
+    if (presenceHeartbeatInterval) return;
+    const ping = () => { if (fbDb) fbDb.collection('users').doc(uid).update({ lastSeenAt: Date.now() }).catch(() => {}); };
+    ping(); // stamp immediately on login so status is fresh right away, not just after the first interval tick
+    presenceHeartbeatInterval = setInterval(ping, PRESENCE_HEARTBEAT_MS);
+  }
+  function stopPresenceHeartbeat() {
+    if (presenceHeartbeatInterval) { clearInterval(presenceHeartbeatInterval); presenceHeartbeatInterval = null; }
+  }
+
+  // Admin-side: re-fetch just the presence-relevant fields every 30s so the dots stay current even
+  // if admin never touches the Manage Users list. Deliberately separate from loadAdminUserList()
+  // (which also fetches every user's trades for the P&L buttons) so this stays cheap — one users
+  // collection read per tick, no trades reads.
+  let presenceRefreshInterval = null;
+  function startPresenceRefreshLoop() {
+    if (presenceRefreshInterval) return;
+    presenceRefreshInterval = setInterval(() => {
+      if (!fbDb) return;
+      fbDb.collection('users').where('role', '==', 'user').get()
+        .then(snapshot => {
+          const byUid = {};
+          snapshot.docs.forEach(d => { byUid[d.id] = d.data(); });
+          adminUsersCache.forEach(u => { if (byUid[u.uid]) u.lastSeenAt = byUid[u.uid].lastSeenAt; });
+          renderPresenceList();
+        })
+        .catch(() => {});
+    }, 30 * 1000);
+  }
+  function stopPresenceRefreshLoop() {
+    if (presenceRefreshInterval) { clearInterval(presenceRefreshInterval); presenceRefreshInterval = null; }
+  }
+
+  function renderPresenceList() {
+    const q = (adminPresenceSearchEl.value || '').trim().toLowerCase();
+    const filtered = q ? adminUsersCache.filter(u =>
+      (u.username || '').toLowerCase().includes(q) ||
+      (u.displayName || '').toLowerCase().includes(q) ||
+      (u.phone || '').toLowerCase().includes(q)
+    ) : adminUsersCache;
+    if (filtered.length === 0) {
+      adminPresenceListEl.innerHTML = `<p style="font-size:0.72rem; color:var(--muted); font-style:italic; margin:2px 0;">${q ? 'No matching accounts' : 'No non-admin accounts yet'}</p>`;
+      return;
+    }
+    const now = Date.now();
+    adminPresenceListEl.innerHTML = filtered.map(u => {
+      const online = u.lastSeenAt && (now - u.lastSeenAt) < PRESENCE_ONLINE_MS;
+      const dotColor = online ? 'var(--green)' : '#9aa1ac';
+      return `<div class="presence-row" data-uid="${u.uid}" style="display:flex; align-items:center; gap:6px; padding:3px 5px; border-radius:6px; cursor:pointer; font-size:0.76rem;">
+        <span style="width:8px; height:8px; border-radius:50%; background:${dotColor}; flex:0 0 auto;"></span>
+        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${u.username || '(no name)'}${u.displayName ? ` <span style="color:var(--muted);">(${u.displayName})</span>` : ''}</span>
+      </div>`;
+    }).join('');
+  }
+  adminPresenceSearchEl.addEventListener('input', renderPresenceList);
+
+  // Clicking a presence row (or a search result within it) expands the Admin tile if it's
+  // collapsed, clears any active Manage-Users search (so the target row is guaranteed to be in the
+  // filtered list), then scrolls to and briefly outlines that user's full row.
+  function jumpToUserRow(uid) {
+    if (adminPanelBodyEl.classList.contains('hidden')) {
+      adminPanelBodyEl.classList.remove('hidden');
+      adminPanelCaretEl.textContent = '▾';
+    }
+    if (adminUserSearchEl.value) { adminUserSearchEl.value = ''; renderFilteredUserList(); }
+    requestAnimationFrame(() => {
+      const row = adminUserListEl.querySelector(`[data-row-uid="${uid}"]`);
+      if (!row) return;
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.style.outline = '2px solid #667085';
+      setTimeout(() => { row.style.outline = ''; }, 2000);
+    });
+  }
+  adminPresenceListEl.addEventListener('click', (e) => {
+    const row = e.target.closest('.presence-row');
+    if (row) jumpToUserRow(row.getAttribute('data-uid'));
+  });
+
   // ACCOUNTS: usernames are system-generated (S365D1, S365D2, ...) — never typed by admin or
   // user — so there's no risk of typos, duplicates, or someone picking something confusing.
   // Re-run any time the admin panel opens and right after each account is created, so the
@@ -3557,6 +3658,7 @@
 
       if (!user) {
         currentUid = null; currentRole = null; currentUsername = null;
+        stopPresenceHeartbeat();
         applyRoleUI(null);
         showAuthScreen(pendingAuthMessage);
         pendingAuthMessage = "";
@@ -3610,6 +3712,9 @@
           needsLocalPinScreen = refreshPinLockMode();
           // Best-effort "last login" stamp for the admin panel's Created/Last Login columns.
           fbDb.collection('users').doc(user.uid).update({ lastLoginAt: Date.now() }).catch(() => {});
+          // FEATURE (2026-09-05): presence heartbeat, so admin's "who's active" dot list can tell
+          // green (online now) from grey (not) — see startPresenceHeartbeat above.
+          startPresenceHeartbeat(user.uid);
         } else {
           serverPinCode = null;
           serverPinIssuedAt = null;
@@ -3617,6 +3722,7 @@
           myPinValidityDays = null;
           hidePinExpiredScreen();
           lockForgotBtn.style.display = '';
+          stopPresenceHeartbeat(); // admin's own session isn't tracked in the non-admin presence list
         }
 
         hideAuthScreen();
