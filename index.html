@@ -620,7 +620,7 @@
     text-align: center;
     max-width: 280px;
   }
-  #auth-hint {
+  #auth-hint, #auth-admin-forgot-btn {
     color: var(--muted);
     font-size: 0.75rem;
     margin-top: 18px;
@@ -808,6 +808,11 @@
     <div id="auth-admin-password-subtitle" class="auth-subtitle-text">Enter your password</div>
     <input id="auth-admin-password" type="password" placeholder="Password" autocomplete="current-password">
     <button id="auth-admin-password-btn">Sign In</button>
+    <!-- FEATURE (2026-09-05): real forgot-password recovery for admin specifically — admin's
+         Firebase email IS their real inbox (viewsri@yahoo.com, no alias involved, unlike every
+         non-admin username), so Firebase's own reset email actually reaches them directly. This
+         closes the "admin locked out of their own account with no way back in" gap. -->
+    <button id="auth-admin-forgot-btn">Forgot password?</button>
     <button id="auth-admin-switch-user-btn">← Not you? Switch user</button>
   </div>
 
@@ -2747,6 +2752,7 @@
   const authAdminPasswordStepEl = document.getElementById('auth-admin-password-step');
   const authAdminPasswordEl = document.getElementById('auth-admin-password');
   const authAdminPasswordBtn = document.getElementById('auth-admin-password-btn');
+  const authAdminForgotBtn = document.getElementById('auth-admin-forgot-btn');
   const authAdminSwitchUserBtn = document.getElementById('auth-admin-switch-user-btn');
   const authHintEl = document.getElementById('auth-hint');
 
@@ -2941,6 +2947,7 @@
     authPinStepEl.classList.add('hidden');
     authAdminPasswordStepEl.classList.add('hidden'); // FEATURE (2026-09-05): admin's own password step
     authAdminPasswordEl.value = '';
+    authAdminForgotBtn.disabled = false;
     authHintEl.classList.remove('hidden');
     authUsernameStepEl.classList.remove('hidden');
     authEnteredDigits = "";
@@ -3082,6 +3089,33 @@
     attemptAdminSignIn();
   });
   authAdminPasswordEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') authAdminPasswordBtn.click(); });
+
+  // FEATURE (2026-09-05): admin's real "forgot password" recovery. Unlike every non-admin
+  // username (a hidden "+"-alias of admin's own inbox — a reset email for one of those would land
+  // in admin's inbox, not the user's, same as the old "Send Reset Email" button that was removed),
+  // "admin" maps straight to ADMIN_EMAIL with no alias, so this genuinely reaches admin directly.
+  authAdminForgotBtn.addEventListener('click', () => {
+    if (!fbAuth) {
+      authErrorEl.style.color = '';
+      authErrorEl.textContent = "Can't connect right now — check your internet and reload.";
+      return;
+    }
+    authAdminForgotBtn.disabled = true;
+    authErrorEl.style.color = 'var(--muted)';
+    authErrorEl.textContent = 'Sending reset link…';
+    fbAuth.sendPasswordResetEmail(ADMIN_EMAIL)
+      .then(() => {
+        authErrorEl.style.color = 'var(--green)';
+        authErrorEl.textContent = `Reset link sent to ${ADMIN_EMAIL} — check your inbox.`;
+        authAdminForgotBtn.disabled = false;
+      })
+      .catch(err => {
+        authErrorEl.style.color = '';
+        authErrorEl.textContent = "Couldn't send the reset email. Try again.";
+        console.warn('Signa365: admin password reset email failed:', err);
+        authAdminForgotBtn.disabled = false;
+      });
+  });
 
   // FIX (PIN lag): signing in is a real Firebase network round trip — on a slow connection
   // (mobile especially) that can take a second or more, and with nothing on screen saying so it
