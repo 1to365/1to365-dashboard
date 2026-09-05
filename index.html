@@ -3116,58 +3116,94 @@
   function renderUserRow(u) {
     const pinStatus = userPinStatus(u);
     const pinColor = { active: 'var(--green)', expiring: 'var(--amber)', expired: 'var(--red)', nopin: 'var(--muted)' }[pinStatus.bucket];
+    // FEATURE (2026-09-05): View P&L's label always shows a live number now instead of needing a
+    // click (loadPnlIntoButtons() fills this in right after the row renders — see below). Starts
+    // as "Loading…" for a moment, same button still opens the fuller Today/month/all-time popup
+    // on click.
     return `
       <div style="border-bottom:1px solid var(--border); padding:8px 0;">
         <div style="font-size:0.85rem; font-weight:700;">${u.username || '(no name)'}${u.displayName ? ` <span style="color:var(--muted); font-weight:400;">(${u.displayName})</span>` : ''}</div>
         <div style="font-size:0.72rem; color:var(--muted); margin-bottom:2px;">${renderDeviceStatus(u)} · <span style="color:${pinColor};">${pinStatus.label}</span></div>
         <div style="font-size:0.68rem; color:var(--muted); margin-bottom:5px;">Created: ${formatAdminDate(u.createdAt)} · Last login: ${formatAdminDate(u.lastLoginAt)}</div>
         <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:5px;">
-          <button data-action="send-reset-email" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Send Reset Email</button>
           <button data-action="allow-pin-reset" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Allow PIN Reset</button>
-          <button data-action="clear-device" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Clear Device</button>
-          <button data-action="toggle-disable" data-uid="${u.uid}" data-disabled="${!!u.disabled}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">${u.disabled ? 'Enable' : 'Disable'}</button>
+          <button data-action="clear-device" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Clear Device</button>
+          <button data-action="toggle-disable" data-uid="${u.uid}" data-username="${u.username || ''}" data-disabled="${!!u.disabled}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">${u.disabled ? 'Enable' : 'Disable'}</button>
           <button data-action="force-logout" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Force Logout</button>
           <button data-action="copy-link" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">🔗 Copy Link</button>
-          <button data-action="view-pnl" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">📊 View P&L</button>
-          <button data-action="reset-pnl" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--amber); background:var(--amber); color:#fff; font-size:0.72rem; cursor:pointer;">Reset P&L</button>
+          <button data-action="view-pnl" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">📊 Loading…</button>
           <button data-action="delete-account" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--red-soft); background:var(--red-soft); color:var(--red); font-size:0.72rem; font-weight:700; cursor:pointer;">Delete Account</button>
         </div>
         <div style="display:flex; gap:5px; align-items:center; margin-bottom:5px;">
           <label style="font-size:0.68rem; color:var(--muted); white-space:nowrap;">PIN validity (days):</label>
           <input type="number" min="1" max="3650" data-validity-uid="${u.uid}" value="${u.pinValidityDays || DEFAULT_PIN_VALIDITY_DAYS}" style="flex:1; min-width:0; padding:4px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
-          <button data-action="save-validity" data-uid="${u.uid}" style="flex:0 0 auto; padding:4px 10px; border-radius:6px; border:none; background:#667085; color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
         </div>
         <!-- FEATURE (2026-09-03): a real login-username rename isn't safe (see admin note in
              backlog — it's baked into that account's actual Firebase sign-in email, renaming it
              here without a backend would break their login). This is a cosmetic label only, shown
              next to the real username everywhere in the admin panel — doesn't touch login at all. -->
-        <div style="display:flex; gap:5px; margin-bottom:5px;">
-          <input type="text" data-displayname-uid="${u.uid}" value="${(u.displayName || '').replace(/"/g, '&quot;')}" placeholder="Display name (label only — doesn't change login)" style="flex:1; min-width:0; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
-          <button data-action="save-displayname" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:#667085; color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
+        <div style="margin-bottom:5px;">
+          <input type="text" data-displayname-uid="${u.uid}" value="${(u.displayName || '').replace(/"/g, '&quot;')}" placeholder="Display name (label only — doesn't change login)" style="width:100%; box-sizing:border-box; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
         </div>
         <!-- FEATURE (2026-09-05): which trading app/broker platform this user actually trades on —
-             admin-only, kept as evidence tied to the account. Same free-text + Save pattern as the
-             admin note field right below it. -->
-        <div style="display:flex; gap:5px; margin-bottom:5px;">
-          <input type="text" data-tradingapp-uid="${u.uid}" value="${(u.tradingApp || '').replace(/"/g, '&quot;')}" placeholder="Trading app/platform (e.g. Zerodha, Upstox)" style="flex:1; min-width:0; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
-          <button data-action="save-tradingapp" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:#667085; color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
+             admin-only, kept as evidence tied to the account. -->
+        <div style="margin-bottom:5px;">
+          <input type="text" data-tradingapp-uid="${u.uid}" value="${(u.tradingApp || '').replace(/"/g, '&quot;')}" placeholder="Trading app/platform (e.g. Zerodha, Upstox)" style="width:100%; box-sizing:border-box; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
         </div>
-        <div style="display:flex; gap:5px;">
-          <input type="text" data-note-uid="${u.uid}" value="${(u.adminNote || '').replace(/"/g, '&quot;')}" placeholder="Admin-only note (e.g. payment/renewal)" style="flex:1; min-width:0; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
-          <button data-action="save-note" data-uid="${u.uid}" style="flex:0 0 auto; padding:5px 10px; border-radius:6px; border:none; background:#667085; color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer;">Save</button>
+        <!-- FEATURE (2026-09-05): admin-only phone number field — also searchable (see
+             renderFilteredUserList below). -->
+        <div style="margin-bottom:5px;">
+          <input type="text" data-phone-uid="${u.uid}" value="${(u.phone || '').replace(/"/g, '&quot;')}" placeholder="Phone number (optional, admin-only)" style="width:100%; box-sizing:border-box; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
         </div>
+        <div style="margin-bottom:5px;">
+          <input type="text" data-note-uid="${u.uid}" value="${(u.adminNote || '').replace(/"/g, '&quot;')}" placeholder="Admin-only note (e.g. payment/renewal)" style="width:100%; box-sizing:border-box; padding:5px 7px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem;">
+        </div>
+        <!-- FEATURE (2026-09-05): one Save button for all 5 fields above (was 4 separate ones) —
+             admin: "why 4 save buttons, can that be one save button for all changes/updates?" -->
+        <button data-action="save-all" data-uid="${u.uid}" style="width:100%; padding:6px; border-radius:6px; border:none; background:#667085; color:#fff; font-size:0.75rem; font-weight:700; cursor:pointer;">💾 Save All</button>
       </div>
     `;
   }
 
   function renderFilteredUserList() {
     const q = (adminUserSearchEl.value || '').trim().toLowerCase();
-    const filtered = q ? adminUsersCache.filter(u => (u.username || '').toLowerCase().includes(q) || (u.displayName || '').toLowerCase().includes(q)) : adminUsersCache;
+    // FEATURE (2026-09-05): search also matches phone number now, alongside username/display name.
+    const filtered = q ? adminUsersCache.filter(u =>
+      (u.username || '').toLowerCase().includes(q) ||
+      (u.displayName || '').toLowerCase().includes(q) ||
+      (u.phone || '').toLowerCase().includes(q)
+    ) : adminUsersCache;
     if (filtered.length === 0) {
       adminUserListEl.innerHTML = `<p style="font-size:0.8rem; color:var(--muted); font-style:italic;">${q ? 'No matching accounts' : 'No non-admin accounts yet'}</p>`;
       return;
     }
     adminUserListEl.innerHTML = filtered.map(renderUserRow).join('');
+    loadPnlIntoButtons(filtered);
+  }
+
+  // FEATURE (2026-09-05): fills each row's "View P&L" button with a live number right after the
+  // row renders, instead of only showing it on click. One extra read per visible user per list
+  // refresh (flagged to admin before this was built) — kept lightweight by only computing Today's
+  // total for the button label; the fuller Today/month/all-time breakdown still shows on click.
+  function loadPnlIntoButtons(users) {
+    if (!fbDb) return;
+    users.forEach(u => {
+      const btn = adminUserListEl.querySelector(`button[data-action="view-pnl"][data-uid="${u.uid}"]`);
+      if (!btn) return;
+      fbDb.collection('users').doc(u.uid).collection('trades').get()
+        .then(snapshot => {
+          if (!btn.isConnected) return; // row may have been re-rendered/filtered away by now
+          if (snapshot.empty) { btn.textContent = '📊 P&L: —'; return; }
+          const todayStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+          let today = 0;
+          snapshot.docs.forEach(d => {
+            const t = d.data();
+            if (new Date(t.ts).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) === todayStr) today += (Number(t.pnl) || 0);
+          });
+          btn.textContent = `📊 ${today >= 0 ? '+' : ''}₹${today.toFixed(0)} today`;
+        })
+        .catch(() => { if (btn.isConnected) btn.textContent = '📊 View P&L'; });
+    });
   }
 
   function loadAdminUserList() {
@@ -3220,21 +3256,7 @@
     if (btn) {
       const action = btn.getAttribute('data-action');
       const uid = btn.getAttribute('data-uid');
-      if (action === 'send-reset-email') {
-        // ACCOUNTS: this user has no real email — their account's address is a hidden alias of
-        // the admin's own inbox, so this reset link lands there, not with the end user. Originally
-        // documented as the fully-locked-out path ("Allow PIN Reset" can't reach a user who can't
-        // sign in at all) — CLARIFIED (2026-09-04): this also doubles as "admin picks the exact
-        // new PIN, right now" for an account that's still active/mid-duration, since the PIN IS
-        // the Firebase password (sg365_<PIN>) — nothing here restricts it to locked-out accounts
-        // only. Alert text updated to say so, since admin asked for a way to change any user's PIN
-        // mid-duration and this already does it, just not as a single in-panel field.
-        const username = btn.getAttribute('data-username') || '';
-        if (!username || !fbAuth) return;
-        fbAuth.sendPasswordResetEmail(usernameToEmail(username))
-          .then(() => alert(`Reset link sent to your own inbox (${ADMIN_EMAIL}) for ${username}. Open it, set the password field to "sg365_" + any 4-digit PIN you choose, then tell ${username} that PIN. Works any time — doesn't have to be expired/locked out first.`))
-          .catch(err => { alert('Could not send reset email.'); console.warn(err); });
-      } else if (action === 'allow-pin-reset') {
+      if (action === 'allow-pin-reset') {
         fbDb.collection('users').doc(uid).update({ pinResetUnlockedAt: Date.now() })
           .then(() => alert('PIN reset unlocked — they can now set a new PIN next time they open the app (or right away if they\'re already stuck on the expired screen).'))
           .catch(err => { alert('Could not unlock PIN reset.'); console.warn(err); });
@@ -3242,6 +3264,10 @@
         // FEATURE (2026-09-04): audit trail — every Clear Device is logged (count + last-cleared
         // time) so admin can see how often a given account has switched devices, per the
         // one-device-at-a-time-but-freely-switchable policy.
+        // CHANGED (2026-09-05): now confirms first, same as Force Logout/Delete Account — this
+        // used to fire immediately on click with no confirm step.
+        const cdUsername = btn.getAttribute('data-username') || 'this user';
+        if (!confirm(`Clear the device lock for ${cdUsername}? They'll be able to sign in from a new device next time.`)) return;
         fbDb.collection('users').doc(uid).update({
           deviceId: null,
           deviceClearCount: firebase.firestore.FieldValue.increment(1),
@@ -3250,7 +3276,12 @@
           .then(() => loadAdminUserList())
           .catch(err => { alert('Could not clear device.'); console.warn(err); });
       } else if (action === 'toggle-disable') {
+        // CHANGED (2026-09-05): now confirms first, same as Clear Device above — used to apply
+        // immediately with no confirm step.
         const isDisabled = btn.getAttribute('data-disabled') === 'true';
+        const tdUsername = btn.getAttribute('data-username') || 'this user';
+        const verb = isDisabled ? 'Enable' : 'Disable';
+        if (!confirm(`${verb} ${tdUsername}'s account?`)) return;
         fbDb.collection('users').doc(uid).update({ disabled: !isDisabled })
           .then(() => loadAdminUserList())
           .catch(err => { alert('Could not update account.'); console.warn(err); });
@@ -3311,35 +3342,10 @@
             alert('Could not load P&L — check your connection and try again.');
             console.warn(err);
           });
-      } else if (action === 'reset-pnl') {
-        // FEATURE (2026-09-05): wipe one user's logged trades back to zero — explicitly NOT edit
-        // or delete-the-account, just clears users/{uid}/trades. Firestore's client SDK has no
-        // "delete this whole subcollection" call, so this reads every trade doc's id first, then
-        // batch-deletes them (chunked at 450 per batch, same pattern as the bulk PIN validity
-        // update, so it still works even for a user with a very long trade history).
-        const username = btn.getAttribute('data-username') || 'this user';
-        if (!confirm(`Reset ${username}'s P&L to zero? This permanently deletes all of their logged trades — this can't be undone.`)) return;
-        const tradesRef = fbDb.collection('users').doc(uid).collection('trades');
-        tradesRef.get().then(snapshot => {
-          if (snapshot.empty) { alert(`${username} has no logged trades — nothing to reset.`); return; }
-          const CHUNK = 450;
-          const docs = snapshot.docs;
-          const chunks = [];
-          for (let i = 0; i < docs.length; i += CHUNK) chunks.push(docs.slice(i, i + CHUNK));
-          let chain = Promise.resolve();
-          chunks.forEach(chunk => {
-            chain = chain.then(() => {
-              const batch = fbDb.batch();
-              chunk.forEach(d => batch.delete(d.ref));
-              return batch.commit();
-            });
-          });
-          return chain.then(() => alert(`${username}'s P&L has been reset to zero (${docs.length} trade${docs.length === 1 ? '' : 's'} removed).`));
-        }).catch(err => {
-          alert('Could not reset P&L — check your connection and try again.');
-          console.warn(err);
-        });
       } else if (action === 'delete-account') {
+        // REMOVED (2026-09-05): "Reset P&L" action used to sit here — admin asked for it to come
+        // back out the day after it shipped. Nothing else touches a user's trades from the admin
+        // panel now besides "View P&L" (read-only).
         // FEATURE (2026-09-03): "hard delete." Deletes the Firestore account record, which is
         // what the app actually checks on every login (see the auth gate above) — so this blocks
         // sign-in exactly like Disable does, but also removes them from the list entirely and
@@ -3352,37 +3358,28 @@
         fbDb.collection('users').doc(uid).delete()
           .then(() => loadAdminUserList())
           .catch(err => { alert('Could not delete account.'); console.warn(err); });
-      } else if (action === 'save-note') {
-        const input = adminUserListEl.querySelector(`input[data-note-uid="${uid}"]`);
-        const note = input ? input.value : '';
-        fbDb.collection('users').doc(uid).update({ adminNote: note })
-          .then(() => { const cached = adminUsersCache.find(u => u.uid === uid); if (cached) cached.adminNote = note; })
-          .catch(err => { alert('Could not save note.'); console.warn(err); });
-      } else if (action === 'save-displayname') {
-        // FEATURE (2026-09-03): cosmetic label only — does NOT touch the real username or Firebase
-        // login email (see the comment above the input). Purely for admin's own readability.
-        const input = adminUserListEl.querySelector(`input[data-displayname-uid="${uid}"]`);
-        const displayName = input ? input.value.trim() : '';
-        fbDb.collection('users').doc(uid).update({ displayName: displayName })
+      } else if (action === 'save-all') {
+        // FEATURE (2026-09-05): one Save button for all 5 per-user fields at once (PIN validity,
+        // Display Name, Trading app, Phone number, Admin note) — replaces the 4 separate Save
+        // buttons these used to have (admin: "why 4 save buttons, can that be one save button for
+        // all changes/updates?"). Reads all 5 inputs for this row and writes them in one update.
+        const validityInput = adminUserListEl.querySelector(`input[data-validity-uid="${uid}"]`);
+        const displayNameInput = adminUserListEl.querySelector(`input[data-displayname-uid="${uid}"]`);
+        const tradingAppInput = adminUserListEl.querySelector(`input[data-tradingapp-uid="${uid}"]`);
+        const phoneInput = adminUserListEl.querySelector(`input[data-phone-uid="${uid}"]`);
+        const noteInput = adminUserListEl.querySelector(`input[data-note-uid="${uid}"]`);
+        const days = validityInput ? parseInt(validityInput.value, 10) : NaN;
+        if (!Number.isFinite(days) || days < 1) { alert('Enter a valid number of PIN-validity days (1 or more).'); return; }
+        const updates = {
+          pinValidityDays: days,
+          displayName: displayNameInput ? displayNameInput.value.trim() : '',
+          tradingApp: tradingAppInput ? tradingAppInput.value.trim() : '',
+          phone: phoneInput ? phoneInput.value.trim() : '',
+          adminNote: noteInput ? noteInput.value : ''
+        };
+        fbDb.collection('users').doc(uid).update(updates)
           .then(() => loadAdminUserList())
-          .catch(err => { alert('Could not save display name.'); console.warn(err); });
-      } else if (action === 'save-tradingapp') {
-        // FEATURE (2026-09-05): which trading app/broker platform this user actually trades on —
-        // admin-only evidence field, same pattern as the admin note.
-        const input = adminUserListEl.querySelector(`input[data-tradingapp-uid="${uid}"]`);
-        const tradingApp = input ? input.value.trim() : '';
-        fbDb.collection('users').doc(uid).update({ tradingApp: tradingApp })
-          .then(() => { const cached = adminUsersCache.find(u => u.uid === uid); if (cached) cached.tradingApp = tradingApp; })
-          .catch(err => { alert('Could not save trading app.'); console.warn(err); });
-      } else if (action === 'save-validity') {
-        // FEATURE (2026-09-04): custom/any-number PIN validity (replaces the old fixed 7/30/60/90
-        // dropdown) — admin can type any whole number of days.
-        const input = adminUserListEl.querySelector(`input[data-validity-uid="${uid}"]`);
-        const days = input ? parseInt(input.value, 10) : NaN;
-        if (!Number.isFinite(days) || days < 1) { alert('Enter a valid number of days (1 or more).'); return; }
-        fbDb.collection('users').doc(uid).update({ pinValidityDays: days })
-          .then(() => loadAdminUserList())
-          .catch(err => { alert('Could not update PIN validity.'); console.warn(err); });
+          .catch(err => { alert('Could not save changes.'); console.warn(err); });
       }
       return;
     }
