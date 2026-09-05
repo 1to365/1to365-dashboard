@@ -508,16 +508,19 @@
   }
 
 
-  /* ---- ACCOUNT EXPIRY BANNER (2026-09-04) ---- */
-  #expiry-banner {
-    background: var(--amber);
-    color: #1a1200;
-    font-size: 0.82rem;
+  /* ---- ACCOUNT EXPIRY NOTICE (2026-09-04, RESTYLED + MOVED 2026-09-05) ---- */
+  /* Was a full-width amber banner below the header; admin asked for it to move into the header's
+     own grey bar next to the date/time, styled white background / red text (a small pill badge
+     reads better there than a full-width strip). */
+  #expiry-header-tag {
+    background: #fff;
+    color: var(--red);
+    font-size: 0.7rem;
     font-weight: 700;
-    text-align: center;
-    padding: 8px 14px;
+    padding: 2px 9px;
+    border-radius: 10px;
+    white-space: nowrap;
   }
-  #expiry-banner.hidden { display: none; }
 
   /* ---- MARKET CLOSED WATERMARK ---- */
   #market-closed-overlay {
@@ -809,7 +812,9 @@
   <!-- FEATURE (2026-09-04): one-device policy notice — only shown during first-time PIN setup
        (see refreshPinLockMode/renderLockSubtitle), so a brand-new user sees this right when
        their account first locks itself to this device. -->
-  <div id="lock-device-notice" class="hidden" style="max-width:260px; text-align:center; font-size:0.72rem; color:var(--muted); margin:-8px 0 16px;">This account can only be used on ONE device at a time — the one you finish setup on now. To switch devices later, contact your admin.</div>
+  <!-- WORDING (2026-09-05): swapped in the wording admin approved during the device-policy
+       discussion — same notice, same trigger (first-time PIN setup only), just clearer phrasing. -->
+  <div id="lock-device-notice" class="hidden" style="max-width:260px; text-align:center; font-size:0.72rem; color:var(--muted); margin:-8px 0 16px;">🔒 This login works on one device at a time. Once you finish setup here, this device stays linked to your account — to switch to a new device, ask your admin to reset it.</div>
   <div id="lock-dots">
     <div class="lock-dot"></div>
     <div class="lock-dot"></div>
@@ -894,16 +899,16 @@
 
     <span id="time-window-dot" class="status-dot" title="Checking..."></span>
     <p id="clock">Loading time...</p>
+    <!-- FEATURE (2026-09-04, MOVED 2026-09-05): account-expiry notice — non-admin only, shown once
+         pinDaysLeft() <= 2. Covers "after login landing page" (shown right after sign-in resolves)
+         and "during login page" as far as that's feasible (the PIN-entry/lock screen, once the app
+         already knows which account is signing in — see renderLockSubtitle). Showing this before a
+         username is even typed isn't safely buildable without a pre-auth account lookup — flagged
+         separately, not attempted here. Moved from its own full-width banner row into this small
+         badge next to the clock, per admin's request; wording shortened to fit this space. -->
+    <span id="expiry-header-tag" class="hidden"></span>
   </div>
 </header>
-
-<!-- FEATURE (2026-09-04): account-expiry banner — non-admin only, shown once pinDaysLeft() <= 2.
-     Covers "after login landing page" (shown right after sign-in resolves) and "during login
-     page" as far as that's feasible (the PIN-entry/lock screen, once the app already knows which
-     account is signing in — see renderLockSubtitle). Showing this before a username is even
-     typed isn't safely buildable without a pre-auth account lookup — flagged separately, not
-     attempted here. -->
-<div id="expiry-banner" class="hidden"></div>
 
 <div id="market-closed-overlay" class="hidden">Market Closed</div>
 
@@ -1023,7 +1028,10 @@
   <div id="admin-panel-body" class="hidden">
     <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
     <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
-    <input id="admin-new-pin" type="text" inputmode="numeric" maxlength="4" placeholder="Starter PIN (4 digits)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
+    <!-- FEATURE (2026-09-05): default starter PIN pre-filled as "2026" for every new account, per
+         admin's decision — admin can still overwrite it per account; still validated as exactly
+         4 digits either way, since it doubles as the Firebase password (see pinToPassword). -->
+    <input id="admin-new-pin" type="text" inputmode="numeric" maxlength="4" value="2026" placeholder="Starter PIN (4 digits)" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
     <!-- FEATURE (2026-09-03), CHANGED (2026-09-04): per-user PIN validity — was a flat 30 days
          for everyone, then a fixed 7/30/60/90 dropdown. Admin asked for any custom number (e.g.
          2, 4, 7, 11) — swapped for a free-entry number field. Stored as pinValidityDays on the
@@ -2349,14 +2357,19 @@
   // safely-buildable stand-in for "during login page" — see the HTML comment above the banner
   // element for why the true pre-auth login screen isn't covered).
   function updateExpiryBanner() {
-    const bannerEl = document.getElementById('expiry-banner');
+    const bannerEl = document.getElementById('expiry-header-tag');
     if (!bannerEl) return;
     if (currentRole !== 'user' || !serverPinCode) { bannerEl.classList.add('hidden'); return; }
     const daysLeft = pinDaysLeft();
     if (daysLeft === null || daysLeft > 2) { bannerEl.classList.add('hidden'); return; }
+    // WORDING (2026-09-05): shortened to fit the header's grey bar (was a full sentence in its own
+    // full-width banner) — admin flagged this would need shortening once moved here.
     bannerEl.textContent = daysLeft <= 0
-      ? '⚠️ Your account access has expired — contact admin to continue.'
-      : `⚠️ Account expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'} — contact admin to renew.`;
+      ? '⚠ Expired'
+      : `⚠ ${daysLeft}d left`;
+    bannerEl.title = daysLeft <= 0
+      ? 'Your account access has expired — contact admin to continue.'
+      : `Account expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'} — contact admin to renew.`;
     bannerEl.classList.remove('hidden');
   }
 
@@ -3390,6 +3403,15 @@
           phone: phoneInput ? phoneInput.value.trim() : '',
           adminNote: noteInput ? noteInput.value : ''
         };
+        // FEATURE (2026-09-05): extending an EXPIRED account restarts the countdown from right now
+        // (relative), instead of adding the new validity onto the original pinSetAt (absolute) —
+        // admin: "the count of duration continuous when reactivated." Mid-tenure edits on a
+        // still-active account are untouched — those keep the existing absolute behavior, since
+        // admin already has full control over the number at any point anyway.
+        const cachedUser = adminUsersCache.find(u => u.uid === uid);
+        if (cachedUser && userPinStatus(cachedUser).bucket === 'expired') {
+          updates.pinSetAt = Date.now();
+        }
         fbDb.collection('users').doc(uid).update(updates)
           .then(() => loadAdminUserList())
           .catch(err => { alert('Could not save changes.'); console.warn(err); });
@@ -3629,7 +3651,7 @@
       .then(() => {
         adminAddStatusEl.textContent = `✅ Account created — username ${username}, starter PIN ${starterPin}, PIN validity ${pinValidityDays} days. Share the username/PIN with them; they'll set their own permanent PIN on first login.`;
         adminAddStatusEl.style.color = 'var(--green)';
-        adminNewPinEl.value = '';
+        adminNewPinEl.value = '2026'; // FEATURE (2026-09-05): reset back to the new default, not blank
         adminNewPinValidityEl.value = String(DEFAULT_PIN_VALIDITY_DAYS);
         // Persist the counter forward past the number just used, so it's never handed out again
         // even if this account is later hard-deleted (see computeNextUsername comment above).
