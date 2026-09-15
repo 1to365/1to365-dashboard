@@ -1379,12 +1379,19 @@
     bigMoveAlerted[elId] = delta > 0 ? 'up' : 'down';
 
     const isUp = delta > 0;
-    const sideWord = isUp ? "STRONG CE" : "STRONG PE";
+    // FIX (2026-09-15): this used to say "STRONG CE"/"STRONG PE" — the exact same phrase
+    // checkAlertTrigger() uses for a real zone-confirmed Strong Signal — even though Big Move is
+    // just a raw price-magnitude blip, completely independent of the actual Supertrend zone. That
+    // made a fast counter-trend bounce (e.g. a morning swing on an otherwise PE day) read on
+    // Telegram as if the trend had flipped CE, when it hadn't (reported 2026-09-15). The in-app
+    // Alerts card already avoided this — plain "CE"/"PE" plus a "(swing, not a trend change —
+    // follow Zone)" caption — Telegram now matches it instead of using the Strong-Signal wording.
+    const sideWord = isUp ? "CE" : "PE";
     const sideIcon = isUp ? "🟢" : "🔴";
     const ptsStr = `${isUp ? '+' : '-'}${Math.abs(delta).toFixed(0)} pts`;
     const spanStr = isRolling ? " (15-min)" : "";
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    sendTelegramText(`🚨 ${priceIndexNames[elId]} BIG MOVE${spanStr} ${sideIcon} ${sideWord} ${ptsStr} · ${timeStr} IST`);
+    sendTelegramText(`🚨 ${priceIndexNames[elId]} BIG MOVE${spanStr} ${sideIcon} ${sideWord} ${ptsStr} · ${timeStr} IST (swing, not a trend change — follow Zone)`);
     // FEATURE: Big Move used to pop up as its own big banner box on top of the dashboard — that's
     // gone now. It shows as an entry in the regular Alerts card instead (same list Strong Signal
     // and Flip use), and auto-clears itself after ALERT_BIG_MOVE_TTL_MS (see pruneExpiredAlerts)
@@ -2255,7 +2262,43 @@
 
   // ---- ST CODE FLIP ALERT (separate from the Strong-signal alert above) ----
   // Fires whenever a T-code flips direction (e.g. TSG -> TSR), regardless of Strong/Bias.
-  const previousStCode = {}; // elId -> last CONFIRMED T-code announced
+  // FIX (2026-09-15): previousStCode/pendingStCode used to be plain in-memory objects — unlike
+  // every other alert-dedup log in this app (lastAlertedDirection, alertHistory, bigMoveAlertLog,
+  // flipEventLog), a page reload/reconnect mid-signal silently wiped this "last confirmed code"
+  // baseline, so the very next real flip after that reload was treated as just a new starting
+  // point instead of a recognized flip — no alert, no Telegram message, no chart arrow for it
+  // (reported 2026-09-11, root-caused then, fixed now). Persisted to localStorage the same
+  // day-scoped way as the other 4 logs.
+  const ST_CODE_KEY = "signa365_st_code_state";
+  function emptyStCodeState() {
+    return {
+      prev: { "nifty-zone": null, "banknifty-zone": null, "sensex-zone": null },
+      pending: { "nifty-zone": null, "banknifty-zone": null, "sensex-zone": null }
+    };
+  }
+  function loadStCodeState() {
+    try {
+      const raw = localStorage.getItem(ST_CODE_KEY);
+      if (!raw) return emptyStCodeState();
+      const parsed = JSON.parse(raw);
+      if (parsed.dateKey !== todayIstKey()) return emptyStCodeState();
+      const empty = emptyStCodeState();
+      return {
+        prev: Object.assign(empty.prev, parsed.prev || {}),
+        pending: Object.assign(empty.pending, parsed.pending || {})
+      };
+    } catch (e) {
+      return emptyStCodeState();
+    }
+  }
+  const stCodeState = loadStCodeState();
+  const previousStCode = stCodeState.prev; // elId -> last CONFIRMED T-code announced
+  const pendingStCode = stCodeState.pending; // elId -> a new code seen once, awaiting a second confirming refresh
+  function persistStCodeState() {
+    try {
+      localStorage.setItem(ST_CODE_KEY, JSON.stringify({ dateKey: todayIstKey(), prev: previousStCode, pending: pendingStCode }));
+    } catch (e) { /* storage full/unavailable — flip baseline just won't survive a reload today */ }
+  }
 
   const recentFlipTs = {}; // elId -> timestamp of last flip, drives the animated badge
   let lastSpotKey = null;  // which index the spot-result box is currently showing
@@ -2280,23 +2323,26 @@
   // announced. A one-off blip that reverts next cycle is simply discarded. This only delays a
   // genuine flip announcement by ~30s — it doesn't touch the Yahoo feed, Telegram sending, or
   // the CE/PE Supertrend calculation itself.
-  const pendingStCode = {}; // elId -> a new code seen once, awaiting a second confirming refresh
+  // (pendingStCode is declared above, alongside previousStCode — both persisted together now.)
 
   function checkFlipAlert(elId, direction, stCode) {
     const prevCode = previousStCode[elId];
 
     if (!prevCode) {
       previousStCode[elId] = stCode; // first-ever reading for this index — just set the baseline
+      persistStCodeState();
       return;
     }
 
     if (stCode === prevCode) {
       delete pendingStCode[elId]; // matches the confirmed baseline — clear any pending change
+      persistStCodeState();
       return;
     }
 
     if (pendingStCode[elId] !== stCode) {
       pendingStCode[elId] = stCode; // first time seeing this different code — hold, don't announce yet
+      persistStCodeState();
       return;
     }
 
@@ -2347,6 +2393,7 @@
     startFlipSpinLoop(); // FEATURE: keeps the chart's revolving flip animation actually spinning (see flipMarkers plugin)
 
     previousStCode[elId] = stCode;
+    persistStCodeState();
   }
 
   // ---- PIN LOCK SCREEN ----
