@@ -1257,13 +1257,12 @@
     throw lastErr;
   }
 
-  // ---- FEATURE 1: BIG MOVE ALERT (new, additive) ----
-  // Purely informational — flags an unusually large single-refresh (30s) jump so you know to
-  // go look. It does not recommend a trade, a direction, or a strike. BankNifty threshold set
-  // proportionally between your Sensex/Nifty numbers since you didn't specify one for it —
-  // easy to adjust if it fires too often or too rarely.
-  const BIG_MOVE_THRESHOLD = { "sensex-price": 100, "nifty-price": 50, "banknifty-price": 75 };
-  const priceIndexNames = { "sensex-price": "SENSEX", "nifty-price": "NIFTY", "banknifty-price": "BANKNIFTY" };
+  // ---- BIG MOVE ALERT — REMOVED (2026-09-16) ----
+  // Admin decided to drop this entirely for all 3 indexes rather than tune it — it was firing too
+  // often during volatile opening-hour price action (reported 2026-09-16). Was a pure price-
+  // magnitude detector, independent of the actual Supertrend zone; see the backlog (Part 10) for
+  // the full history (threshold tuning, double-fire fix, wording fix) before this removal.
+  const priceIndexNames = { "sensex-price": "SENSEX", "nifty-price": "NIFTY", "banknifty-price": "BANKNIFTY" }; // still used by the stale-price status line below
 
   // FEATURE (2026-09-03): live/stale data indicator — per-index consecutive-failure count. After
   // 2 failed refreshes in a row (~60s+ of no real update) that tile shows a small "Stale" flag, so
@@ -1272,40 +1271,14 @@
   const STALE_AFTER_FAILS = 2;
   const staleFlagIds = { "nifty-price": "nifty-stale-flag", "banknifty-price": "banknifty-stale-flag", "sensex-price": "sensex-stale-flag" };
 
-  // Today's Big Move Alert events per index — no longer drives the chart arrows (see
-  // flipEventLog below for that), but still used for the Alerts card entries and Telegram — for
-  // the whole trading day, surviving a page reload/reopen too (localStorage, not just an
-  // in-memory array), keyed to today's IST date so it naturally starts empty again the next day
-  // without growing forever.
-  const BIG_MOVE_LOG_KEY = "signa365_bigmove_log";
   function todayIstKey() {
     const d = getIstDate();
     return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
   }
-  function emptyBigMoveLog() {
-    return { "sensex-price": [], "nifty-price": [], "banknifty-price": [] };
-  }
-  function loadBigMoveLog() {
-    try {
-      const raw = localStorage.getItem(BIG_MOVE_LOG_KEY);
-      if (!raw) return emptyBigMoveLog();
-      const parsed = JSON.parse(raw);
-      if (parsed.dateKey !== todayIstKey()) return emptyBigMoveLog();
-      return Object.assign(emptyBigMoveLog(), parsed.log || {});
-    } catch (e) {
-      return emptyBigMoveLog();
-    }
-  }
-  const bigMoveAlertLog = loadBigMoveLog();
-  function persistBigMoveLog() {
-    try {
-      localStorage.setItem(BIG_MOVE_LOG_KEY, JSON.stringify({ dateKey: todayIstKey(), log: bigMoveAlertLog }));
-    } catch (e) { /* storage full/unavailable — chart markers just won't survive a reload today */ }
-  }
 
   // Today's confirmed Code-flip events per index (TG<->TR) — same day-scoped, localStorage-backed
-  // pattern as bigMoveAlertLog above, but this is what the chart arrows are now driven by instead
-  // of Big Move Alert (see checkFlipAlert below, which pushes into this on every confirmed flip).
+  // pattern the old Big Move log used (removed 2026-09-16 above) — this is what the chart arrows
+  // are driven by (see checkFlipAlert below, which pushes into this on every confirmed flip).
   const FLIP_LOG_KEY = "signa365_flip_log";
   function emptyFlipLog() {
     return { "sensex-price": [], "nifty-price": [], "banknifty-price": [] };
@@ -1326,83 +1299,6 @@
     try {
       localStorage.setItem(FLIP_LOG_KEY, JSON.stringify({ dateKey: todayIstKey(), log: flipEventLog }));
     } catch (e) { /* storage full/unavailable — chart arrows just won't survive a reload today */ }
-  }
-
-  // FIX (Big Move blind spot on gradual moves): the original check only ever compared this
-  // tick's price to the immediately previous one (30s apart), so a big move that built up
-  // gradually over many refreshes — never crossing the threshold in any single 30s step, but
-  // clearly exceeding it over, say, 15 minutes — never fired. Path 1 below (tick-to-tick) is
-  // unchanged and still catches a sudden single-tick spike; Path 2 is new and compares against
-  // the oldest price still inside a rolling 15-minute window, catching a slow bleed too.
-  const BIG_MOVE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes — matches the "held 15+ min" language already used elsewhere for Strong Signal
-  const bigMoveHistory = {}; // elId -> [{t, price}, ...] pruned to the last 15 minutes
-  // FIX (2026-09-03): used to be bigMoveRollingAlerted, checked only by Path 2 — Path 1 (the
-  // sudden-tick check right below) had NO debounce at all, so it could both re-fire every single
-  // 30s cycle on its own during a fast sustained move, AND fire back-to-back with Path 2 for what
-  // was really one move (reported: BANKNIFTY +96 tick alert, then +89 (15-min) alert 30s later).
-  // Now a single shared "already alerted this stretch" flag covers BOTH paths.
-  const bigMoveAlerted = {}; // elId -> 'up' | 'down' | null — shared between the tick and rolling-window paths
-
-  function checkBigMove(elId, prevPrice, newPrice) {
-    // FIX: checkAlertTrigger/checkFlipAlert already skip outside the trade window — this one
-    // never did, so a stray after-hours/pre-market price blip from Yahoo (any time of day,
-    // including overnight) could read as a "big move" and fire a false alert. Same gate now.
-    if (!isWithinTradeWindow()) return;
-    if (prevPrice == null || newPrice == null) return; // first reading this session — nothing to compare yet
-    const threshold = BIG_MOVE_THRESHOLD[elId];
-    if (!threshold) return;
-
-    const now = Date.now();
-    const hist = bigMoveHistory[elId] || (bigMoveHistory[elId] = []);
-    hist.push({ t: now, price: newPrice });
-    while (hist.length && now - hist[0].t > BIG_MOVE_WINDOW_MS) hist.shift();
-
-    const tickDelta = newPrice - prevPrice;                 // Path 1: sudden single-tick jump
-    const rollingDelta = hist.length ? newPrice - hist[0].price : 0; // Path 2: drift over the rolling window
-
-    let delta, isRolling = false;
-    if (Math.abs(tickDelta) >= threshold) {
-      const dir = tickDelta > 0 ? 'up' : 'down';
-      if (bigMoveAlerted[elId] === dir) return; // already alerted this stretch — don't refire
-      delta = tickDelta;
-    } else if (Math.abs(rollingDelta) >= threshold) {
-      const dir = rollingDelta > 0 ? 'up' : 'down';
-      if (bigMoveAlerted[elId] === dir) return; // already alerted this stretch (by either path)
-      delta = rollingDelta;
-      isRolling = true;
-    } else {
-      // Neither path triggered. Once price has drifted back to within half the threshold of the
-      // window-start, clear the alert memory so a fresh excursion can alert again later.
-      if (Math.abs(rollingDelta) < threshold / 2) bigMoveAlerted[elId] = null;
-      return;
-    }
-    bigMoveAlerted[elId] = delta > 0 ? 'up' : 'down';
-
-    const isUp = delta > 0;
-    // FIX (2026-09-15): this used to say "STRONG CE"/"STRONG PE" — the exact same phrase
-    // checkAlertTrigger() uses for a real zone-confirmed Strong Signal — even though Big Move is
-    // just a raw price-magnitude blip, completely independent of the actual Supertrend zone. That
-    // made a fast counter-trend bounce (e.g. a morning swing on an otherwise PE day) read on
-    // Telegram as if the trend had flipped CE, when it hadn't (reported 2026-09-15). The in-app
-    // Alerts card already avoided this — plain "CE"/"PE" plus a "(swing, not a trend change —
-    // follow Zone)" caption — Telegram now matches it instead of using the Strong-Signal wording.
-    const sideWord = isUp ? "CE" : "PE";
-    const sideIcon = isUp ? "🟢" : "🔴";
-    const ptsStr = `${isUp ? '+' : '-'}${Math.abs(delta).toFixed(0)} pts`;
-    const spanStr = isRolling ? " (15-min)" : "";
-    const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    sendTelegramText(`🚨 ${priceIndexNames[elId]} BIG MOVE${spanStr} ${sideIcon} ${sideWord} ${ptsStr} · ${timeStr} IST (swing, not a trend change — follow Zone)`);
-    // FEATURE: Big Move used to pop up as its own big banner box on top of the dashboard — that's
-    // gone now. It shows as an entry in the regular Alerts card instead (same list Strong Signal
-    // and Flip use), and auto-clears itself after ALERT_BIG_MOVE_TTL_MS (see pruneExpiredAlerts)
-    // instead of staying in the list indefinitely like Strong Signal/Flip entries do.
-    alertHistory.unshift({ index: priceIndexNames[elId], direction: isUp ? "CE" : "PE", ts: Date.now(), isBigMove: true, ptsStr, spanStr });
-    if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
-    renderAlerts();
-    if (bigMoveAlertLog[elId]) {
-      bigMoveAlertLog[elId].push({ time: Date.now(), isUp });
-      persistBigMoveLog();
-    }
   }
 
   // FIX (2026-09-03): Market Pulse tile font color was driven by `change = price -
@@ -1480,7 +1376,6 @@
         const change = reliablePC != null ? (price - reliablePC) : rawChange;
         const el = document.getElementById(elId);
         el.style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
-        checkBigMove(elId, currentPrice[elId], price); // FEATURE 1 — compare before overwriting
         currentPrice[elId] = price;
         currentChange[elId] = change;
         cachePrice(elId, price, change);
@@ -2089,24 +1984,7 @@
           <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
         </div>`;
       }
-      if (a.isBigMove) {
-        // FEATURE: Big Move now lives here instead of its own popup box — auto-clears itself
-        // after ALERT_BIG_MOVE_TTL_MS (see pruneExpiredAlerts), unlike Strong Signal/Flip rows.
-        // FIX (2026-09-03): Big Move can legitimately fire in the opposite color from the current
-        // Supertrend trend (it measures the speed/size of a swing, not the trend itself) — that
-        // read as contradictory when it happened next to a same-colored trend. Chart arrows for
-        // Big Move were already removed in an earlier redesign (chart arrows are flip-only now),
-        // but the same confusion could still happen here in the list — added a short caption so
-        // it never reads as a trend/Zone change.
-        return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
-          <span style="font-size:1.3rem;">🚨</span>
-          <div style="flex:1;">
-            <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">BIG MOVE ${a.direction} ${a.ptsStr}${a.spanStr}</span>
-            <span style="color:var(--muted); font-weight:400; font-size:0.78rem;"> (swing, not a trend change — follow Zone)</span>
-          </div>
-          <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
-        </div>`;
-      }
+      // (Big Move Alert card entries removed 2026-09-16 — see backlog Part 10.)
       const arrow = isCE ? "▲" : "▼";
       // FEATURE CHANGE (2026-09-04): the lunch-lull caption is gone — Strong alerts no longer
       // fire at all during lunch lull (see checkAlertTrigger), so a.lowConviction is never set
@@ -2121,17 +1999,15 @@
     }).join('');
   }
 
-  // FEATURE: Big Move Alerts clear themselves out of the Alerts card after a set time (admin
-  // asked for this to keep the list from accumulating every Big Move for the whole day) — Strong
-  // Signal Confirmed and Flip entries are untouched by this, they still stay until pushed off by
-  // MAX_ALERTS like before.
-  const ALERT_BIG_MOVE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+  // (Big Move's own TTL auto-clear removed with it, 2026-09-16 — see backlog Part 10. Strong
+  // Signal Confirmed and Flip entries were never affected by it; they still stay until pushed off
+  // by MAX_ALERTS, unchanged.)
   const FLIP_SPIN_MS = 2 * 60 * 1000; // how long the revolving chart animation plays after a flip
   // FIX (2026-09-08): the day-scoped clear only ran once, in loadAlertHistory() at page load —
   // if the tab stays open across midnight into the next trading day with no reload, alertHistory
   // never gets rechecked and yesterday's entries just sit there (reported 2026-09-08: BankNifty/
   // Nifty/Sensex entries with timestamps LATER than the current time were actually from the day
-  // before). Now checked every 30s here too, same as the Big Move TTL just below.
+  // before). Now checked every 30s here too.
   function pruneStaleDayAlerts() {
     let changed = false;
     const now = Date.now();
@@ -2146,16 +2022,9 @@
     return changed;
   }
   function pruneExpiredAlerts() {
-    let changed = false;
-    for (let i = alertHistory.length - 1; i >= 0; i--) {
-      const a = alertHistory[i];
-      if (a.isBigMove && (Date.now() - a.ts > ALERT_BIG_MOVE_TTL_MS)) {
-        alertHistory.splice(i, 1);
-        changed = true;
-      }
-    }
-    if (pruneStaleDayAlerts()) changed = true;
-    if (changed) renderAlerts();
+    // (Big Move's own TTL sweep removed with it, 2026-09-16 — nothing sets isBigMove anymore, so
+    // this now only needs the day-boundary sweep below.)
+    if (pruneStaleDayAlerts()) renderAlerts();
   }
   setInterval(pruneExpiredAlerts, 30000);
 
