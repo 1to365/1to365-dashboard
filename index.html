@@ -1118,6 +1118,13 @@
     <input id="admin-new-pin-validity" type="number" min="1" max="3650" value="30" placeholder="e.g. 2, 7, 30, 90..." style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
     <button id="admin-add-user-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:#667085; color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Create Account</button>
     <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
+    <!-- FEATURE (2026-09-17, Part 15): copy-ready welcome message shown right after a successful
+         Create Account — URL + username + password + standard instructions, ready to paste
+         straight into WhatsApp/SMS with no retyping. Hidden until the first successful creation. -->
+    <div id="admin-welcome-block" class="hidden" style="margin-top:8px;">
+      <textarea id="admin-welcome-text" readonly style="width:100%; box-sizing:border-box; min-height:118px; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.75rem; font-family:inherit; resize:vertical;"></textarea>
+      <button id="admin-welcome-copy-btn" style="width:100%; margin-top:6px; padding:7px; border-radius:8px; border:none; background:var(--green, #0f7a3d); color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer;">📋 Copy message to share</button>
+    </div>
 
     <!-- FEATURE (2026-09-04): bulk-change PIN validity for every existing user at once — admin:
          "in middle I might recreate the PIN with a shorter or larger duration for all existing
@@ -2756,6 +2763,9 @@
   //    handlePinComplete's setup-confirm branch).
   //  - "admin" is a reserved username that maps straight to the admin's real address, no alias.
   const ADMIN_EMAIL = "viewsri@yahoo.com";
+  // FEATURE (2026-09-17, Part 15): the live dashboard's own URL — used only to build the
+  // copy-ready welcome message below (see admin-welcome-block); not used anywhere else.
+  const DASHBOARD_URL = "https://1to365.github.io/1to365-dashboard/";
   function usernameToEmail(username) {
     const [local, domain] = ADMIN_EMAIL.split('@');
     const clean = username.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
@@ -2776,6 +2786,9 @@
   const adminNewPinValidityEl = document.getElementById('admin-new-pin-validity');
   const adminAddUserBtn = document.getElementById('admin-add-user-btn');
   const adminAddStatusEl = document.getElementById('admin-add-status');
+  const adminWelcomeBlockEl = document.getElementById('admin-welcome-block');
+  const adminWelcomeTextEl = document.getElementById('admin-welcome-text');
+  const adminWelcomeCopyBtn = document.getElementById('admin-welcome-copy-btn');
   const adminExportCsvBtn = document.getElementById('admin-export-csv-btn');
   const adminUserSummaryEl = document.getElementById('admin-user-summary');
   const adminUserSearchEl = document.getElementById('admin-user-search');
@@ -3799,6 +3812,7 @@
   }
 
   adminAddUserBtn.addEventListener('click', () => {
+    adminWelcomeBlockEl.classList.add('hidden'); // hide any previous account's welcome message once a new attempt starts
     const username = adminNewUsernameEl.value.trim();
     // FEATURE (2026-09-05, item 2 of the security plan): every new account now gets a real starter
     // PASSWORD, not a 4-digit PIN (existing accounts are unaffected — "new accounts only"). Not
@@ -3891,6 +3905,17 @@
       .then(() => {
         adminAddStatusEl.textContent = `✅ Account created — username ${username}, starter password ${starterPassword}, valid ${pinValidityDays} days. Share the username/password with them; they'll set their own permanent password on first login.`;
         adminAddStatusEl.style.color = 'var(--green)';
+        // FEATURE (2026-09-17, Part 15): copy-ready welcome message — URL + username + password +
+        // standard instructions, ready to paste straight into WhatsApp/SMS with no retyping.
+        adminWelcomeTextEl.value =
+          `Signa365 Dashboard Access\n` +
+          `Link: ${DASHBOARD_URL}\n` +
+          `Username: ${username}\n` +
+          `Password: ${starterPassword}\n\n` +
+          `- Change this password on first login.\n` +
+          `- Works on one device at a time only.\n` +
+          `- For any changes or issues, contact admin.`;
+        adminWelcomeBlockEl.classList.remove('hidden');
         adminNewPinEl.value = 'Pass@123'; // FEATURE (2026-09-05, item 2): reset back to the new starter-password default
         adminNewPinValidityEl.value = String(DEFAULT_PIN_VALIDITY_DAYS);
         // Persist the counter forward past the number just used, so it's never handed out again
@@ -3919,6 +3944,29 @@
         secondaryApp.delete().catch(() => {});
       })
       .finally(() => { adminAddUserBtn.disabled = false; });
+  });
+
+  // FEATURE (2026-09-17, Part 15): one-click copy for the welcome message above. Tries the modern
+  // Clipboard API first; falls back to the old select+execCommand trick for older/mobile browsers
+  // where navigator.clipboard may be unavailable (e.g. non-HTTPS or older WebView contexts).
+  adminWelcomeCopyBtn.addEventListener('click', () => {
+    const text = adminWelcomeTextEl.value;
+    const showCopied = () => {
+      const original = adminWelcomeCopyBtn.textContent;
+      adminWelcomeCopyBtn.textContent = '✅ Copied!';
+      setTimeout(() => { adminWelcomeCopyBtn.textContent = original; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showCopied).catch(() => {
+        adminWelcomeTextEl.select();
+        document.execCommand('copy');
+        showCopied();
+      });
+    } else {
+      adminWelcomeTextEl.select();
+      document.execCommand('copy');
+      showCopied();
+    }
   });
 
   // ---- AUTH STATE GATE — the actual login check that runs on every load and on every sign-in/out ----
