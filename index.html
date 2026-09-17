@@ -3573,8 +3573,22 @@
         if (!confirm(`Permanently delete ${username}? This can't be undone — they'll never be able to sign in again. Note: this exact username can't be reused for a NEW account later without a manual cleanup step in Firebase Console (a different username is unaffected).`)) return;
         fbDb.collection('users').doc(uid).delete()
           .then(() => {
+            // FIX (2026-09-17): usernameIndex/{username} is ONE shared marker per username, not
+            // per-account-doc — if a duplicate Firestore user doc under this same username still
+            // exists (e.g. a leftover ghost from a partial Create Account failure, see Part 14),
+            // blindly deleting it here would also wipe out the marker the OTHER, still-valid
+            // account depends on to show its password login widget instead of the PIN pad (exactly
+            // what happened to a real account this way — confirmed 2026-09-17). So: check whether
+            // any account with this same username still exists after this delete, and only clean
+            // up the shared usernameIndex doc when none remain.
             if (username && username !== 'this account') {
-              fbDb.collection('usernameIndex').doc(username.trim().toLowerCase()).delete().catch(() => {});
+              fbDb.collection('users').where('username', '==', username).limit(1).get()
+                .then(snap => {
+                  if (snap.empty) {
+                    fbDb.collection('usernameIndex').doc(username.trim().toLowerCase()).delete().catch(() => {});
+                  }
+                })
+                .catch(() => {}); // best-effort either way — never blocks the delete that already happened
             }
             loadAdminUserList();
           })
