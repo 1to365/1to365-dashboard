@@ -3561,11 +3561,23 @@
         // can't be undone with "Enable". Caveat, stated plainly rather than silently glossed
         // over: the underlying Firebase Auth login record itself can only be deleted by a backend
         // with the Admin SDK, which this client-only app doesn't have — it's left behind, orphaned
-        // and harmless (no Firestore doc means it can never sign in again).
+        // and can never sign in again (no Firestore doc), BUT it does one real, non-obvious thing:
+        // it permanently reserves this exact username, because Firebase requires each Auth email
+        // to be unique and the username maps straight to one (see usernameToEmail). Trying to
+        // create a new account with this SAME username later will fail with
+        // "email-already-in-use" until that old login is removed by hand in Firebase Console →
+        // Authentication (confirmed 2026-09-17, see backlog Part 9 follow-up) — a different
+        // username has no such problem. Also cleans up this username's usernameIndex entry so a
+        // future recreate isn't left pointing at stale auth-mode data either.
         const username = btn.getAttribute('data-username') || 'this account';
-        if (!confirm(`Permanently delete ${username}? This can't be undone — they'll never be able to sign in again, and all trace of the account (except an inert login record) is removed.`)) return;
+        if (!confirm(`Permanently delete ${username}? This can't be undone — they'll never be able to sign in again. Note: this exact username can't be reused for a NEW account later without a manual cleanup step in Firebase Console (a different username is unaffected).`)) return;
         fbDb.collection('users').doc(uid).delete()
-          .then(() => loadAdminUserList())
+          .then(() => {
+            if (username && username !== 'this account') {
+              fbDb.collection('usernameIndex').doc(username.trim().toLowerCase()).delete().catch(() => {});
+            }
+            loadAdminUserList();
+          })
           .catch(err => { alert('Could not delete account.'); console.warn(err); });
       } else if (action === 'save-all') {
         // FEATURE (2026-09-05): one Save button for all 5 per-user fields at once (PIN validity,
@@ -3829,8 +3841,7 @@
         // going forward (lock-screen widget swap — see isPasswordMode). usernameIndex/{username} is
         // the small world-readable lookup the pre-auth login screen checks to decide which widget to
         // show BEFORE any Firebase sign-in succeeds (needed since the tightened Firestore rules from
-        // item 1 block unauthenticated reads on users/{uid} itself) — needs one more rules paste,
-        // see the backlog note for the exact rules block.
+        // item 1 block unauthenticated reads on users/{uid} itself).
         return Promise.all([
           fbDb.collection('users').doc(newUid).set({
             role: 'user',
@@ -3843,7 +3854,25 @@
             authMode: 'password'
           }),
           fbDb.collection('usernameIndex').doc(usernameLower).set({ authMode: 'password' })
-        ]).then(() => secondaryApp.auth().signOut()).then(() => secondaryApp.delete());
+        ]).then(() => secondaryApp.auth().signOut())
+          .catch(firestoreErr => {
+            // FIX (2026-09-17, Part 9 follow-up): the Auth login (`cred.user`) above is already
+            // created by this point — if either Firestore write just failed (rules gap, network
+            // blip, anything), the OLD code left that Auth login behind orphaned with no matching
+            // Firestore doc: invisible in the admin list, AND it permanently blocks this exact
+            // username from ever being (re)created again, since Firebase requires each Auth email
+            // to be unique (this is exactly how "S365D3" got stuck — an earlier attempt hit the
+            // usernameIndex permissions gap after the Auth account was already made). We're still
+            // signed in as that brand-new user right here, so self-delete it and clean up any
+            // partial Firestore writes, best-effort, then surface the ORIGINAL error — so a failed
+            // attempt no longer leaves a permanent landmine and the same username can just be
+            // retried immediately.
+            return Promise.all([
+              cred.user.delete().catch(e => console.warn('Signa365: rollback — could not delete orphaned Auth user:', e)),
+              fbDb.collection('users').doc(newUid).delete().catch(() => {}),
+              fbDb.collection('usernameIndex').doc(usernameLower).delete().catch(() => {})
+            ]).then(() => Promise.reject(firestoreErr));
+          });
       })
       .then(() => {
         adminAddStatusEl.textContent = `✅ Account created — username ${username}, starter password ${starterPassword}, valid ${pinValidityDays} days. Share the username/password with them; they'll set their own permanent password on first login.`;
@@ -3859,9 +3888,18 @@
         advance.catch(err => console.warn('Signa365: could not advance username counter:', err))
           .then(() => computeNextUsername());
         loadAdminUserList();
+        secondaryApp.delete().catch(() => {});
       })
       .catch(err => {
-        adminAddStatusEl.textContent = 'Could not create account: ' + (err && err.message ? err.message : err);
+        // FIX (2026-09-17): auth/email-already-in-use means this exact username's Auth login was
+        // already left behind from BEFORE this rollback fix existed (or the rollback above just
+        // failed) — the automatic rollback can't reach an account from a past session, so this
+        // still needs one manual cleanup click.
+        let msg = err && err.message ? err.message : String(err);
+        if (err && err.code === 'auth/email-already-in-use') {
+          msg = `This username's Firebase login record already exists from an earlier attempt. Fix once: Firebase Console → Authentication → Users → find "${syntheticEmail}" → Delete user, then retry Create Account.`;
+        }
+        adminAddStatusEl.textContent = 'Could not create account: ' + msg;
         adminAddStatusEl.style.color = 'var(--red)';
         console.warn('Signa365: add user failed:', err);
         secondaryApp.delete().catch(() => {});
