@@ -2002,7 +2002,7 @@
   // (Big Move's own TTL auto-clear removed with it, 2026-09-16 — see backlog Part 10. Strong
   // Signal Confirmed and Flip entries were never affected by it; they still stay until pushed off
   // by MAX_ALERTS, unchanged.)
-  const FLIP_SPIN_MS = 2 * 60 * 1000; // how long the revolving chart animation plays after a flip
+  const FLIP_SPIN_MS = 2 * 60 * 1000; // how long the chart's flip-dot pulse animation plays after a flip (2026-09-17: was the revolving 🔄 icon before the arrows-to-dot redesign)
   // FIX (2026-09-08): the day-scoped clear only ran once, in loadAlertHistory() at page load —
   // if the tab stays open across midnight into the next trading day with no reload, alertHistory
   // never gets rechecked and yesterday's entries just sit there (reported 2026-09-08: BankNifty/
@@ -2251,15 +2251,15 @@
       renderSpotResult(lastSpotKey, currentPrice[spotIndexMeta[lastSpotKey].priceEl]);
     }
 
-    // FEATURE: chart arrows are keyed to actual Code flips now (TG<->TR), not Big Move Alert —
-    // this is what the (Call-CE)/(Put-PE) chart markers read from, so they always agree with the
+    // FEATURE: chart flip dots are keyed to actual Code flips now (TG<->TR), not Big Move Alert —
+    // this is what the flipMarkers chart dots read from, so they always agree with the
     // ST line's own color instead of sometimes showing the opposite side mid-trend.
     const flipPriceEl = zoneToPriceEl[elId];
     if (flipPriceEl && flipEventLog[flipPriceEl]) {
       flipEventLog[flipPriceEl].push({ time: Date.now(), isUp: isCE });
       persistFlipLog();
     }
-    startFlipSpinLoop(); // FEATURE: keeps the chart's revolving flip animation actually spinning (see flipMarkers plugin)
+    startFlipSpinLoop(); // FEATURE: keeps the chart's flip-dot pulse animation actually redrawing (see flipMarkers plugin)
 
     previousStCode[elId] = stCode;
     persistStCodeState();
@@ -4184,10 +4184,10 @@
   let liveChart = null;
   let currentlyDisplayedKey = null; // which index's chart is actually on screen right now
 
-  // FEATURE (2026-09-03): keeps the flipMarkers plugin's revolving 🔄 icon actually spinning —
-  // Chart.js only redraws the canvas when told to, so without this the icon would just sit at
-  // whatever angle it was drawn at during the last normal 30s refresh. `update('none')` is a
-  // cheap redraw (skips animations/scale recompute, just repaints with the same data) called a
+  // FEATURE (2026-09-03, redrawn 2026-09-17): keeps the flipMarkers plugin's dot pulse actually
+  // animating — Chart.js only redraws the canvas when told to, so without this the dot would just
+  // sit at whatever size/opacity it was drawn at during the last normal 30s refresh. `update('none')`
+  // is a cheap redraw (skips animations/scale recompute, just repaints with the same data) called a
   // few times a second while at least one flip anywhere is still inside its 2-minute window; the
   // loop stops itself the moment nothing is left to animate, so it doesn't run all session.
   let flipSpinTimer = null;
@@ -4297,10 +4297,9 @@
       // now drawn directly by the prevCloseLabel plugin below instead of as a dataset, so the
       // y-axis auto-scales to the real price data only. See that plugin for the actual line draw.
 
-      // Chart arrows are Big-Move-Alert-only now (the earlier per-flip arrows on the
-      // Supertrend line were removed — with flips happening several times a session, the
-      // line ended up cluttered with arrows). The Supertrend line itself is still colored
-      // green/red via trendBySlot below; only the on-chart ▲/▼ markers changed.
+      // The Supertrend line itself is colored green/red via trendBySlot below, straight from the
+      // server's own trend array — this is a complete, authoritative record of every real flip
+      // today, independent of which device (if any) was open live to see it.
       candles.forEach((c, i) => {
         const ist = toIstDate(c.time);
         const mins = ist.getHours() * 60 + ist.getMinutes();
@@ -4311,21 +4310,47 @@
         trendBySlot[slotIdx] = trend[i];
       });
 
-      // Chart arrow markers — placed at the exact time(s) the Code actually flipped (TG<->TR) for
-      // this index today (from flipEventLog, populated by checkFlipAlert), plotted against the
-      // price line. FEATURE: these used to be driven by Big Move Alert instead, which could show
-      // an arrow in the opposite color from the ST line mid-trend (a big pullback that didn't
-      // actually flip the trend) — confusing at a glance. Now an arrow only appears when the
-      // trend itself genuinely changes color, so it always agrees with the ST line.
-      const flipMarkers = [];
+      // Chart flip-dot markers — FIX (2026-09-17, Part 11 permanent fix): derived primarily from
+      // trendBySlot (the day's own server-authoritative trend array) instead of relying only on
+      // this device's own live-observed flipEventLog. flipEventLog only ever gets an entry at the
+      // exact moment THIS browser was open and live-watching through a flip's 2-reading
+      // confirmation — a device opened after a flip already happened, or one that reloaded/was
+      // backgrounded right through the transition, could never show that flip's dot before, with
+      // no way to self-heal later (confirmed via live diagnostic 2026-09-16: a fresh page load's
+      // first reading always sets the baseline with no flip fired, by design). Scanning
+      // trendBySlot for real sign changes instead means every flip that actually happened today
+      // gets a dot, on any device, no matter when it's opened. flipEventLog is still consulted —
+      // matched by slot — purely to reuse its exact live timestamp when this device DID catch a
+      // flip live (so it pulses with real-time precision); a flip this device never saw live gets
+      // an approximate timestamp computed from its own slot's IST clock time instead, which is
+      // accurate enough for the 2-minute "just happened" pulse to still behave correctly. Telegram
+      // and the Alerts card are untouched — they still fire only from live detection, since you
+      // can't usefully alert about something after the fact.
+      const liveFlipTimeBySlot = {};
       (flipEventLog[meta.priceEl] || []).forEach(ev => {
         const ist = toIstDate(ev.time);
         if (ist.getFullYear() !== today.getFullYear() || ist.getMonth() !== today.getMonth() || ist.getDate() !== today.getDate()) return;
         const mins = ist.getHours() * 60 + ist.getMinutes();
         const slotIdx = Math.round((mins - SESSION_START_MIN) / SLOT_STEP_MIN);
         if (slotIdx < 0 || slotIdx >= slotCount) return;
-        flipMarkers.push({ slotIdx, isUp: ev.isUp, time: ev.time });
+        liveFlipTimeBySlot[slotIdx] = ev.time;
       });
+      const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // IST is always UTC+5:30, no DST
+      const flipMarkers = [];
+      let carryTrend = null;
+      for (let i = 0; i < slotCount; i++) {
+        const t = trendBySlot[i];
+        if (t == null) continue;
+        if (carryTrend != null && t !== carryTrend) {
+          // Live confirmation can land a slot or two after the trend array's own flip point, so
+          // check a couple of neighboring slots for a matching live timestamp before falling back.
+          const liveTime = liveFlipTimeBySlot[i] ?? liveFlipTimeBySlot[i + 1] ?? liveFlipTimeBySlot[i - 1];
+          const slotMinutes = SESSION_START_MIN + i * SLOT_STEP_MIN;
+          const approxTime = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), Math.floor(slotMinutes / 60), slotMinutes % 60, 0) - IST_OFFSET_MS;
+          flipMarkers.push({ slotIdx: i, isUp: t === 1, time: liveTime != null ? liveTime : approxTime });
+        }
+        carryTrend = t;
+      }
 
       const ctx = document.getElementById('live-chart').getContext('2d');
       if (liveChart) liveChart.destroy();
@@ -4423,45 +4448,44 @@
           }
         }, {
           id: 'flipMarkers',
+          // FIX (2026-09-17): the ▲/▼ arrows + (Call-CE)/(Put-PE) text labels were reported as
+          // misleading during real trading hours (admin: "sometime or most of the time
+          // misleading") — removed entirely per admin's request. Replaced with a small dot drawn
+          // directly on the Supertrend line itself at the exact flip point, colored the same way
+          // the arrows were (green = CE/up, red = PE/down): a tiny permanent dot marks where a
+          // flip happened, and it gently pulses (size + opacity) for FLIP_SPIN_MS (2 minutes)
+          // right after the flip so a fresh one is easy to notice, then settles down to a small
+          // static dot. Reuses the same flipMarkers/flipEventLog data and the same
+          // startFlipSpinLoop() redraw-while-animating loop the old spin icon used — only what's
+          // drawn changed, not when or how often it redraws.
           afterDraw(chart) {
             if (!flipMarkers.length) return;
             const xScale = chart.scales.x;
             const yScale = chart.scales.y;
             const c = chart.ctx;
             c.save();
-            c.textAlign = 'center';
             flipMarkers.forEach(mk => {
               const yVal = priceData[mk.slotIdx];
               if (yVal == null) return;
               const x = xScale.getPixelForValue(mk.slotIdx);
               const yPixel = yScale.getPixelForValue(yVal);
-              c.fillStyle = mk.isUp ? '#0f7a3d' : '#c81e3a';
-              c.font = 'bold 20px -apple-system, Segoe UI, sans-serif';
-              const arrowY = mk.isUp ? yPixel - 14 : yPixel + 26;
-              c.fillText(mk.isUp ? '▲' : '▼', x, arrowY);
-              // (Call-CE)/(Put-PE) label paired with each flip arrow, same isUp flag the arrow
-              // itself already uses — smallest font that still reads clearly next to the arrow,
-              // same side offset (above for CE, below for PE).
-              c.font = '8px -apple-system, Segoe UI, sans-serif';
-              const labelY = mk.isUp ? arrowY - 12 : arrowY + 11;
-              c.fillText(mk.isUp ? '(Call-CE)' : '(Put-PE)', x, labelY);
-              // FEATURE (2026-09-03): a small revolving icon above the flip point for 2 minutes
-              // after a flip, separate from the (Call-CE)/(Put-PE) arrow above which stays
-              // permanently — purely a temporary "something just happened here" flourish.
-              // Rotation angle is driven by real elapsed time, and the animation loop that keeps
-              // this redrawing (see checkFlipAlert) stops itself once nothing is left to animate.
+              const color = mk.isUp ? '#0f7a3d' : '#c81e3a';
+              const BASE_RADIUS = 2.5; // tiny — just a marker on the line, not a big blob
+              let radius = BASE_RADIUS, alpha = 1;
               if (mk.time != null && Date.now() - mk.time < FLIP_SPIN_MS) {
-                const spinY = (mk.isUp ? labelY - 16 : labelY + 16);
-                const angle = ((Date.now() - mk.time) / 1000) * (Math.PI * 1.2); // ~1 turn per ~5s
-                c.save();
-                c.translate(x, spinY);
-                c.rotate(angle);
-                c.font = '14px -apple-system, Segoe UI, sans-serif';
-                c.textAlign = 'center';
-                c.textBaseline = 'middle';
-                c.fillText('🔄', 0, 0);
-                c.restore();
+                // Gentle pulse for 2 minutes right after a flip — radius 2.5→5px, opacity 0.55→1,
+                // about one pulse per second — driven by real elapsed time like the old spin icon.
+                const t = (Date.now() - mk.time) / 1000;
+                const wave = (Math.sin(t * Math.PI * 2) + 1) / 2; // 0..1
+                radius = BASE_RADIUS + wave * 2.5;
+                alpha = 0.55 + wave * 0.45;
               }
+              c.globalAlpha = alpha;
+              c.fillStyle = color;
+              c.beginPath();
+              c.arc(x, yPixel, radius, 0, Math.PI * 2);
+              c.fill();
+              c.globalAlpha = 1;
             });
             c.restore();
           }
