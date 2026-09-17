@@ -1120,10 +1120,16 @@
     <div id="admin-add-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
     <!-- FEATURE (2026-09-17, Part 15): copy-ready welcome message shown right after a successful
          Create Account — URL + username + password + standard instructions, ready to paste
-         straight into WhatsApp/SMS with no retyping. Hidden until the first successful creation. -->
+         straight into WhatsApp/SMS with no retyping. Hidden until the first successful creation.
+         FEATURE (2026-09-17, Part 19): added a direct "Send via WhatsApp" button alongside Copy —
+         opens WhatsApp itself (web or app, whichever the device has) with the whole message
+         already typed in; admin just picks the contact and hits send, no manual paste needed. -->
     <div id="admin-welcome-block" class="hidden" style="margin-top:8px;">
       <textarea id="admin-welcome-text" readonly style="width:100%; box-sizing:border-box; min-height:118px; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.75rem; font-family:inherit; resize:vertical;"></textarea>
-      <button id="admin-welcome-copy-btn" style="width:100%; margin-top:6px; padding:7px; border-radius:8px; border:none; background:var(--green, #0f7a3d); color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer;">📋 Copy message to share</button>
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <button id="admin-welcome-copy-btn" style="flex:1; padding:7px; border-radius:8px; border:none; background:var(--green, #0f7a3d); color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer;">📋 Copy message</button>
+        <a id="admin-welcome-whatsapp-btn" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; padding:7px; border-radius:8px; background:#25D366; color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:none;">💬 Send via WhatsApp</a>
+      </div>
     </div>
 
     <!-- FEATURE (2026-09-04): bulk-change PIN validity for every existing user at once — admin:
@@ -2789,6 +2795,7 @@
   const adminWelcomeBlockEl = document.getElementById('admin-welcome-block');
   const adminWelcomeTextEl = document.getElementById('admin-welcome-text');
   const adminWelcomeCopyBtn = document.getElementById('admin-welcome-copy-btn');
+  const adminWelcomeWhatsappBtn = document.getElementById('admin-welcome-whatsapp-btn');
   const adminExportCsvBtn = document.getElementById('admin-export-csv-btn');
   const adminUserSummaryEl = document.getElementById('admin-user-summary');
   const adminUserSearchEl = document.getElementById('admin-user-search');
@@ -3767,48 +3774,66 @@
     if (row) jumpToUserRow(row.getAttribute('data-uid'));
   });
 
-  // ACCOUNTS: usernames are system-generated (S365D1, S365D2, ...) — never typed by admin or
-  // user — so there's no risk of typos, duplicates, or someone picking something confusing.
-  // Re-run any time the admin panel opens and right after each account is created, so the
-  // field always shows the next one ready to go.
+  // ACCOUNTS: usernames are system-generated — never typed by admin or user — so there's no risk
+  // of typos, duplicates, or someone picking something confusing. Re-run any time the admin panel
+  // opens and right after each account is created, so the field always shows a fresh one ready
+  // to go.
   //
-  // FIX (2026-09-04): this used to live-scan existing user docs every time and take max+1 —
-  // which meant that hard-deleting the highest-numbered account (Delete Account) would free up
-  // its number for reuse on the very next account created, so two different people could end up
-  // sharing a username over time. Now it's backed by a persistent counter doc (meta/
-  // usernameCounter) that only ever counts up: the scan below runs at most once, ever, just to
-  // seed that counter from whatever accounts already existed before this fix shipped.
+  // FIX (2026-09-04): usernames used to be a simple sequential counter (S365D1, S365D2, ...)
+  // backed by meta/usernameCounter, only ever counting up so a hard-deleted account's number could
+  // never be handed out again.
+  // FEATURE (2026-09-17, Part 18): admin asked for the username itself to be random+unique too,
+  // not just sequential — matching the password below. Kept the recognizable "S365D" prefix, added
+  // one random letter (no ambiguous I/O) + 3 random digits for the unique part (e.g. "S365DK482",
+  // ~21,000 possible combinations). Checked against both the `users` collection and the
+  // `usernameIndex` lookup before being accepted — retried up to 5 times on a collision, which at
+  // this app's account volume is astronomically unlikely to ever actually happen. The old
+  // meta/usernameCounter doc is no longer read for generating a NEW username (this replaces that);
+  // left in place rather than deleted, since existing accounts already created under the old
+  // sequential pattern are untouched either way.
   function usernameCounterRef() {
     return fbDb.collection('meta').doc('usernameCounter');
+  }
+  // FEATURE (2026-09-17, Part 15 follow-up): auto-generate a fresh, unique-enough starter password
+  // every time a new username is generated — admin flagged that repeatedly clicking Create without
+  // changing the password field first was handing out the same static default ("Pass@123") to
+  // multiple accounts. Still fully editable/overridable per account, same as the username field.
+  function generateStarterPassword() {
+    const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // no ambiguous I/O — easier to read back correctly
+    const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+    const digits = Math.floor(1000 + Math.random() * 9000); // 4 random digits
+    return `Sg365${letter}${digits}`; // e.g. "Sg365K4821" — well over the 6-character minimum
+  }
+  function generateRandomUsername() {
+    const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+    const digits = Math.floor(100 + Math.random() * 900); // 3 digits, 100-999
+    return `S365D${letter}${digits}`; // e.g. "S365DK482"
+  }
+  function tryGenerateUniqueUsername(attemptsLeft) {
+    const candidate = generateRandomUsername();
+    const candidateLower = candidate.toLowerCase();
+    Promise.all([
+      fbDb.collection('users').where('username', '==', candidate).limit(1).get(),
+      fbDb.collection('usernameIndex').doc(candidateLower).get()
+    ]).then(([usersSnap, indexDoc]) => {
+      const taken = !usersSnap.empty || indexDoc.exists;
+      if (taken && attemptsLeft > 0) {
+        tryGenerateUniqueUsername(attemptsLeft - 1);
+      } else {
+        adminNewUsernameEl.value = candidate;
+      }
+    }).catch(err => {
+      adminNewUsernameEl.placeholder = "Couldn't generate — reopen panel to retry";
+      console.warn('Signa365: username generation failed:', err);
+    });
   }
   function computeNextUsername() {
     adminNewUsernameEl.value = '';
     adminNewUsernameEl.placeholder = 'Generating username…';
+    adminNewPinEl.value = generateStarterPassword();
     if (!fbDb) return;
-    usernameCounterRef().get()
-      .then(doc => {
-        if (doc.exists && Number.isFinite(doc.data().nextN)) {
-          adminNewUsernameEl.value = 'S365D' + doc.data().nextN;
-          return;
-        }
-        // No counter doc yet — one-time seed from existing accounts, then persist it so this
-        // scan never has to run again.
-        return fbDb.collection('users').where('role', '==', 'user').get().then(snapshot => {
-          let maxN = 0;
-          snapshot.docs.forEach(d => {
-            const m = /^S365D(\d+)$/i.exec((d.data().username || '').trim());
-            if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
-          });
-          const seedN = maxN + 1;
-          return usernameCounterRef().set({ nextN: seedN }, { merge: true }).then(() => {
-            adminNewUsernameEl.value = 'S365D' + seedN;
-          });
-        });
-      })
-      .catch(err => {
-        adminNewUsernameEl.placeholder = "Couldn't generate — reopen panel to retry";
-        console.warn('Signa365: computeNextUsername failed:', err);
-      });
+    tryGenerateUniqueUsername(5);
   }
 
   adminAddUserBtn.addEventListener('click', () => {
@@ -3915,8 +3940,12 @@
           `- Change this password on first login.\n` +
           `- Works on one device at a time only.\n` +
           `- For any changes or issues, contact admin.`;
+        // FEATURE (2026-09-17, Part 19): wa.me opens WhatsApp (web or app) with this text
+        // pre-filled in the compose box — admin picks a contact and hits send, no manual paste.
+        // No phone number in the link on purpose — admin picks who to send it to inside WhatsApp.
+        adminWelcomeWhatsappBtn.href = `https://wa.me/?text=${encodeURIComponent(adminWelcomeTextEl.value)}`;
         adminWelcomeBlockEl.classList.remove('hidden');
-        adminNewPinEl.value = 'Pass@123'; // FEATURE (2026-09-05, item 2): reset back to the new starter-password default
+        adminNewPinEl.value = generateStarterPassword(); // FIX (2026-09-17): fresh random password instead of the same static default each time
         adminNewPinValidityEl.value = String(DEFAULT_PIN_VALIDITY_DAYS);
         // Persist the counter forward past the number just used, so it's never handed out again
         // even if this account is later hard-deleted (see computeNextUsername comment above).
