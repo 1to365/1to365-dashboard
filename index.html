@@ -2394,9 +2394,9 @@
   // Dead-end state for a non-admin whose PIN has expired (or who tapped Forgot PIN) and whose
   // admin hasn't unlocked a reset yet.
   function showPinExpiredScreen() {
-    lockDotsEl.style.display = 'none';
-    lockKeypadEl.style.display = 'none';
-    lockPasswordWidgetEl.style.display = 'none'; // FEATURE (2026-09-05, item 2): password-mode widget too
+    lockDotsEl.classList.add('hidden');
+    lockKeypadEl.classList.add('hidden');
+    lockPasswordWidgetEl.classList.add('hidden'); // FEATURE (2026-09-05, item 2): password-mode widget too
     lockForgotBtn.style.display = 'none';
     lockSubtitleEl.textContent = '';
     lockErrorEl.textContent = '';
@@ -2405,9 +2405,17 @@
   function hidePinExpiredScreen() {
     // FEATURE (2026-09-05, item 2): shows whichever widget matches this account's authMode —
     // the 4-digit keypad for legacy accounts, the text password field for password-mode ones.
-    lockDotsEl.style.display = isPasswordMode ? 'none' : '';
-    lockKeypadEl.style.display = isPasswordMode ? 'none' : '';
-    lockPasswordWidgetEl.style.display = isPasswordMode ? '' : 'none';
+    // FIX (2026-09-17): this used to toggle .style.display only — but #lock-password-widget's own
+    // HTML starts with class="hidden", and the global ".hidden { display: none !important; }"
+    // utility rule always wins over a plain inline style. That meant the password-mode widget
+    // could never actually become visible no matter what this set it to, silently since the
+    // password-mode feature shipped (2026-09-05) — every password-mode account's first-login
+    // "set a password" (and "confirm your password", and "password expired") screen showed no
+    // input at all, just text and the unrelated "Forgot password?" link. Toggling the class itself
+    // (like every other shown/hidden element in this file) instead of fighting !important fixes it.
+    lockDotsEl.classList.toggle('hidden', isPasswordMode);
+    lockKeypadEl.classList.toggle('hidden', isPasswordMode);
+    lockPasswordWidgetEl.classList.toggle('hidden', !isPasswordMode);
     lockForgotBtn.style.display = '';
     lockExpiredEl.classList.add('hidden');
   }
