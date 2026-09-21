@@ -264,6 +264,16 @@
     padding: 0;
     flex-shrink: 0;
   }
+  /* REDESIGN (2026-09-21): brought back the clean inline SVG line-icons from the earlier
+     navy pass (admin liked how they looked, on top of the bright blue palette) — replacing the
+     emoji in the static chrome again. currentColor lets each icon inherit whatever text color it
+     sits next to, so it automatically follows the current theme's blue/green/red/amber tones. */
+  .icon-inline {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+    flex-shrink: 0;
+  }
   .info-popover {
     position: absolute;
     top: 40px;
@@ -912,7 +922,7 @@
        their account first locks itself to this device. -->
   <!-- WORDING (2026-09-05): swapped in the wording admin approved during the device-policy
        discussion — same notice, same trigger (first-time PIN setup only), just clearer phrasing. -->
-  <div id="lock-device-notice" class="hidden" style="max-width:260px; text-align:center; font-size:0.72rem; color:rgba(255,255,255,0.8); margin:-8px 0 16px;">🔒 This login works on one device at a time. Once you finish setup here, this device stays linked to your account — to switch to a new device, ask your admin to reset it.</div>
+  <div id="lock-device-notice" class="hidden" style="max-width:260px; text-align:center; font-size:0.72rem; color:rgba(255,255,255,0.8); margin:-8px 0 16px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> This login works on one device at a time. Once you finish setup here, this device stays linked to your account — to switch to a new device, ask your admin to reset it.</div>
   <div id="lock-dots">
     <div class="lock-dot"></div>
     <div class="lock-dot"></div>
@@ -957,9 +967,9 @@
     <span class="tagline">Live Mining</span>
   </div>
   <div style="display:flex; align-items:center; gap:10px; position:relative; flex-wrap:wrap;">
-    <button id="rules-toggle" class="ribbon-icon-btn" title="Discipline to Follow">❔</button>
+    <button id="rules-toggle" class="ribbon-icon-btn" title="Discipline to Follow"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
     <div id="rules-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:14px 16px; z-index:300;">
-      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">📋 Discipline to Follow</p>
+      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Discipline to Follow</p>
       <ul class="checklist" style="margin:0;">
         <li>Real trades allowed any trading day (Mon–Fri)</li>
         <li>Max ₹10–15K capital per trade</li>
@@ -969,7 +979,7 @@
       </ul>
     </div>
 
-    <button id="pnl-toggle" class="ribbon-btn">💰 P&L ▾</button>
+    <button id="pnl-toggle" class="ribbon-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1-3 2.2c0 1.4 1.3 1.8 3 2.3s3 .9 3 2.3c0 1.2-1.3 2.2-3 2.2s-3-1.1-3-2.5"/></svg> P&L ▾</button>
     <div id="pnl-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:16px; z-index:300; color:var(--text);">
       <div style="text-align:center;">
         <div id="pnl-amount" style="font-size:1.9rem; font-weight:800;">₹0</div>
@@ -989,11 +999,11 @@
       </div>
 
       <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">📆 Weekly Totals</p>
+      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Weekly Totals</p>
       <div id="weekly-list"></div>
 
       <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">📅 Monthly Totals</p>
+      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Totals</p>
       <div id="monthly-list"></div>
     </div>
 
@@ -1001,7 +1011,7 @@
     <!-- REMOVED (2026-09-04): self-service display name edit button — admin decided users should
          just keep remembering their username instead. Admin's own Display Name field in the
          admin panel (per-user row) is untouched — that's a separate, admin-only feature. -->
-    <button id="logout-btn" class="ribbon-icon-btn" title="Logout" style="display:none;">🚪</button>
+    <button id="logout-btn" class="ribbon-icon-btn" title="Logout" style="display:none;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
 
     <span id="time-window-dot" class="status-dot" title="Checking..."></span>
     <p id="clock">Loading time...</p>
@@ -1021,8 +1031,8 @@
 <!-- PAGE NAV (2026-09-03): admin-only tab strip to switch between page 1 (dashboard) and page 2
      (admin tools). Swipe on #pages-viewport works too — see goToPage()/swipe handlers below. -->
 <div id="page-nav">
-  <button id="page-nav-1" class="active" type="button">📊 Dashboard</button>
-  <button id="page-nav-2" type="button">👑 Admin</button>
+  <button id="page-nav-1" class="active" type="button"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg> Dashboard</button>
+  <button id="page-nav-2" type="button"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 3 5-6 5 6 4-3-2 9H5L3 8z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> Admin</button>
 </div>
 
 <div id="pages-viewport">
@@ -1033,7 +1043,7 @@
 
 <!-- LIVE PRICES -->
 <div class="card theme-blue">
-  <h2>📈 Market Pulse <button class="info-icon-btn" data-info="info-prices">i</button> <button class="info-icon-btn" data-info="info-st">⚡</button></h2>
+  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Market Pulse <button class="info-icon-btn" data-info="info-prices">i</button> <button class="info-icon-btn" data-info="info-st">⚡</button></h2>
   <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Tiles always show the real live price. Tap a tile, or type a spot below, to run the CE/PE zone calculator for that index — it never changes what's shown on the tile.</div>
   <div id="info-st" class="info-popover hidden">✅ = Strong CE · 🔻 = Strong PE · ⚠️ = Bias (not yet confirmed) · ▲/▼ = direction (CE/PE) · Auto-calculated live from ST 5M (7,3), updates automatically on flip — no manual input needed</div>
   <div class="price-grid">
@@ -1041,7 +1051,7 @@
       <span class="hand-marker" id="nifty-hand"></span>
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-price">—</div>
-      <span id="nifty-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;">⚠ Stale — retrying</span>
+      <span id="nifty-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stale — retrying</span>
       <div style="font-size:0.78rem; margin-top:4px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
       <div id="nifty-duration" style="font-size:0.66rem; color:var(--muted); margin-top:2px;"></div>
       <div id="nifty-expiry-tag" class="expiry-tag"></div>
@@ -1050,7 +1060,7 @@
       <span class="hand-marker" id="banknifty-hand"></span>
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-price">—</div>
-      <span id="banknifty-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;">⚠ Stale — retrying</span>
+      <span id="banknifty-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stale — retrying</span>
       <div style="font-size:0.78rem; margin-top:4px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
       <div id="banknifty-duration" style="font-size:0.66rem; color:var(--muted); margin-top:2px;"></div>
       <div id="banknifty-expiry-tag" class="expiry-tag"></div>
@@ -1059,7 +1069,7 @@
       <span class="hand-marker" id="sensex-hand"></span>
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-price">—</div>
-      <span id="sensex-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;">⚠ Stale — retrying</span>
+      <span id="sensex-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stale — retrying</span>
       <div style="font-size:0.78rem; margin-top:4px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
       <div id="sensex-duration" style="font-size:0.66rem; color:var(--muted); margin-top:2px;"></div>
       <div id="sensex-expiry-tag" class="expiry-tag"></div>
@@ -1070,9 +1080,9 @@
   <!-- Google Finance links, one per index, in their own row well below the tiles above so
        there's no overlap with the tile's own tap-to-open-chart area. -->
   <div class="price-grid" style="margin-top:10px;">
-    <a href="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn">📊 NIFTY Chart</a>
-    <a href="https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn">📊 BANKNIFTY Chart</a>
-    <a href="https://www.google.com/finance/quote/SENSEX:INDEXBOM" target="_blank" rel="noopener" class="gfinance-btn">📊 SENSEX Chart</a>
+    <a href="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg> NIFTY Chart</a>
+    <a href="https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg> BANKNIFTY Chart</a>
+    <a href="https://www.google.com/finance/quote/SENSEX:INDEXBOM" target="_blank" rel="noopener" class="gfinance-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg> SENSEX Chart</a>
   </div>
 
   <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
@@ -1087,10 +1097,10 @@
      "signal command section remain dedicated for Alerts to display with Enable/disable sound
      button" — badges were duplicate display alongside Market Pulse) -->
 <div class="card theme-amber">
-  <h2>👀 Watch Me</h2>
+  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Watch Me</h2>
   <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px; margin-bottom:8px;">
-    <span style="font-size:0.85rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em;">🔔 Alerts</span>
-    <button id="sound-enable-btn" style="padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem; font-weight:700; cursor:pointer;">🔊 Enable Sound</button>
+    <span style="font-size:0.85rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Alerts</span>
+    <button id="sound-enable-btn" style="padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem; font-weight:700; cursor:pointer;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Enable Sound</button>
   </div>
   <div id="alerts-list" style="flex:1; overflow-y:auto; min-height:0;">
     <p class="placeholder" style="font-size:0.92rem;">Waiting for a Strong signal…</p>
@@ -1099,7 +1109,7 @@
 
 <!-- LIVE INTRADAY CHART -->
 <div class="card" id="live-chart-card" style="grid-column: 1 / -1;">
-  <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button> <span id="chart-price-line" style="font-weight:700; text-transform:none; font-size:0.85em;"></span> <span style="display:inline-block; border:1.5px solid var(--border); border-radius:8px; padding:3px 10px; font-size:0.72rem; font-weight:600; color:var(--muted); text-transform:none; vertical-align:middle; white-space:nowrap;">Green = <span style="color:var(--green); font-weight:800;">Call (CE)</span> · Red = <span style="color:var(--red); font-weight:800;">Put (PE)</span></span></h2>
+  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg> Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button> <span id="chart-price-line" style="font-weight:700; text-transform:none; font-size:0.85em;"></span> <span style="display:inline-block; border:1.5px solid var(--border); border-radius:8px; padding:3px 10px; font-size:0.72rem; font-weight:600; color:var(--muted); text-transform:none; vertical-align:middle; white-space:nowrap;">Green = <span style="color:var(--green); font-weight:800;">Call (CE)</span> · Red = <span style="color:var(--red); font-weight:800;">Put (PE)</span></span></h2>
   <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = ST 5M (7,3) · Dotted = prev. close</div>
   <div id="chart-placeholder" class="placeholder" style="font-size:0.9rem;">Tap a tile above or set a spot to see its live chart here</div>
   <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
@@ -1118,7 +1128,7 @@
      all admin activity happens, per admin's request to park admin-only work off the main page. -->
 <div class="card hidden" id="admin-panel" style="grid-column: 1 / -1;">
   <h2 id="admin-panel-toggle" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
-    <span>👑 Admin</span>
+    <span><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 3 5-6 5 6 4-3-2 9H5L3 8z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> Admin</span>
     <span id="admin-panel-caret" style="color:var(--muted); font-size:0.8em;">▸</span>
   </h2>
   <!-- FEATURE (2026-09-05): compact "who's active right now" view — admin asked to see this in the
@@ -1137,14 +1147,14 @@
          security risk — see backlog). Calls Firebase's own updatePassword() directly; any length/
          characters accepted beyond Firebase's own 6-character minimum. Takes effect immediately —
          next login, use the new password on the "Enter your password" screen. -->
-    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">🔑 Change My Password</p>
+    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="15" r="4"/><path d="M10 12l9-9M15 3l3 3M17 5l2.5 2.5"/></svg> Change My Password</p>
     <input id="admin-change-password" type="password" placeholder="New password (6+ characters)" autocomplete="new-password" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
     <input id="admin-change-password-confirm" type="password" placeholder="Confirm new password" autocomplete="new-password" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
     <button id="admin-change-password-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Update Password</button>
     <div id="admin-change-password-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
 
     <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
+    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add New User</p>
     <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
     <!-- FEATURE (2026-09-05, item 2 of the security plan): new accounts now get a real starter
          PASSWORD, not a 4-digit PIN — replaces "2026" as the default. Admin can still overwrite it
@@ -1171,8 +1181,8 @@
     <div id="admin-welcome-block" class="hidden" style="margin-top:8px;">
       <textarea id="admin-welcome-text" readonly style="width:100%; box-sizing:border-box; min-height:118px; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.75rem; font-family:inherit; resize:vertical;"></textarea>
       <div style="display:flex; gap:6px; margin-top:6px;">
-        <button id="admin-welcome-copy-btn" style="flex:1; padding:7px; border-radius:8px; border:none; background:var(--green, #0f7a3d); color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer;">📋 Copy message</button>
-        <a id="admin-welcome-whatsapp-btn" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; padding:7px; border-radius:8px; background:#25D366; color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:none;">💬 Send via WhatsApp</a>
+        <button id="admin-welcome-copy-btn" style="flex:1; padding:7px; border-radius:8px; border:none; background:var(--green, #0f7a3d); color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Copy message</button>
+        <a id="admin-welcome-whatsapp-btn" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; padding:7px; border-radius:8px; background:#25D366; color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:none;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Send via WhatsApp</a>
       </div>
     </div>
 
@@ -1180,7 +1190,7 @@
          "in middle I might recreate the PIN with a shorter or larger duration for all existing
          users." Separate from the per-user field further down, which still edits one at a time. -->
     <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">🔁 Set Password Validity for ALL Users</p>
+    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Set Password Validity for ALL Users</p>
     <div style="display:flex; gap:6px;">
       <input id="admin-bulk-validity" type="number" min="1" max="3650" placeholder="days" style="flex:1; min-width:0; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
       <button id="admin-bulk-validity-btn" style="flex:0 0 auto; padding:7px 12px; border-radius:8px; border:none; background:var(--red); color:#fff; font-size:0.8rem; font-weight:700; cursor:pointer;">Apply to All</button>
@@ -1189,8 +1199,8 @@
 
     <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin:0;">👥 Manage Users</p>
-      <button id="admin-export-csv-btn" style="padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; font-weight:700; cursor:pointer;">⬇️ Export CSV</button>
+      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin:0;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Manage Users</p>
+      <button id="admin-export-csv-btn" style="padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; font-weight:700; cursor:pointer;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV</button>
     </div>
     <!-- FEATURE (2026-09-03): summary strip (active/expiring/expired/disabled counts) + search box,
          both driven off the same users array loadAdminUserList() already fetches. -->
