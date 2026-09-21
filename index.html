@@ -16,24 +16,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<!-- REDESIGN (2026-09-20): favicon — none existed before. Same mark as the login/lock screen logo
-     (navy tile, ascending line, gold peak dot), inlined as an SVG data URI so no extra file/host
-     is needed on GitHub Pages. -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%231e3a5f'/%3E%3Cpath d='M2.5 16.5 L8 11 L12 14 L15.5 8.5 L21.5 3' stroke='white' stroke-width='2.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='21.5' cy='3' r='2.6' fill='%23c9962c'/%3E%3C/svg%3E">
+<!-- REDESIGN (2026-09-20): favicon — none existed before. REDESIGN (2026-09-21): circular
+     gold-ring badge added. REVERTED (2026-09-21, same day): admin liked the original rising-line +
+     gold-dot mark better than the "S" monogram — back to that glyph, kept inside the new gold-ring
+     circular badge shape. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Ccircle cx='18' cy='18' r='16' fill='%231a63e8' stroke='%23f0b93d' stroke-width='3'/%3E%3Cpath d='M8.5 24 L14 18 L18 21 L21.5 15 L27.5 9' stroke='white' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='27.5' cy='9' r='3' fill='%23f0b93d'/%3E%3C/svg%3E">
 <style>
   :root {
-    /* REDESIGN (2026-09-20): professional navy + gold visual refresh, admin's "make this look
-       highly professional, international standard" request. Every selector below is unchanged —
-       only color/font/shadow VALUES moved, so nothing the JS depends on (IDs, classes, structure)
-       is touched. Semantic colors (green/red for P&L and CE/PE, amber for stale/bias, the
-       nifty/banknifty/sensex identity colors) are deliberately left exactly as they were — those
-       carry real meaning to a trader at a glance and must never be "restyled" out from under them.
-       --accent (navy) replaces the old flat grey brand color (#667085) used for the header,
-       buttons and logo. --heading is new — a slightly darker slate than --muted, used for card
-       titles and section labels so they read with a touch more authority than plain body text.
-       --orange/--gold (used only for non-directional accents — the lock screen's dot/keypad ring,
-       the flip badge, checklist bullets — never for P&L) are now an actual warm gold instead of
-       blue, for a subtle premium touch where it doesn't risk being misread as a trading signal. */
+    /* REDESIGN (2026-09-20): professional navy + gold visual refresh — SUPERSEDED 2026-09-21,
+       admin didn't like navy/gold, sent reference screenshots of a bright-blue app design instead.
+       REDESIGN (2026-09-21): vivid blue refresh replacing the navy — --accent/--accent-dark are now
+       a bright blue (was dark navy), --orange/--gold are back to blue accents (was gold). Semantic
+       colors (green/red for P&L and CE/PE, amber for stale/bias, the nifty/banknifty/sensex
+       identity colors) are still deliberately untouched — those carry real meaning to a trader at a
+       glance and must never be "restyled" out from under them. --heading is unchanged from the
+       2026-09-20 pass (slate, used for card titles/section labels). */
     --bg: #f4f6fb;
     --panel: #ffffff;
     --panel-alt: #f6f9fc;
@@ -47,12 +44,12 @@
     --red-soft: rgba(200,30,58,0.10);
     --amber: #a15c00;
     --amber-soft: rgba(161,92,0,0.10);
-    --accent: #1e3a5f;
-    --accent-dark: #0f1f33;
-    --accent-soft: rgba(30,58,95,0.08);
-    --orange: #b8860b;
-    --orange-soft: rgba(184,134,11,0.10);
-    --gold: #c9962c;
+    --accent: #1a63e8;
+    --accent-dark: #123fae;
+    --accent-soft: rgba(26,99,232,0.08);
+    --orange: #1a63e8;
+    --orange-soft: rgba(26,99,232,0.10);
+    --gold: #2f7de0;
     --radius: 14px;
     --shadow: 0 1px 2px rgba(15,23,42,0.05), 0 6px 18px rgba(15,23,42,0.07);
     --nifty: #2f5fed;
@@ -98,8 +95,9 @@
     gap: 8px;
     padding: 12px 16px;
     /* CHANGED (2026-09-05): header + dashboard "brand" accent swapped blue → grey, per admin
-       request. REDESIGN (2026-09-20): grey → deep navy, part of the professional visual refresh.
-       Scoped to purely decorative brand color only — CE/PE signal colors, P&L green/red,
+       request. REDESIGN (2026-09-20): grey → deep navy. REDESIGN (2026-09-21): navy → vivid blue,
+       admin didn't like the navy/gold pass, asked for bright blue instead (reference screenshots
+       supplied). Scoped to purely decorative brand color only — CE/PE signal colors, P&L green/red,
        flip-badge, index tile identity colors (N/B/S), and the lock-screen's own dot/keypad accents
        are all left exactly as they were, since those carry real meaning, not just branding. */
     background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
@@ -264,15 +262,6 @@
     align-items: center;
     justify-content: center;
     padding: 0;
-    flex-shrink: 0;
-  }
-  /* 2026-09-20 redesign: shared sizing for the inline SVG line-icons that replaced emoji
-     in the static chrome (headers, buttons, labels). currentColor lets each icon inherit
-     whatever text color it sits next to, so it never needs its own color rule. */
-  .icon-inline {
-    width: 1em;
-    height: 1em;
-    vertical-align: -0.15em;
     flex-shrink: 0;
   }
   .info-popover {
@@ -596,7 +585,9 @@
   #auth-screen {
     position: fixed;
     inset: 0;
-    background: linear-gradient(160deg, #eef2f7 0%, #e6ebf2 45%, #f4f7fa 100%);
+    /* REDESIGN (2026-09-21): deep blue → teal gradient, matching admin's reference screenshot
+       (replaces the light grey/navy-grid background from the 2026-09-20 pass). */
+    background: linear-gradient(160deg, #123a8a 0%, #1a63e8 35%, #1791b0 70%, #0f9488 100%);
     z-index: 10000;
     display: flex;
     flex-direction: column;
@@ -606,22 +597,28 @@
   }
   #auth-screen.hidden { display: none; }
   #auth-logo {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
+    /* REDESIGN (2026-09-21): circular badge with a gold ring, replacing the rounded-square tile —
+       admin's reference showed a distinctive badge-style emblem, not a plain icon tile. */
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    border: 3px solid #f0b93d;
     color: #fff;
     font-size: 1.6rem;
     font-weight: 900;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 18px rgba(15,23,42,0.28);
+    box-shadow: 0 6px 18px rgba(26,99,232,0.35);
     margin-bottom: 12px;
     letter-spacing: -0.02em;
   }
-  #auth-brand { color: var(--heading); font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
-  #auth-subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; text-align: center; }
+  /* REDESIGN (2026-09-21): text on #auth-screen/#lock-screen now sits on a dark blue/teal
+     gradient (was a light background), so these are white/translucent-white instead of the
+     shared --heading/--muted slate tones used everywhere else on light card backgrounds. */
+  #auth-brand { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+  #auth-subtitle { color: rgba(255,255,255,0.85); font-size: 0.85rem; margin-bottom: 20px; text-align: center; }
   #auth-screen input {
     width: min(280px, 100%);
     box-sizing: border-box;
@@ -639,16 +636,18 @@
     margin-top: 4px;
     border: none;
     border-radius: 10px;
-    background: var(--accent);
-    color: #fff;
+    /* REDESIGN (2026-09-21): white button instead of accent-colored — accent is now the same
+       bright blue as the screen's own background, so a blue-on-blue button had no contrast. */
+    background: #fff;
+    color: var(--accent);
     font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
   }
-  #auth-pin-subtitle, .auth-subtitle-text { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; text-align: center; }
+  #auth-pin-subtitle, .auth-subtitle-text { color: rgba(255,255,255,0.85); font-size: 0.85rem; margin-bottom: 16px; text-align: center; }
   #auth-switch-user-btn, #auth-admin-switch-user-btn {
     margin-top: 18px;
-    color: var(--muted);
+    color: rgba(255,255,255,0.8);
     font-size: 0.72rem;
     text-decoration: underline;
     cursor: pointer;
@@ -656,7 +655,9 @@
     border: none;
   }
   #auth-error {
-    color: var(--red);
+    /* Scoped light-red for readability on the dark gradient — does NOT touch the shared --red
+       variable, which is still the real P&L/CE-PE loss color used everywhere else. */
+    color: #ffd1d1;
     font-size: 0.8rem;
     min-height: 1.2em;
     margin-top: 10px;
@@ -664,7 +665,7 @@
     max-width: 280px;
   }
   #auth-hint, #auth-admin-forgot-btn {
-    color: var(--muted);
+    color: rgba(255,255,255,0.8);
     font-size: 0.75rem;
     margin-top: 18px;
     text-align: center;
@@ -678,14 +679,8 @@
   #lock-screen {
     position: fixed;
     inset: 0;
-    /* 2026-09-20 redesign: navy-tinted background + grid lines, matching #auth-screen */
-    background:
-      linear-gradient(160deg, rgba(238,242,247,0.90) 0%, rgba(230,235,242,0.82) 45%, rgba(244,247,250,0.86) 100%),
-      repeating-linear-gradient(0deg, rgba(30,58,95,0.055) 0px, rgba(30,58,95,0.055) 1px, transparent 1px, transparent 34px),
-      repeating-linear-gradient(90deg, rgba(30,58,95,0.055) 0px, rgba(30,58,95,0.055) 1px, transparent 1px, transparent 34px),
-      #f0f3f7;
-    background-size: cover, 34px 34px, 34px 34px, cover;
-    background-position: center;
+    /* REDESIGN (2026-09-21): same deep blue → teal gradient as #auth-screen, see comment there. */
+    background: linear-gradient(160deg, #123a8a 0%, #1a63e8 35%, #1791b0 70%, #0f9488 100%);
     z-index: 9999;
     display: flex;
     flex-direction: column;
@@ -704,7 +699,9 @@
   #lock-expired-text {
     font-size: 1rem;
     font-weight: 800;
-    color: var(--red);
+    /* Scoped light-red for readability on the dark gradient background — not the shared --red
+       P&L/CE-PE variable. */
+    color: #ffd1d1;
     line-height: 1.4;
   }
   .hidden { display: none !important; }
@@ -716,29 +713,31 @@
     filter: grayscale(15%);
   }
   #lock-logo {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
+    /* REDESIGN (2026-09-21): matches #auth-logo's circular gold-ring badge, see comment there. */
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    border: 3px solid #f0b93d;
     color: #fff;
     font-size: 1.6rem;
     font-weight: 900;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 18px rgba(15,23,42,0.28);
+    box-shadow: 0 6px 18px rgba(26,99,232,0.35);
     margin-bottom: 12px;
     letter-spacing: -0.02em;
   }
   #lock-brand {
-    color: var(--heading);
+    color: #fff;
     font-size: 1.4rem;
     font-weight: 800;
     letter-spacing: 0.01em;
     margin-bottom: 4px;
   }
   #lock-subtitle {
-    color: var(--muted);
+    color: rgba(255,255,255,0.85);
     font-size: 0.8rem;
     margin-bottom: 22px;
     text-align: center;
@@ -752,11 +751,11 @@
   .lock-dot {
     width: 14px; height: 14px;
     border-radius: 50%;
-    border: 2px solid var(--orange);
+    border: 2px solid rgba(255,255,255,0.75);
     background: transparent;
     transition: background 0.15s ease;
   }
-  .lock-dot.filled { background: var(--orange); }
+  .lock-dot.filled { background: #fff; }
   #lock-dots.shake, .pin-dots-row.shake { animation: shakeErr 0.4s; }
   @keyframes shakeErr {
     0%, 100% { transform: translateX(0); }
@@ -764,7 +763,9 @@
     40%, 80% { transform: translateX(8px); }
   }
   #lock-error {
-    color: var(--red);
+    /* Scoped light-red for readability on the dark gradient — see #auth-error's comment, same
+       reasoning: does not touch the shared --red P&L/CE-PE variable. */
+    color: #ffd1d1;
     font-size: 0.75rem;
     min-height: 1.2em;
     margin-bottom: 10px;
@@ -775,12 +776,14 @@
     gap: 12px;
   }
   .lock-key {
+    /* REDESIGN (2026-09-21): rounded-square translucent-white keys instead of solid white
+       circles — matches admin's reference PIN screen (frosted glass keys on a gradient). */
     width: 64px; height: 64px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    box-shadow: var(--shadow);
-    color: var(--heading);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.16);
+    box-shadow: none;
+    color: #fff;
     font-size: 1.3rem;
     font-weight: 700;
     cursor: pointer;
@@ -788,11 +791,11 @@
     align-items: center;
     justify-content: center;
   }
-  .lock-key:active { background: var(--orange-soft); }
+  .lock-key:active { background: rgba(255,255,255,0.32); }
   .lock-key.empty { visibility: hidden; }
   #lock-forgot {
     margin-top: 24px;
-    color: var(--muted);
+    color: rgba(255,255,255,0.8);
     font-size: 0.72rem;
     text-decoration: underline;
     cursor: pointer;
@@ -822,8 +825,10 @@
     padding: 11px 14px;
     border: none;
     border-radius: 10px;
-    background: var(--orange);
-    color: #fff;
+    /* REDESIGN (2026-09-21): white button for contrast against the blue/teal gradient — see
+       #auth-continue-btn's comment, same reasoning. */
+    background: #fff;
+    color: var(--accent);
     font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;
@@ -835,7 +840,7 @@
 <!-- ACCOUNTS: login gate — sits on top of everything (including the PIN lock) until
      Firebase Auth confirms a signed-in, non-disabled user with a valid account doc. -->
 <div id="auth-screen">
-  <div id="auth-logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 16.5 L8 11 L12 14 L15.5 8.5 L21.5 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21.5" cy="3" r="2.6" fill="#c9962c"/></svg></div>
+  <div id="auth-logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 16.5 L8 11 L12 14 L15.5 8.5 L21.5 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21.5" cy="3" r="2.6" fill="#f0b93d"/></svg></div>
   <div id="auth-brand">Signa365</div>
   <div id="auth-subtitle">Sign in to continue</div>
 
@@ -899,7 +904,7 @@
 </div>
 
 <div id="lock-screen">
-  <div id="lock-logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 16.5 L8 11 L12 14 L15.5 8.5 L21.5 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21.5" cy="3" r="2.6" fill="#c9962c"/></svg></div>
+  <div id="lock-logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 16.5 L8 11 L12 14 L15.5 8.5 L21.5 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21.5" cy="3" r="2.6" fill="#f0b93d"/></svg></div>
   <div id="lock-brand">Signa365</div>
   <div id="lock-subtitle">Enter Password</div>
   <!-- FEATURE (2026-09-04): one-device policy notice — only shown during first-time PIN setup
@@ -907,7 +912,7 @@
        their account first locks itself to this device. -->
   <!-- WORDING (2026-09-05): swapped in the wording admin approved during the device-policy
        discussion — same notice, same trigger (first-time PIN setup only), just clearer phrasing. -->
-  <div id="lock-device-notice" class="hidden" style="max-width:260px; text-align:center; font-size:0.72rem; color:var(--muted); margin:-8px 0 16px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> This login works on one device at a time. Once you finish setup here, this device stays linked to your account — to switch to a new device, ask your admin to reset it.</div>
+  <div id="lock-device-notice" class="hidden" style="max-width:260px; text-align:center; font-size:0.72rem; color:rgba(255,255,255,0.8); margin:-8px 0 16px;">🔒 This login works on one device at a time. Once you finish setup here, this device stays linked to your account — to switch to a new device, ask your admin to reset it.</div>
   <div id="lock-dots">
     <div class="lock-dot"></div>
     <div class="lock-dot"></div>
@@ -952,9 +957,9 @@
     <span class="tagline">Live Mining</span>
   </div>
   <div style="display:flex; align-items:center; gap:10px; position:relative; flex-wrap:wrap;">
-    <button id="rules-toggle" class="ribbon-icon-btn" title="Discipline to Follow"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
+    <button id="rules-toggle" class="ribbon-icon-btn" title="Discipline to Follow">❔</button>
     <div id="rules-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:14px 16px; z-index:300;">
-      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Discipline to Follow</p>
+      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">📋 Discipline to Follow</p>
       <ul class="checklist" style="margin:0;">
         <li>Real trades allowed any trading day (Mon–Fri)</li>
         <li>Max ₹10–15K capital per trade</li>
@@ -964,7 +969,7 @@
       </ul>
     </div>
 
-    <button id="pnl-toggle" class="ribbon-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1-3 2.2c0 1.4 1.3 1.8 3 2.3s3 .9 3 2.3c0 1.2-1.3 2.2-3 2.2s-3-1.1-3-2.5"/></svg> P&L ▾</button>
+    <button id="pnl-toggle" class="ribbon-btn">💰 P&L ▾</button>
     <div id="pnl-panel" class="hidden ribbon-panel" style="background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:16px; z-index:300; color:var(--text);">
       <div style="text-align:center;">
         <div id="pnl-amount" style="font-size:1.9rem; font-weight:800;">₹0</div>
@@ -984,11 +989,11 @@
       </div>
 
       <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Weekly Totals</p>
+      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">📆 Weekly Totals</p>
       <div id="weekly-list"></div>
 
       <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Totals</p>
+      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">📅 Monthly Totals</p>
       <div id="monthly-list"></div>
     </div>
 
@@ -996,7 +1001,7 @@
     <!-- REMOVED (2026-09-04): self-service display name edit button — admin decided users should
          just keep remembering their username instead. Admin's own Display Name field in the
          admin panel (per-user row) is untouched — that's a separate, admin-only feature. -->
-    <button id="logout-btn" class="ribbon-icon-btn" title="Logout" style="display:none;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+    <button id="logout-btn" class="ribbon-icon-btn" title="Logout" style="display:none;">🚪</button>
 
     <span id="time-window-dot" class="status-dot" title="Checking..."></span>
     <p id="clock">Loading time...</p>
@@ -1016,8 +1021,8 @@
 <!-- PAGE NAV (2026-09-03): admin-only tab strip to switch between page 1 (dashboard) and page 2
      (admin tools). Swipe on #pages-viewport works too — see goToPage()/swipe handlers below. -->
 <div id="page-nav">
-  <button id="page-nav-1" class="active" type="button"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg> Dashboard</button>
-  <button id="page-nav-2" type="button"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 3 5-6 5 6 4-3-2 9H5L3 8z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> Admin</button>
+  <button id="page-nav-1" class="active" type="button">📊 Dashboard</button>
+  <button id="page-nav-2" type="button">👑 Admin</button>
 </div>
 
 <div id="pages-viewport">
@@ -1028,7 +1033,7 @@
 
 <!-- LIVE PRICES -->
 <div class="card theme-blue">
-  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Market Pulse <button class="info-icon-btn" data-info="info-prices">i</button> <button class="info-icon-btn" data-info="info-st">⚡</button></h2>
+  <h2>📈 Market Pulse <button class="info-icon-btn" data-info="info-prices">i</button> <button class="info-icon-btn" data-info="info-st">⚡</button></h2>
   <div id="info-prices" class="info-popover hidden">Auto feed is ~15min delayed (Yahoo Finance). Tiles always show the real live price. Tap a tile, or type a spot below, to run the CE/PE zone calculator for that index — it never changes what's shown on the tile.</div>
   <div id="info-st" class="info-popover hidden">✅ = Strong CE · 🔻 = Strong PE · ⚠️ = Bias (not yet confirmed) · ▲/▼ = direction (CE/PE) · Auto-calculated live from ST 5M (7,3), updates automatically on flip — no manual input needed</div>
   <div class="price-grid">
@@ -1036,7 +1041,7 @@
       <span class="hand-marker" id="nifty-hand"></span>
       <div class="label"><span class="idx-icon nifty">N</span>NIFTY</div>
       <div class="value" id="nifty-price">—</div>
-      <span id="nifty-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stale — retrying</span>
+      <span id="nifty-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;">⚠ Stale — retrying</span>
       <div style="font-size:0.78rem; margin-top:4px;"><span id="st-nifty-badge" class="badge bias">Loading...</span></div>
       <div id="nifty-duration" style="font-size:0.66rem; color:var(--muted); margin-top:2px;"></div>
       <div id="nifty-expiry-tag" class="expiry-tag"></div>
@@ -1045,7 +1050,7 @@
       <span class="hand-marker" id="banknifty-hand"></span>
       <div class="label"><span class="idx-icon banknifty">B</span>BANKNIFTY</div>
       <div class="value" id="banknifty-price">—</div>
-      <span id="banknifty-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stale — retrying</span>
+      <span id="banknifty-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;">⚠ Stale — retrying</span>
       <div style="font-size:0.78rem; margin-top:4px;"><span id="st-banknifty-badge" class="badge bias">Loading...</span></div>
       <div id="banknifty-duration" style="font-size:0.66rem; color:var(--muted); margin-top:2px;"></div>
       <div id="banknifty-expiry-tag" class="expiry-tag"></div>
@@ -1054,7 +1059,7 @@
       <span class="hand-marker" id="sensex-hand"></span>
       <div class="label"><span class="idx-icon sensex">S</span>SENSEX</div>
       <div class="value" id="sensex-price">—</div>
-      <span id="sensex-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Stale — retrying</span>
+      <span id="sensex-stale-flag" class="hidden" style="display:block; font-size:0.66rem; font-weight:700; color:var(--amber); margin-top:2px;">⚠ Stale — retrying</span>
       <div style="font-size:0.78rem; margin-top:4px;"><span id="st-sensex-badge" class="badge bias">Loading...</span></div>
       <div id="sensex-duration" style="font-size:0.66rem; color:var(--muted); margin-top:2px;"></div>
       <div id="sensex-expiry-tag" class="expiry-tag"></div>
@@ -1065,9 +1070,9 @@
   <!-- Google Finance links, one per index, in their own row well below the tiles above so
        there's no overlap with the tile's own tap-to-open-chart area. -->
   <div class="price-grid" style="margin-top:10px;">
-    <a href="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg> NIFTY Chart</a>
-    <a href="https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg> BANKNIFTY Chart</a>
-    <a href="https://www.google.com/finance/quote/SENSEX:INDEXBOM" target="_blank" rel="noopener" class="gfinance-btn"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg> SENSEX Chart</a>
+    <a href="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn">📊 NIFTY Chart</a>
+    <a href="https://www.google.com/finance/quote/NIFTY_BANK:INDEXNSE" target="_blank" rel="noopener" class="gfinance-btn">📊 BANKNIFTY Chart</a>
+    <a href="https://www.google.com/finance/quote/SENSEX:INDEXBOM" target="_blank" rel="noopener" class="gfinance-btn">📊 SENSEX Chart</a>
   </div>
 
   <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
@@ -1082,10 +1087,10 @@
      "signal command section remain dedicated for Alerts to display with Enable/disable sound
      button" — badges were duplicate display alongside Market Pulse) -->
 <div class="card theme-amber">
-  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Watch Me</h2>
+  <h2>👀 Watch Me</h2>
   <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px; margin-bottom:8px;">
-    <span style="font-size:0.85rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Alerts</span>
-    <button id="sound-enable-btn" style="padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem; font-weight:700; cursor:pointer;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Enable Sound</button>
+    <span style="font-size:0.85rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em;">🔔 Alerts</span>
+    <button id="sound-enable-btn" style="padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem; font-weight:700; cursor:pointer;">🔊 Enable Sound</button>
   </div>
   <div id="alerts-list" style="flex:1; overflow-y:auto; min-height:0;">
     <p class="placeholder" style="font-size:0.92rem;">Waiting for a Strong signal…</p>
@@ -1094,7 +1099,7 @@
 
 <!-- LIVE INTRADAY CHART -->
 <div class="card" id="live-chart-card" style="grid-column: 1 / -1;">
-  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg> Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button> <span id="chart-price-line" style="font-weight:700; text-transform:none; font-size:0.85em;"></span></h2>
+  <h2>📉 Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button> <span id="chart-price-line" style="font-weight:700; text-transform:none; font-size:0.85em;"></span></h2>
   <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = ST 5M (7,3) · Dotted = prev. close</div>
   <div id="chart-placeholder" class="placeholder" style="font-size:0.9rem;">Tap a tile above or set a spot to see its live chart here</div>
   <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
@@ -1113,7 +1118,7 @@
      all admin activity happens, per admin's request to park admin-only work off the main page. -->
 <div class="card hidden" id="admin-panel" style="grid-column: 1 / -1;">
   <h2 id="admin-panel-toggle" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
-    <span><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 3 5-6 5 6 4-3-2 9H5L3 8z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> Admin</span>
+    <span>👑 Admin</span>
     <span id="admin-panel-caret" style="color:var(--muted); font-size:0.8em;">▸</span>
   </h2>
   <!-- FEATURE (2026-09-05): compact "who's active right now" view — admin asked to see this in the
@@ -1132,14 +1137,14 @@
          security risk — see backlog). Calls Firebase's own updatePassword() directly; any length/
          characters accepted beyond Firebase's own 6-character minimum. Takes effect immediately —
          next login, use the new password on the "Enter your password" screen. -->
-    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="15" r="4"/><path d="M10 12l9-9M15 3l3 3M17 5l2.5 2.5"/></svg> Change My Password</p>
+    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">🔑 Change My Password</p>
     <input id="admin-change-password" type="password" placeholder="New password (6+ characters)" autocomplete="new-password" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
     <input id="admin-change-password-confirm" type="password" placeholder="Confirm new password" autocomplete="new-password" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
     <button id="admin-change-password-btn" style="width:100%; padding:8px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Update Password</button>
     <div id="admin-change-password-status" style="font-size:0.75rem; margin-top:6px; min-height:1.1em;"></div>
 
     <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add New User</p>
+    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">➕ Add New User</p>
     <input id="admin-new-username" type="text" readonly placeholder="Generating username…" style="width:100%; box-sizing:border-box; margin-bottom:6px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem; font-weight:700; cursor:default;">
     <!-- FEATURE (2026-09-05, item 2 of the security plan): new accounts now get a real starter
          PASSWORD, not a 4-digit PIN — replaces "2026" as the default. Admin can still overwrite it
@@ -1166,8 +1171,8 @@
     <div id="admin-welcome-block" class="hidden" style="margin-top:8px;">
       <textarea id="admin-welcome-text" readonly style="width:100%; box-sizing:border-box; min-height:118px; padding:8px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.75rem; font-family:inherit; resize:vertical;"></textarea>
       <div style="display:flex; gap:6px; margin-top:6px;">
-        <button id="admin-welcome-copy-btn" style="flex:1; padding:7px; border-radius:8px; border:none; background:var(--green, #0f7a3d); color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Copy message</button>
-        <a id="admin-welcome-whatsapp-btn" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; padding:7px; border-radius:8px; background:#25D366; color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:none;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Send via WhatsApp</a>
+        <button id="admin-welcome-copy-btn" style="flex:1; padding:7px; border-radius:8px; border:none; background:var(--green, #0f7a3d); color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer;">📋 Copy message</button>
+        <a id="admin-welcome-whatsapp-btn" target="_blank" rel="noopener" style="flex:1; display:flex; align-items:center; justify-content:center; padding:7px; border-radius:8px; background:#25D366; color:#fff; font-size:0.78rem; font-weight:700; cursor:pointer; text-decoration:none;">💬 Send via WhatsApp</a>
       </div>
     </div>
 
@@ -1175,7 +1180,7 @@
          "in middle I might recreate the PIN with a shorter or larger duration for all existing
          users." Separate from the per-user field further down, which still edits one at a time. -->
     <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Set Password Validity for ALL Users</p>
+    <p style="font-size:0.7rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">🔁 Set Password Validity for ALL Users</p>
     <div style="display:flex; gap:6px;">
       <input id="admin-bulk-validity" type="number" min="1" max="3650" placeholder="days" style="flex:1; min-width:0; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
       <button id="admin-bulk-validity-btn" style="flex:0 0 auto; padding:7px 12px; border-radius:8px; border:none; background:var(--red); color:#fff; font-size:0.8rem; font-weight:700; cursor:pointer;">Apply to All</button>
@@ -1184,8 +1189,8 @@
 
     <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin:0;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Manage Users</p>
-      <button id="admin-export-csv-btn" style="padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; font-weight:700; cursor:pointer;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV</button>
+      <p style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin:0;">👥 Manage Users</p>
+      <button id="admin-export-csv-btn" style="padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; font-weight:700; cursor:pointer;">⬇️ Export CSV</button>
     </div>
     <!-- FEATURE (2026-09-03): summary strip (active/expiring/expired/disabled counts) + search box,
          both driven off the same users array loadAdminUserList() already fetches. -->
@@ -4577,13 +4582,13 @@
             }
           },
           scales: {
-            x: { ticks: { maxTicksLimit: 6, color: '#1e3a5f', font: { size: 10 } }, grid: { display: false } },
+            x: { ticks: { maxTicksLimit: 6, color: '#1a63e8', font: { size: 10 } }, grid: { display: false } },
             // FIX (2026-09-03): y-axis used to scale tight to exactly the plotted min/max, so a
             // small ~40-point band could fill the whole chart height and make ordinary moves look
             // dramatic. `grace` adds a 10% cushion above/below the real data range — doesn't
             // change the data or reintroduce the old prevClose-stretch issue (prevClose is drawn
             // by a separate plugin, not a dataset, so it still can't pull the axis wider).
-            y: { position: 'left', grace: '10%', ticks: { color: '#1e3a5f', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
+            y: { position: 'left', grace: '10%', ticks: { color: '#1a63e8', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
           }
         },
         plugins: [{
@@ -4596,7 +4601,7 @@
             const c = chart.ctx;
             c.save();
             c.font = '10px -apple-system, Segoe UI, sans-serif';
-            c.fillStyle = '#1e3a5f';
+            c.fillStyle = '#1a63e8';
             c.textAlign = 'right';
             const label = `Prev close ${prevClose.toLocaleString('en-IN')}`;
             // FIX: prevClose can sit above or below today's actual plotted range (the axis now
