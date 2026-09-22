@@ -2754,15 +2754,21 @@
     // was just clutter. Compares each week's Monday against "now", both put through the same
     // IST-shift trick weekStartKey() already uses, so this stays correct regardless of the
     // browser's own timezone (matches the no-timeZone-override convention the label below uses).
+    // FIX (2026-09-22): admin pointed out a week starting in the previous month but ENDING in the
+    // current one (e.g. 31 Aug – 06 Sept) was being dropped entirely, even though part of it is
+    // genuinely this month's trading — "any week which has overlap also keep in the P&L to display
+    // in weekly totals." Now checks the whole week's range: a week is kept if EITHER its Monday
+    // (start) or Sunday (end) falls in the current month, not just its Monday.
     const nowShifted = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
     const nowMonthKey = nowShifted.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
     const totals = {}; // monday-date-string -> { sum, label }
     trades.forEach(t => {
       const monday = weekStartKey(t.ts);
-      const mondayMonthKey = monday.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
-      if (mondayMonthKey !== nowMonthKey) return; // skip weeks that started in a different month
-      const key = monday.toISOString();
       const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+      const mondayMonthKey = monday.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+      const sundayMonthKey = sunday.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+      if (mondayMonthKey !== nowMonthKey && sundayMonthKey !== nowMonthKey) return; // skip weeks that don't overlap the current month at all
+      const key = monday.toISOString();
       const label = `${monday.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} – ${sunday.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`;
       if (!totals[key]) totals[key] = { sum: 0, label };
       totals[key].sum += t.pnl;
