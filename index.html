@@ -4641,7 +4641,10 @@
           // the arrows were (green = CE/up, red = PE/down): a tiny permanent dot marks where a
           // flip happened. FIX (2026-09-21): the 2-minute pulse (size + opacity animation) that used
           // to play right after a fresh flip was removed per admin's request ("no need of the spin
-          // anymore") — every dot now just renders as a plain static dot, always.
+          // anymore") — every dot now just renders as a plain static dot, always. FIX (2026-09-23):
+          // swapped the plain circle for a small 5-point star per admin's pick from a 3-way preview
+          // (current dot / doubled dot / star) — outer radius kept at the already-doubled 5px size,
+          // same green (CE)/red (PE) coloring, no other logic touched.
           afterDraw(chart) {
             if (!flipMarkers.length) return;
             const xScale = chart.scales.x;
@@ -4654,10 +4657,19 @@
               const x = xScale.getPixelForValue(mk.slotIdx);
               const yPixel = yScale.getPixelForValue(yVal);
               const color = mk.isUp ? '#0f7a3d' : '#c81e3a';
-              const BASE_RADIUS = 2.5; // tiny — just a marker on the line, not a big blob
+              const OUTER_RADIUS = 5; // same size as the doubled dot it replaces
+              const INNER_RADIUS = OUTER_RADIUS * 0.42; // standard 5-point star proportion
+              const POINTS = 5;
               c.fillStyle = color;
               c.beginPath();
-              c.arc(x, yPixel, BASE_RADIUS, 0, Math.PI * 2);
+              for (let p = 0; p < POINTS * 2; p++) {
+                const r = p % 2 === 0 ? OUTER_RADIUS : INNER_RADIUS;
+                const angle = (Math.PI / POINTS) * p - Math.PI / 2; // start pointing straight up
+                const px = x + r * Math.cos(angle);
+                const py = yPixel + r * Math.sin(angle);
+                if (p === 0) c.moveTo(px, py); else c.lineTo(px, py);
+              }
+              c.closePath();
               c.fill();
             });
             c.restore();
