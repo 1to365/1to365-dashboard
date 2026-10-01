@@ -2707,9 +2707,21 @@
   const pnlPanelEl = document.getElementById('pnl-panel');
   const monthlyListEl = document.getElementById('monthly-list');
 
+  // FEATURE (2026-10-01): Monthly Totals redesigned from a plain text list into a bar chart.
+  // Admin: "can you redesign the P&L in graphical display with amounts on top and bottom with
+  // month (show only six months and continue with next month and hide the previous month on
+  // 7th month)". Bars are sign-colored (green=profit, red=loss, matching the P&L/CE-PE
+  // convention used everywhere else in the app — admin's confirmation 2026-10-01, over the
+  // mockup's cosmetic per-month colors), amounts drawn directly on each bar (above for a profit
+  // month, below for a loss month). Reuses Chart.js, already loaded for the Live Chart.
+  // Weekly Totals (renderWeeklySummary, below) is untouched — admin: "for the weekly totals,
+  // keep it as is, do not change it."
+  let monthlyChart = null;
+
   function renderMonthlySummary() {
     const trades = tjLoad();
     if (trades.length === 0) {
+      if (monthlyChart) { monthlyChart.destroy(); monthlyChart = null; }
       monthlyListEl.innerHTML = '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No logs yet</p>';
       return;
     }
@@ -2718,18 +2730,79 @@
       const key = new Date(t.ts).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', year: 'numeric' });
       totals[key] = (totals[key] || 0) + t.pnl;
     });
-    // Sort by actual date descending, not alphabetically
-    const sorted = Object.entries(totals).sort((a, b) => {
-      const da = new Date(a[0]), db = new Date(b[0]);
-      return db - da;
+    // Sort by actual date descending (most recent first), then keep only the 6 most recent
+    // calendar months — a classic rolling window: once a 7th month has data, the oldest of the
+    // 6 drops off automatically since this always takes the most recent 6, nothing is hard-reset.
+    const sorted = Object.entries(totals)
+      .sort((a, b) => new Date(b[0]) - new Date(a[0]))
+      .slice(0, 6);
+    const chronological = sorted.slice().reverse(); // oldest -> newest, left to right on the chart
+
+    const labels = chronological.map(([month]) => month);
+    const values = chronological.map(([, total]) => total);
+    const colors = values.map(v => v >= 0 ? '#0f7a3d' : '#c81e3a'); // locked --green/--red hex —
+    // Chart.js draws to canvas, which can't read CSS custom properties, same reason the Live
+    // Chart's own flip/trend colors above are also hardcoded literals rather than var(--green).
+
+    monthlyListEl.innerHTML = '<canvas id="monthly-chart" height="150"></canvas>';
+    const monthlyCtx = document.getElementById('monthly-chart').getContext('2d');
+    if (monthlyChart) monthlyChart.destroy();
+    monthlyChart = new Chart(monthlyCtx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors,
+          borderRadius: 4,
+          borderSkipped: (ctx) => values[ctx.dataIndex] >= 0 ? 'bottom' : 'top',
+          maxBarThickness: 24
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        layout: { padding: { top: 22, bottom: 6 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (c) => `${c.raw >= 0 ? '+' : '-'}₹${Math.abs(c.raw).toLocaleString('en-IN')}`
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
+          y: { grace: '15%', ticks: { display: false }, grid: { color: '#e1e7f0' }, border: { display: false } }
+        }
+      },
+      plugins: [{
+        // Direct value labels on each bar (above for profit, below for loss) — text always
+        // uses ink, never the bar's own color, per the app's existing label convention.
+        id: 'monthlyValueLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          const meta = chart.getDatasetMeta(0);
+          ctx.save();
+          ctx.font = '700 11px Inter, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#334155';
+          meta.data.forEach((bar, i) => {
+            const v = values[i];
+            const label = (v >= 0 ? '+₹' : '-₹') + Math.abs(v).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            if (v >= 0) {
+              ctx.textBaseline = 'alphabetic';
+              ctx.fillText(label, bar.x, bar.y - 6);
+            } else {
+              ctx.textBaseline = 'top';
+              ctx.fillText(label, bar.x, bar.y + 6);
+            }
+          });
+          ctx.restore();
+        }
+      }]
     });
-    monthlyListEl.innerHTML = sorted.map(([month, total]) => {
-      const color = total >= 0 ? 'var(--green)' : 'var(--red)';
-      return `<div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); font-size:0.88rem;">
-        <span>${month}</span>
-        <strong style="color:${color};">₹${total >= 0 ? '+' : ''}${total.toFixed(0)}</strong>
-      </div>`;
-    }).join('');
   }
 
   // ---- FEATURE 6: WEEKLY TOTALS (new — same pattern as renderMonthlySummary, grouped Mon–Sun) ----
