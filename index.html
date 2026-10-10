@@ -2135,15 +2135,59 @@
     lastAlertedDirection[elId] = direction;
     persistStrongDir();
 
-    const idxName = alertIndexNames[elId];
-    for (let i = alertHistory.length - 1; i >= 0; i--) {
-      if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
-    }
-    alertHistory.unshift({ index: idxName, direction, ts: Date.now() });
-    if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
-    renderAlerts();
-    playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
-    sendTelegramAlert(elId, direction);
+    // FIX (2026-10-10, reported 2026-10-08 — same Strong PE alerts re-sent ~30 min later on all 3
+    // indexes in the same second, no market change): lastAlertedDirection above only lives in THIS
+    // browser's localStorage, so a second device/browser (or a tab whose storage got cleared) that
+    // starts mid-day has an empty memory, re-confirms the same Strong reading, and sends it again.
+    // Before announcing, ask a small shared cloud record (Firestore alertState/{today}) whether any
+    // device already announced this direction for this index today. If yes: this device just logs it
+    // quietly in its own Alerts card (original time, no beep, no Telegram). If no (or the cloud is
+    // unreachable / the rule isn't published yet): announce exactly as before. Local gate above is
+    // unchanged and still the fast path — this only adds a cross-device check.
+    claimStrongAlertInCloud(elId, direction).then(res => {
+      const idxName = alertIndexNames[elId];
+      for (let i = alertHistory.length - 1; i >= 0; i--) {
+        if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
+      }
+      if (res.alreadyAnnounced) {
+        alertHistory.unshift({ index: idxName, direction, ts: res.ts || Date.now() });
+        if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
+        renderAlerts();
+        return; // another device already announced this — stay quiet here
+      }
+      alertHistory.unshift({ index: idxName, direction, ts: Date.now() });
+      if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
+      renderAlerts();
+      playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
+      sendTelegramAlert(elId, direction);
+    });
+  }
+
+  // Shared "who already announced what today" record, one doc per IST day: alertState/{todayKey},
+  // fields like { "sensex-zone": { dir: "PE", ts: 1760000000000 } }. Resolves { alreadyAnnounced:
+  // true, ts } if another device already announced this exact direction for this index today;
+  // { alreadyAnnounced: false } if this device just claimed it (go ahead and announce); and ALSO
+  // { alreadyAnnounced: false } on any failure/timeout/missing rule — fail-open on purpose, so a
+  // cloud problem can never silence a real alert (worst case = the old per-device behaviour).
+  // Needs one Firestore rules paste (see BACKLOG.md): until then every call just falls back.
+  function claimStrongAlertInCloud(elId, direction) {
+    return new Promise(resolve => {
+      let settled = false;
+      const done = (v) => { if (!settled) { settled = true; resolve(v); } };
+      if (!fbDb || !currentUid) { done({ alreadyAnnounced: false }); return; }
+      setTimeout(() => done({ alreadyAnnounced: false }), 6000); // don't let a slow/offline cloud delay a real alert
+      const ref = fbDb.collection('alertState').doc(todayIstKey());
+      fbDb.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const cur = snap.exists ? (snap.data()[elId] || null) : null;
+        if (cur && cur.dir === direction) return { alreadyAnnounced: true, ts: cur.ts };
+        tx.set(ref, { [elId]: { dir: direction, ts: Date.now() } }, { merge: true });
+        return { alreadyAnnounced: false };
+      }).then(done).catch(err => {
+        console.warn("Signa365: shared alert check unavailable, announcing from this device only:", err);
+        done({ alreadyAnnounced: false });
+      });
+    });
   }
 
   // ---- TELEGRAM ALERTS ----
