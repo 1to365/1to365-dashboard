@@ -496,6 +496,86 @@
     .idx-icon { width: 15px; height: 15px; font-size: 0.52rem; margin-right: 2px; }
   }
 
+  /* OPEN POSITIONS card (2026-10-12) — built only from the existing palette/vars (panel-alt, border,
+     green/red/amber + soft variants, Inter) so it reads as part of the same dashboard. */
+  .op-head-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .op-count { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: none; letter-spacing: 0; }
+  .op-add-btn { padding: 6px 12px; border-radius: 8px; border: none; background: var(--accent); color: #fff; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+  .op-add-btn:disabled { background: var(--panel-alt); color: var(--muted); border: 1px solid var(--border); cursor: not-allowed; }
+  .op-pos { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 10px; }
+  .op-pos-head { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .op-in { min-width: 0; width: 100%; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 0.85rem; font-family: inherit; }
+  .op-pos-head .op-label { flex: 1 1 auto; font-weight: 700; }
+  .op-pos-head .op-status { flex: 0 0 96px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+  .op-del { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--muted); font-size: 1rem; line-height: 1; cursor: pointer; }
+  .op-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .op-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .op-k { font-size: 0.64rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+  .op-v { font-size: 0.9rem; font-weight: 700; color: var(--text); min-height: 1.3em; display: flex; align-items: center; flex-wrap: wrap; }
+  .op-v.pos { color: var(--green); }
+  .op-v.neg { color: var(--red); }
+  .op-pill { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.01em; }
+  .op-pill.good { background: var(--green-soft); color: var(--green); }
+  .op-pill.bad { background: var(--red-soft); color: var(--red); }
+  .op-pill.flat { background: var(--amber-soft); color: var(--amber); }
+  .op-link { background: none; border: none; padding: 0; color: var(--accent); font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .op-totals { background: var(--panel); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: 12px; padding: 10px; margin-bottom: 10px; }
+  .op-totals-title { font-size: 0.72rem; font-weight: 800; color: var(--heading); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 8px; }
+  .op-totals .op-grid { grid-template-columns: repeat(2, 1fr); }
+  .op-totals .op-v { font-size: 1rem; }
+  @media (min-width: 900px) {
+    .op-totals .op-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  /* Simplified entry (2026-10-12): quick-add form, compact card with a big result line */
+  .op-quick { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 10px; }
+  .op-quick-row { display: flex; gap: 6px; align-items: center; }
+  .op-status-btn { flex: 0 0 auto; padding: 6px 10px; border-radius: 20px; border: 1px solid var(--border); background: var(--panel); color: var(--muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.02em; cursor: pointer; font-family: inherit; }
+  .op-pos.closed { opacity: 0.62; }
+  /* Exit alert (2026-10-12): red pulsing banner + glowing card when a position's CMP is at/below its stoploss */
+  .op-exit-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 9000; background: var(--red); color: #fff; padding: 10px 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.3); animation: opExitPulse 1s ease-in-out infinite; }
+  .op-exit-banner.hidden { display: none; }
+  .op-exit-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+  .op-exit-row + .op-exit-row { border-top: 1px solid rgba(255,255,255,0.35); }
+  .op-exit-txt { flex: 1; font-size: 0.92rem; font-weight: 700; line-height: 1.3; }
+  .op-exit-txt small { display: block; font-weight: 500; opacity: 0.92; font-size: 0.8rem; }
+  .op-exit-dismiss { flex: none; padding: 8px 14px; border-radius: 8px; border: 2px solid #fff; background: #fff; color: var(--red); font-weight: 800; font-size: 0.85rem; cursor: pointer; }
+  .op-exit-snd { font-size: 0.74rem; opacity: 0.95; padding-top: 2px; }
+  .op-pos.exiting { border-color: var(--red); animation: opExitGlow 1s ease-in-out infinite; }
+  @keyframes opExitPulse { 0%, 100% { background: var(--red); } 50% { background: #8f1228; } }
+  @keyframes opExitGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(200,30,58,0.0); } 50% { box-shadow: 0 0 0 4px rgba(200,30,58,0.35); } }
+  @media (prefers-reduced-motion: reduce) { .op-exit-banner, .op-pos.exiting { animation: none; } }
+  .op-result { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .op-bigpl { font-size: 1.35rem; font-weight: 800; }
+  .op-pct { font-size: 0.85rem; font-weight: 700; color: var(--muted); }
+  .op-pct.pos { color: var(--green); }
+  .op-pct.neg { color: var(--red); }
+  .op-hint { font-size: 0.74rem; font-weight: 600; color: var(--muted); font-style: italic; }
+  .op-inrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .op-cmp { border-color: var(--accent); border-width: 1.5px; font-weight: 700; }
+  .op-slrow { display: flex; align-items: flex-end; gap: 10px; margin-top: 8px; }
+  .op-slfield { flex: 0 0 38%; }
+  .op-details { margin-top: 8px; }
+  .op-details summary { font-size: 0.78rem; font-weight: 700; color: var(--accent); cursor: pointer; }
+  .op-details .op-grid { grid-template-columns: repeat(2, 1fr); margin-top: 8px; }
+  @media (min-width: 900px) {
+    .op-details .op-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  /* Read-only layout (2026-10-12): plain text for everything calculated; only CMP is a box */
+  .op-name { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: 1rem; color: var(--text); overflow-wrap: anywhere; }
+  .op-edit { flex: 0 0 auto; }
+  .op-sub { font-size: 0.85rem; color: var(--muted); margin: 0 0 8px; }
+  .op-sub strong { color: var(--text); }
+  .op-inrow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: end; }
+  .op-inrow2 .op-v { font-size: 1.1rem; min-height: 2.1em; }
+  .op-sl-panel { margin-top: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-alt); }
+  .op-sl-add { display: flex; gap: 6px; margin-bottom: 8px; }
+  .op-sl-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .op-sl-row:last-child { border-bottom: none; }
+  .op-sl-paste { width: 100%; min-height: 64px; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 0.8rem; font-family: inherit; resize: vertical; margin-bottom: 6px; }
+  @media (min-width: 900px) {
+    .op-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
   .badge {
     display: inline-block;
     padding: 4px 10px;
@@ -846,6 +926,7 @@
 </style>
 </head>
 <body>
+<div id="op-exit-banner" class="op-exit-banner hidden" role="alert" aria-live="assertive"></div>
 
 <!-- ACCOUNTS: login gate — sits on top of everything (including the PIN lock) until
      Firebase Auth confirms a signed-in, non-disabled user with a valid account doc. -->
@@ -1104,6 +1185,45 @@
   </div>
   <div id="alerts-list" style="flex:1; overflow-y:auto; min-height:0;">
     <p class="placeholder" style="font-size:0.92rem;">Waiting for a Strong signal…</p>
+  </div>
+</div>
+
+<!-- OPEN POSITIONS (2026-10-12) — max 4 positions, modeled on admin's Google Sheet columns -->
+<div class="card theme-teal" id="open-positions-card" style="grid-column: 1 / -1;">
+  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Open Positions <button class="info-icon-btn" data-info="info-openpos">i</button>
+    <span class="op-head-right"><span class="op-count" id="op-count">0/4</span><button class="op-add-btn" id="op-add-btn" type="button">+ Add</button></span>
+  </h2>
+  <div id="info-openpos" class="info-popover hidden">Tap + Add and enter just Qty and Buy price. After that, the only thing you type is CMP (the current price) — everything else is calculated and read-only: profit/loss, HOLD/EXIT, stoploss, capital, points, balance. Stoploss comes from your saved list (tap "Add stoploss" once per buy price). HOLD while CMP is above the stoploss, EXIT at or below it. Use Edit to correct Qty, Buy or the name. There is no live feed for option prices, so CMP is typed by you.</div>
+  <div class="op-quick hidden" id="op-quick">
+    <div class="op-quick-row">
+      <input class="op-in" id="op-q-qty" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Qty">
+      <input class="op-in" id="op-q-buy" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Buy ₹">
+      <button class="op-add-btn" id="op-q-add" type="button">Add</button>
+      <button class="op-del" id="op-q-cancel" type="button" aria-label="Cancel">×</button>
+    </div>
+    <input class="op-in" id="op-q-name" type="text" maxlength="40" enterkeyhint="done" placeholder="Name (optional), e.g. SENSEX 73200 PE" style="margin-top:6px;">
+    <div id="op-q-err" style="font-size:0.75rem; color:var(--red); margin-top:4px; min-height:1em;"></div>
+  </div>
+  <div id="op-list"></div>
+  <div class="op-totals hidden" id="op-totals">
+    <div class="op-totals-title">Total — all open positions</div>
+    <div class="op-grid">
+      <div class="op-field"><span class="op-k">Total Points</span><span class="op-v" data-o="tpoints"></span></div>
+      <div class="op-field"><span class="op-k">Total Capital</span><span class="op-v" data-o="tcapital"></span></div>
+      <div class="op-field"><span class="op-k">Total Profit / Loss</span><span class="op-v" data-o="tpl"></span></div>
+      <div class="op-field"><span class="op-k">Total Balance (Grand Total)</span><span class="op-v" data-o="tbalance"></span></div>
+    </div>
+  </div>
+  <div style="margin-top:2px;"><button class="op-link" id="op-sl-toggle" type="button">Saved stoplosses ▾</button></div>
+  <div class="op-sl-panel hidden" id="op-sl-panel">
+    <div class="op-sl-add">
+      <input class="op-in" id="op-sl-price" type="number" inputmode="decimal" placeholder="Buy ₹">
+      <input class="op-in" id="op-sl-val" type="number" inputmode="decimal" placeholder="Stoploss ₹">
+      <button class="op-add-btn" id="op-sl-add-btn" type="button">Add</button>
+    </div>
+    <textarea class="op-sl-paste" id="op-sl-paste" placeholder="Or paste two columns from your sheet (Buy price, Stoploss), one pair per line"></textarea>
+    <div style="margin-bottom:8px;"><button class="op-link" id="op-sl-import-btn" type="button">Import pasted rows</button> <span id="op-sl-msg" style="font-size:0.75rem; color:var(--muted);"></span></div>
+    <div id="op-sl-list"></div>
   </div>
 </div>
 
@@ -2904,6 +3024,519 @@
     }).join('');
   }
 
+  // ---- OPEN POSITIONS (new, 2026-10-12) ----
+  // Admin's Google Sheet, rebuilt as a Page-1 card: up to 4 open positions. Manual: Status, Label
+  // (contract), Qty, Buy price, CMP/LTP. Automatic (same formulas as the sheet): Capital = Qty×Buy,
+  // Rec. Stoploss = lookup of Buy in the stoploss table (exact match, like the sheet's VLOOKUP),
+  // Points = CMP−Buy, P/L = Points×Qty, Outcome (PROFIT/LOSS/NOTHING), Balance = Capital+P/L,
+  // Action = HOLD while CMP is above the stoploss, EXIT at or below it (long positions), Gain/Loss %
+  // = P/L ÷ Capital. Stored per account in localStorage first (works offline), mirrored best-effort
+  // to Firestore users/{uid}/openPositions/state so phone and desktop show the same positions —
+  // that mirror needs one Firestore rule (see BACKLOG.md); until it is published everything simply
+  // stays on this device and nothing else is affected.
+  const OP_MAX = 4;
+  const OP_SL_MAX = 300;
+  let opState = { positions: [], slTable: [], updatedAt: 0 };
+  let opUnsubscribe = null;
+  let opSaveTimer = null;
+  let opPendingCloud = null; // newer cloud copy that arrived while a field was being typed in — applied once focus leaves the card
+  const opCardEl = document.getElementById('open-positions-card');
+  const opListEl = document.getElementById('op-list');
+  const opTotalsEl = document.getElementById('op-totals');
+  const opAddBtn = document.getElementById('op-add-btn');
+  const opCountEl = document.getElementById('op-count');
+  const opSlToggleEl = document.getElementById('op-sl-toggle');
+  const opSlPanelEl = document.getElementById('op-sl-panel');
+  const opSlListEl = document.getElementById('op-sl-list');
+  const opSlMsgEl = document.getElementById('op-sl-msg');
+
+  function opKey() { return currentUid ? ('signa365_openpos_' + currentUid) : 'signa365_openpos'; }
+  function opEsc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function opNum(v) {
+    if (v === null || v === undefined || v === '') return null;
+    const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[₹,\s]/g, ''));
+    return isFinite(n) ? n : null;
+  }
+  function opNormalize(o) {
+    const out = { positions: [], slTable: [], updatedAt: 0 };
+    if (!o || typeof o !== 'object') return out;
+    if (Array.isArray(o.positions)) {
+      o.positions.slice(0, OP_MAX).forEach(p => {
+        if (!p || typeof p !== 'object') return;
+        out.positions.push({
+          id: String(p.id || ('p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6))),
+          label: String(p.label || '').slice(0, 40),
+          status: String(p.status || 'ONGOING').slice(0, 14),
+          qty: opNum(p.qty), buy: opNum(p.buy), cmp: opNum(p.cmp)
+        });
+      });
+    }
+    if (Array.isArray(o.slTable)) {
+      o.slTable.slice(0, OP_SL_MAX).forEach(r => {
+        const price = opNum(r && r.price), sl = opNum(r && r.sl);
+        if (price != null && sl != null) out.slTable.push({ price, sl });
+      });
+    }
+    out.updatedAt = typeof o.updatedAt === 'number' ? o.updatedAt : 0;
+    return out;
+  }
+  function opLoadLocal() {
+    try { return opNormalize(JSON.parse(localStorage.getItem(opKey()))); } catch (e) { return opNormalize(null); }
+  }
+  function opPersistLocal() {
+    try { localStorage.setItem(opKey(), JSON.stringify(opState)); } catch (e) { /* storage full/unavailable — positions just won't survive a reload on this device */ }
+  }
+  function opDocRef(uid) {
+    return fbDb.collection('users').doc(uid).collection('openPositions').doc('state');
+  }
+  // Every change: stamp, save locally right away, then push to the cloud shortly after (debounced so
+  // typing a number doesn't write on every keystroke). uid/state are captured now so a logout inside
+  // the debounce window can't send one account's positions to another's document.
+  function opTouchAndSave() {
+    opState.updatedAt = Date.now();
+    opPersistLocal();
+    if (!fbDb || !currentUid) return;
+    const uid = currentUid;
+    const snapshot = JSON.parse(JSON.stringify(opState));
+    clearTimeout(opSaveTimer);
+    opSaveTimer = setTimeout(() => {
+      opDocRef(uid).set(snapshot).catch(err => console.warn("Signa365: open-positions cloud sync unavailable, saved on this device only:", err));
+    }, 700);
+  }
+  function subscribeToOpenPositions() {
+    if (!fbDb || !currentUid) return;
+    const uid = currentUid;
+    opUnsubscribe = opDocRef(uid).onSnapshot(
+      (snap) => {
+        if (!snap.exists) {
+          // nothing in the cloud yet — first-time sync: push whatever this device already has
+          if (opState.positions.length || opState.slTable.length) opDocRef(uid).set(opState).catch(() => {});
+          return;
+        }
+        const cloud = opNormalize(snap.data());
+        if (cloud.updatedAt > opState.updatedAt) {
+          if (opCardEl.contains(document.activeElement)) { opPendingCloud = cloud; return; } // don't yank a field out from under active typing — applied on focus-out below
+          opState = cloud;
+          opPersistLocal();
+          opRender();
+        } else if (cloud.updatedAt < opState.updatedAt) {
+          opDocRef(uid).set(opState).catch(() => {}); // this device is newer — push it up
+        }
+      },
+      (err) => console.warn("Signa365: open-positions sync unavailable (rule not published yet?), using this device only:", err)
+    );
+  }
+
+  // Exact-match lookup like the sheet's VLOOKUP(...,0): returns the stoploss for this buy price, or null.
+  function opLookupSL(buy, table) {
+    if (buy == null) return null;
+    for (let i = 0; i < table.length; i++) {
+      if (Math.abs(table[i].price - buy) < 0.005) return table[i].sl;
+    }
+    return null;
+  }
+  function opCalc(p, table) {
+    const qty = p.qty, buy = p.buy, cmp = p.cmp;
+    const capital = (qty != null && buy != null) ? qty * buy : null;
+    const sl = opLookupSL(buy, table);
+    const points = (cmp != null && buy != null) ? cmp - buy : null;
+    const pl = (points != null && qty != null) ? points * qty : null;
+    const outcome = pl == null ? null : (pl > 0 ? 'PROFIT' : (pl < 0 ? 'LOSS' : 'NOTHING'));
+    const balance = capital != null ? capital + (pl || 0) : null;
+    const action = (cmp != null && sl != null) ? (cmp <= sl ? 'EXIT' : 'HOLD') : null;
+    const pct = (pl != null && capital) ? (pl / capital) * 100 : null;
+    return { capital, sl, points, pl, outcome, balance, action, pct };
+  }
+  function opFmt(n, signed, rupee) {
+    if (n == null) return '—';
+    const abs = Math.abs(n).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    const sign = signed ? (n > 0 ? '+' : (n < 0 ? '-' : '')) : (n < 0 ? '-' : '');
+    return sign + (rupee ? '₹' : '') + abs;
+  }
+  function opSetCell(cardEl, key, html, cls) {
+    const el = cardEl.querySelector('[data-o="' + key + '"]');
+    if (!el) return;
+    el.innerHTML = html;
+    el.classList.remove('pos', 'neg');
+    if (cls) el.classList.add(cls);
+  }
+  function opRefreshCard(cardEl, p) {
+    const c = opCalc(p, opState.slTable);
+    const sign = (n) => n == null ? '' : (n > 0 ? 'pos' : (n < 0 ? 'neg' : ''));
+    // Headline: profit/loss (big), its % beside it, and the HOLD/EXIT verdict — the only things
+    // glanced at during the day. Plain-words hints replace "—" so it's clear what to do next.
+    opSetCell(cardEl, 'pl', c.pl == null ? '<span class="op-hint">Enter CMP to see profit / loss</span>' : opFmt(c.pl, true, true), sign(c.pl));
+    opSetCell(cardEl, 'pct', c.pct == null ? '' : '(' + (c.pct > 0 ? '+' : '') + c.pct.toFixed(1) + '%)', sign(c.pct));
+    let actionHtml;
+    if (c.action) actionHtml = '<span class="op-pill ' + (c.action === 'HOLD' ? 'good' : 'bad') + '">' + c.action + '</span>';
+    else if (p.cmp == null) actionHtml = '<span class="op-hint">Enter CMP</span>';
+    else actionHtml = '';
+    opSetCell(cardEl, 'action', actionHtml);
+    // Details (collapsed by default): the rest of the sheet's columns
+    opSetCell(cardEl, 'points', opFmt(c.points, true, false), sign(c.points));
+    opSetCell(cardEl, 'outcome', c.outcome ? '<span class="op-pill ' + (c.outcome === 'PROFIT' ? 'good' : (c.outcome === 'LOSS' ? 'bad' : 'flat')) + '">' + c.outcome + '</span>' : '—');
+    opSetCell(cardEl, 'balance', opFmt(c.balance, false, true));
+    // Read-only line under the name: qty × buy = capital
+    opSetCell(cardEl, 'sub', (p.qty != null && p.buy != null)
+      ? '<strong>' + opFmt(p.qty, false, false) + '</strong> qty × <strong>₹' + opFmt(p.buy, false, false) + '</strong> = ' + opFmt(c.capital, false, true)
+      : 'Qty / Buy missing — tap Edit');
+    // Stoploss is automatic (looked up from the saved list by buy price) — display only. If none is
+    // saved for this buy price, one tap opens the saved-stoplosses panel with the buy price pre-filled.
+    opSetCell(cardEl, 'sl', c.sl != null
+      ? opFmt(c.sl, false, true)
+      : (p.buy != null ? '<button class="op-link" type="button" data-open-sl="' + p.buy + '">Add stoploss ›</button>' : '—'));
+    opRefreshTotals();
+  }
+  // Totals across ALL positions (2026-10-12): Σ Points, Σ Capital, Σ P/L, Σ Balance (= Σ Capital +
+  // Σ P/L). A position still missing a value just contributes nothing for that column — same as a
+  // blank cell in the sheet. Note: Total Points adds points across different quantities, so Total
+  // Profit/Loss is the number that truly combines them; Total Points is shown because admin asked.
+  function opRefreshTotals() {
+    const hasAny = opState.positions.length > 0;
+    opTotalsEl.classList.toggle('hidden', !hasAny);
+    opScheduleExitCheck(); // also runs when empty (sign-out / last position removed) so a ringing alarm stops
+    if (!hasAny) return;
+    let points = 0, capital = 0, pl = 0, balance = 0;
+    opState.positions.forEach(p => {
+      const c = opCalc(p, opState.slTable);
+      if (c.points != null) points += c.points;
+      if (c.capital != null) capital += c.capital;
+      if (c.pl != null) pl += c.pl;
+      if (c.balance != null) balance += c.balance;
+    });
+    const r2 = (n) => Math.round(n * 100) / 100; // keep float dust (e.g. 0.1+0.2) out of the display
+    const sign = (n) => n > 0 ? 'pos' : (n < 0 ? 'neg' : '');
+    opSetCell(opTotalsEl, 'tpoints', opFmt(r2(points), true, false), sign(r2(points)));
+    opSetCell(opTotalsEl, 'tcapital', opFmt(r2(capital), false, true));
+    opSetCell(opTotalsEl, 'tpl', opFmt(r2(pl), true, true), sign(r2(pl)));
+    opSetCell(opTotalsEl, 'tbalance', opFmt(r2(balance), false, true));
+  }
+  function opRefreshAll() {
+    opListEl.querySelectorAll('.op-pos').forEach(el => {
+      const p = opState.positions.find(x => x.id === el.getAttribute('data-id'));
+      if (p) opRefreshCard(el, p);
+    });
+  }
+
+  function opRender() {
+    opCountEl.textContent = opState.positions.length + '/' + OP_MAX;
+    opAddBtn.disabled = opState.positions.length >= OP_MAX;
+    if (opState.positions.length >= OP_MAX && !opEditingId) opQuickEl.classList.add('hidden');
+    if (opState.positions.length === 0) {
+      opListEl.innerHTML = '<p class="placeholder" style="font-size:0.9rem; margin-bottom:8px;">No open positions yet. Tap + Add, enter Qty and Buy price — that is all.</p>';
+    } else {
+      opListEl.innerHTML = opState.positions.map(p => {
+        const v = (n) => n == null ? '' : n;
+        const closed = String(p.status).toUpperCase() === 'CLOSED';
+        return '<div class="op-pos' + (closed ? ' closed' : '') + '" data-id="' + opEsc(p.id) + '">' +
+          '<div class="op-pos-head">' +
+            '<div class="op-name">' + opEsc(p.label) + '</div>' +
+            '<button class="op-status-btn" type="button" data-status-toggle="1" title="Tap to switch ONGOING / CLOSED">' + opEsc(p.status) + '</button>' +
+            '<button class="op-link op-edit" type="button" data-edit="' + opEsc(p.id) + '">Edit</button>' +
+            '<button class="op-del" type="button" data-del="' + opEsc(p.id) + '" aria-label="Remove position">×</button>' +
+          '</div>' +
+          '<div class="op-sub" data-o="sub"></div>' +
+          '<div class="op-result"><div><span class="op-v op-bigpl" data-o="pl"></span> <span class="op-pct" data-o="pct"></span></div><span class="op-v" data-o="action"></span></div>' +
+          '<div class="op-inrow2">' +
+            '<label class="op-field"><span class="op-k">Now (CMP) ₹</span><input class="op-in op-cmp" data-f="cmp" type="number" inputmode="decimal" value="' + v(p.cmp) + '"></label>' +
+            '<div class="op-field"><span class="op-k">Stoploss</span><span class="op-v" data-o="sl"></span></div>' +
+          '</div>' +
+          '<details class="op-details"><summary>Details</summary><div class="op-grid">' +
+            '<div class="op-field"><span class="op-k">Points</span><span class="op-v" data-o="points"></span></div>' +
+            '<div class="op-field"><span class="op-k">Outcome</span><span class="op-v" data-o="outcome"></span></div>' +
+            '<div class="op-field"><span class="op-k">Balance</span><span class="op-v" data-o="balance"></span></div>' +
+          '</div></details>' +
+        '</div>';
+      }).join('');
+      opRefreshAll();
+    }
+    opRefreshTotals();
+    opRenderSlList();
+  }
+  function opRenderSlList() {
+    opSlToggleEl.textContent = 'Saved stoplosses (' + opState.slTable.length + ') ' + (opSlPanelEl.classList.contains('hidden') ? '▾' : '▴');
+    const rows = opState.slTable.slice().sort((a, b) => a.price - b.price);
+    opSlListEl.innerHTML = rows.length === 0
+      ? '<p class="placeholder" style="font-size:0.82rem;">Nothing saved yet. Stoplosses you type on a position are saved here automatically — or add / paste them above.</p>'
+      : rows.map(r => '<div class="op-sl-row"><span>Buy <strong>₹' + opEsc(r.price) + '</strong> → SL <strong>₹' + opEsc(r.sl) + '</strong></span>' +
+          '<button class="op-del" type="button" data-sl-del="' + opEsc(r.price) + '" aria-label="Remove row">×</button></div>').join('');
+  }
+  function opUpsertSL(price, sl) {
+    const i = opState.slTable.findIndex(r => Math.abs(r.price - price) < 0.005);
+    if (i >= 0) { opState.slTable[i].sl = sl; return 'updated'; }
+    if (opState.slTable.length >= OP_SL_MAX) return 'full';
+    opState.slTable.push({ price, sl });
+    return 'added';
+  }
+
+  // + Add opens a tiny form: just Qty and Buy price (name optional). Everything else is automatic.
+  const opQuickEl = document.getElementById('op-quick');
+  const opQQtyEl = document.getElementById('op-q-qty');
+  const opQBuyEl = document.getElementById('op-q-buy');
+  const opQNameEl = document.getElementById('op-q-name');
+  const opQErrEl = document.getElementById('op-q-err');
+  let opEditingId = null; // set while the quick form is being used to correct an existing position
+  const opQAddBtn = document.getElementById('op-q-add');
+  function opOpenQuick(open, pos) {
+    opEditingId = open && pos ? pos.id : null;
+    opQAddBtn.textContent = opEditingId ? 'Save' : 'Add';
+    opQuickEl.classList.toggle('hidden', !open);
+    opQErrEl.textContent = '';
+    if (open) {
+      opQQtyEl.value = pos && pos.qty != null ? pos.qty : '';
+      opQBuyEl.value = pos && pos.buy != null ? pos.buy : '';
+      opQNameEl.value = pos ? pos.label : '';
+      opQQtyEl.focus();
+      opQuickEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+  function opQuickAdd() {
+    const qty = opNum(opQQtyEl.value), buy = opNum(opQBuyEl.value);
+    if (qty == null || qty <= 0 || buy == null || buy <= 0) { opQErrEl.textContent = 'Enter Qty and Buy price.'; return; }
+    if (opEditingId) {
+      const p = opState.positions.find(x => x.id === opEditingId);
+      if (p) { p.qty = qty; p.buy = buy; p.label = (opQNameEl.value.trim() || p.label || 'Position').slice(0, 40); }
+      opOpenQuick(false);
+      opTouchAndSave();
+      opRender();
+      return;
+    }
+    if (opState.positions.length >= OP_MAX) { opQErrEl.textContent = 'Max ' + OP_MAX + ' positions.'; return; }
+    const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const name = opQNameEl.value.trim() || ('Position ' + (opState.positions.length + 1));
+    opState.positions.push({ id, label: name.slice(0, 40), status: 'ONGOING', qty, buy, cmp: null });
+    opOpenQuick(false);
+    opTouchAndSave();
+    opRender();
+    const cmpEl = opListEl.querySelector('[data-id="' + id + '"] [data-f="cmp"]');
+    if (cmpEl) cmpEl.focus(); // straight to the one number you update during the day
+  }
+  opAddBtn.addEventListener('click', () => {
+    if (opState.positions.length >= OP_MAX) return;
+    // closed -> open a blank Add form; open for adding -> close it; open for editing -> switch to a blank Add form
+    opOpenQuick(opQuickEl.classList.contains('hidden') || !!opEditingId);
+  });
+  opQAddBtn.addEventListener('click', opQuickAdd);
+  document.getElementById('op-q-cancel').addEventListener('click', () => opOpenQuick(false));
+  [opQQtyEl, opQBuyEl, opQNameEl].forEach(el => el.addEventListener('keydown', (e) => { if (e.key === 'Enter') opQuickAdd(); }));
+
+  // Typing: update just that field + that card's computed cells (no re-render, so the cursor stays put).
+  opListEl.addEventListener('input', (e) => {
+    const input = e.target.closest('.op-in');
+    if (!input) return;
+    const cardEl = input.closest('.op-pos');
+    const p = cardEl && opState.positions.find(x => x.id === cardEl.getAttribute('data-id'));
+    if (!p) return;
+    const f = input.getAttribute('data-f');
+    p[f] = opNum(input.value); // CMP is the only box on a card; everything else is read-only or set via Edit
+    opRefreshCard(cardEl, p);
+    opTouchAndSave();
+  });
+  opListEl.addEventListener('click', (e) => {
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      if (!confirm('Remove this position?')) return;
+      const id = del.getAttribute('data-del');
+      opState.positions = opState.positions.filter(x => x.id !== id);
+      opTouchAndSave();
+      opRender();
+      return;
+    }
+    const ed = e.target.closest('[data-edit]');
+    if (ed) {
+      const p = opState.positions.find(x => x.id === ed.getAttribute('data-edit'));
+      if (p) opOpenQuick(true, p);
+      return;
+    }
+    const sl = e.target.closest('[data-open-sl]');
+    if (sl) {
+      // one-tap stoploss entry: open the saved-stoplosses panel with this position's buy price filled in
+      opSlPanelEl.classList.remove('hidden');
+      opRenderSlList();
+      document.getElementById('op-sl-price').value = sl.getAttribute('data-open-sl');
+      document.getElementById('op-sl-val').focus();
+      opSlPanelEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+    const st = e.target.closest('[data-status-toggle]');
+    if (st) {
+      const cardEl = st.closest('.op-pos');
+      const p = cardEl && opState.positions.find(x => x.id === cardEl.getAttribute('data-id'));
+      if (!p) return;
+      p.status = String(p.status).toUpperCase() === 'ONGOING' ? 'CLOSED' : 'ONGOING';
+      st.textContent = p.status;
+      cardEl.classList.toggle('closed', p.status === 'CLOSED');
+      opTouchAndSave();
+    }
+  });
+  opSlToggleEl.addEventListener('click', () => {
+    opSlPanelEl.classList.toggle('hidden');
+    opRenderSlList();
+  });
+  document.getElementById('op-sl-add-btn').addEventListener('click', () => {
+    const priceEl = document.getElementById('op-sl-price'), valEl = document.getElementById('op-sl-val');
+    const price = opNum(priceEl.value), sl = opNum(valEl.value);
+    if (price == null || sl == null) { opSlMsgEl.textContent = 'Enter both a Buy price and a Stoploss.'; return; }
+    const r = opUpsertSL(price, sl);
+    opSlMsgEl.textContent = r === 'full' ? 'Table is full (' + OP_SL_MAX + ' rows).' : (r === 'updated' ? 'Updated.' : 'Added.');
+    priceEl.value = ''; valEl.value = '';
+    opTouchAndSave();
+    opRenderSlList();
+    opRefreshAll();
+  });
+  document.getElementById('op-sl-import-btn').addEventListener('click', () => {
+    const ta = document.getElementById('op-sl-paste');
+    let added = 0, updated = 0, skipped = 0;
+    ta.value.split(/\r?\n/).forEach(line => {
+      const nums = line.split(/[\t,;\s]+/).map(opNum).filter(n => n != null);
+      if (nums.length < 2) { if (line.trim()) skipped++; return; }
+      const r = opUpsertSL(nums[0], nums[1]);
+      if (r === 'added') added++; else if (r === 'updated') updated++; else skipped++;
+    });
+    opSlMsgEl.textContent = added + ' added, ' + updated + ' updated' + (skipped ? ', ' + skipped + ' skipped' : '') + '.';
+    if (added || updated) ta.value = '';
+    opTouchAndSave();
+    opRenderSlList();
+    opRefreshAll();
+  });
+  document.getElementById('op-sl-list').addEventListener('click', (e) => {
+    const del = e.target.closest('[data-sl-del]');
+    if (!del) return;
+    const price = opNum(del.getAttribute('data-sl-del'));
+    opState.slTable = opState.slTable.filter(r => Math.abs(r.price - price) >= 0.005);
+    opTouchAndSave();
+    opRenderSlList();
+    opRefreshAll();
+  });
+  opCardEl.addEventListener('focusout', () => {
+    setTimeout(opCheckExits, 80); // finished typing a CMP — check right away instead of waiting out the typing pause
+    setTimeout(() => {
+      if (!opPendingCloud || opCardEl.contains(document.activeElement)) return;
+      const c = opPendingCloud; opPendingCloud = null;
+      if (c.updatedAt > opState.updatedAt) { opState = c; opPersistLocal(); opRender(); }
+    }, 60);
+  });
+  // Called on every sign-in: load THIS account's saved positions, then start the cloud mirror.
+  function opStartForCurrentUser() {
+    opPendingCloud = null;
+    opState = opLoadLocal();
+    opRender();
+    subscribeToOpenPositions();
+  }
+  // ---- EXIT ALERT (2026-10-12) ----
+  // When an ONGOING position's CMP is at/below its stoploss: red pulsing banner at the top + glowing card
+  // + repeating siren (if Sound is On) + vibration, until you tap Dismiss; ONE Telegram message per crossing
+  // (shared across your devices through alertState, fail-open like the Strong-signal alert). Back above the
+  // stoploss re-arms it. CMP is typed by hand, so the check waits ~1.8s after the last keystroke (typing "80"
+  // passes through "8" — that must not count as an exit) and runs at once when you leave the field.
+  // Only fires for positions touched TODAY (IST), so yesterday's stale numbers never ring on page load.
+  const opExitBannerEl = document.getElementById('op-exit-banner');
+  let opExitTimer = null;
+  let opExitActive = {};      // id -> { label, cmp, sl, pl }  — currently alarming on this device
+  let opExitSirenTimer = null;
+  let opTitleTimer = null;
+  const opBaseTitle = document.title;
+  function opExitDismissKey() { return 'signa365_op_exit_dismissed_' + (currentUid || 'anon'); }
+  function opExitLoadDismissed() { try { return JSON.parse(localStorage.getItem(opExitDismissKey())) || {}; } catch (e) { return {}; } }
+  function opExitSaveDismissed(o) { try { localStorage.setItem(opExitDismissKey(), JSON.stringify(o)); } catch (e) { /* best effort */ } }
+  function opIstDay(ts) { return new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); }
+  function opScheduleExitCheck() {
+    clearTimeout(opExitTimer);
+    opExitTimer = setTimeout(opCheckExits, 1800);
+  }
+  function opExitStamp(p, sl) { return p.buy + '/' + sl; } // a dismissal applies to this buy price + stoploss only
+  function opCheckExits() {
+    clearTimeout(opExitTimer);
+    const freshToday = opState.updatedAt && opIstDay(opState.updatedAt) === opIstDay(Date.now());
+    const dismissed = opExitLoadDismissed();
+    let dismissedChanged = false;
+    const nowExiting = {};
+    opState.positions.forEach(p => {
+      const c = opCalc(p, opState.slTable);
+      const live = c.action === 'EXIT' && /^ONGOING$/i.test(p.status);
+      if (!live) {
+        // back above SL (or closed/removed values): re-arm, forget any dismissal, free the shared Telegram claim
+        if (dismissed[p.id]) { delete dismissed[p.id]; dismissedChanged = true; }
+        if (opExitActive[p.id] || opExitTelegramSent[p.id]) { delete opExitTelegramSent[p.id]; opExitReleaseClaim(p.id); }
+        return;
+      }
+      if (!freshToday) return;
+      const stamp = opExitStamp(p, c.sl);
+      if (dismissed[p.id] === stamp) return; // you already dismissed this one
+      nowExiting[p.id] = { label: p.label || 'Position', cmp: p.cmp, sl: c.sl, pl: c.pl, qty: p.qty, buy: p.buy, stamp: stamp };
+      if (!opExitActive[p.id] && !opExitTelegramSent[p.id]) {
+        opExitTelegramSent[p.id] = true;
+        opExitSendTelegram(p.id, nowExiting[p.id]);
+      }
+    });
+    if (dismissedChanged) opExitSaveDismissed(dismissed);
+    opExitActive = nowExiting;
+    opExitApply();
+  }
+  const opExitTelegramSent = {};
+  function opExitClaimKey(id) { return 'op_' + String(currentUid || 'anon').slice(0, 10) + '_' + id; }
+  function opExitSendTelegram(id, e) {
+    claimStrongAlertInCloud(opExitClaimKey(id), 'EXIT').then(res => {
+      if (res.alreadyAnnounced) return; // another of your devices already sent this one
+      const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+      const plTxt = e.pl == null ? '' : '\nP/L: ' + opFmt(e.pl, true, true);
+      sendTelegramText('🚨 EXIT NOW — ' + e.label + '\nCMP ₹' + e.cmp + ' hit stoploss ₹' + e.sl + ' (bought ₹' + e.buy + ' × ' + e.qty + ')' + plTxt + '\n' + timeStr + ' IST');
+    });
+  }
+  function opExitReleaseClaim(id) {
+    if (!fbDb || !currentUid) return;
+    try {
+      fbDb.collection('alertState').doc(todayIstKey())
+        .update({ [opExitClaimKey(id)]: firebase.firestore.FieldValue.delete() }).catch(() => {});
+    } catch (e) { /* best effort */ }
+  }
+  function opExitSiren() {
+    // two-tone, repeats every ~1.6s while any exit alarm is active (uses the same Sound On/Off switch as other alerts)
+    playBeep(880);
+    setTimeout(() => playBeep(620), 380);
+    setTimeout(() => playBeep(880), 760);
+    try { if (navigator.vibrate) navigator.vibrate([300, 120, 300]); } catch (e) { /* not supported */ }
+  }
+  function opExitApply() {
+    const ids = Object.keys(opExitActive);
+    opListEl.querySelectorAll('.op-pos').forEach(el => el.classList.toggle('exiting', !!opExitActive[el.getAttribute('data-id')]));
+    if (!ids.length) {
+      opExitBannerEl.classList.add('hidden'); opExitBannerEl.innerHTML = '';
+      clearInterval(opExitSirenTimer); opExitSirenTimer = null;
+      if (opTitleTimer) { clearInterval(opTitleTimer); opTitleTimer = null; document.title = opBaseTitle; }
+      return;
+    }
+    opExitBannerEl.innerHTML = ids.map(id => {
+      const e = opExitActive[id];
+      return '<div class="op-exit-row"><div class="op-exit-txt">🚨 EXIT NOW — ' + opEsc(e.label) +
+        '<small>CMP ₹' + opEsc(String(e.cmp)) + ' is at/below stoploss ₹' + opEsc(String(e.sl)) + (e.pl != null ? ' · ' + opEsc(opFmt(e.pl, true, true)) : '') + '</small></div>' +
+        '<button type="button" class="op-exit-dismiss" data-dismiss-exit="' + opEsc(id) + '">Dismiss</button></div>';
+    }).join('') + (soundEnabled ? '' : '<div class="op-exit-snd">🔇 Sound is off — tap “Sound Off” at the top to hear the alarm.</div>');
+    opExitBannerEl.classList.remove('hidden');
+    if (!opExitSirenTimer) { opExitSiren(); opExitSirenTimer = setInterval(opExitSiren, 1600); }
+    if (!opTitleTimer) {
+      let on = false;
+      opTitleTimer = setInterval(() => { on = !on; document.title = on ? '🚨 EXIT NOW' : opBaseTitle; }, 900);
+    }
+  }
+  opExitBannerEl.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-dismiss-exit]');
+    if (!b) return;
+    const id = b.getAttribute('data-dismiss-exit');
+    const e = opExitActive[id];
+    if (e) {
+      const d = opExitLoadDismissed(); d[id] = e.stamp; opExitSaveDismissed(d);
+      delete opExitActive[id];
+    }
+    opExitApply();
+  });
+  // Sound switch pressed while an alarm is on: refresh the banner (hint text) and start the siren if it just turned on
+  document.getElementById('sound-enable-btn').addEventListener('click', () => { if (Object.keys(opExitActive).length) setTimeout(opExitApply, 50); });
+
+  opRender();
+
   pnlToggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     renderMonthlySummary();
@@ -4200,8 +4833,10 @@
     fbAuth.onAuthStateChanged(async (user) => {
       if (tradesUnsubscribe) { tradesUnsubscribe(); tradesUnsubscribe = null; }
       if (ownUserDocUnsubscribe) { ownUserDocUnsubscribe(); ownUserDocUnsubscribe = null; }
+      if (opUnsubscribe) { opUnsubscribe(); opUnsubscribe = null; }
 
       if (!user) {
+        opState = opNormalize(null); opRender(); // don't leave one account's open positions in the page after sign-out
         currentUid = null; currentRole = null; currentUsername = null;
         stopPresenceHeartbeat();
         applyRoleUI(null);
@@ -4285,6 +4920,7 @@
         if (currentRole === 'user') updateExpiryBanner();
         applyRoleUI(currentRole);
         subscribeToTrades();
+        opStartForCurrentUser();
         subscribeToOwnUserDoc(user.uid);
         updatePnL();
         renderMonthlySummary();
