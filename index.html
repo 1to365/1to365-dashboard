@@ -2431,7 +2431,8 @@
   function emptyStCodeState() {
     return {
       prev: { "nifty-zone": null, "banknifty-zone": null, "sensex-zone": null },
-      pending: { "nifty-zone": null, "banknifty-zone": null, "sensex-zone": null }
+      pending: { "nifty-zone": null, "banknifty-zone": null, "sensex-zone": null },
+      dur: { "nifty-zone": null, "banknifty-zone": null, "sensex-zone": null } // minutes the confirmed direction had been held at its last matching refresh
     };
   }
   function loadStCodeState() {
@@ -2443,7 +2444,8 @@
       const empty = emptyStCodeState();
       return {
         prev: Object.assign(empty.prev, parsed.prev || {}),
-        pending: Object.assign(empty.pending, parsed.pending || {})
+        pending: Object.assign(empty.pending, parsed.pending || {}),
+        dur: Object.assign(empty.dur, parsed.dur || {})
       };
     } catch (e) {
       return emptyStCodeState();
@@ -2451,10 +2453,11 @@
   }
   const stCodeState = loadStCodeState();
   const previousStCode = stCodeState.prev; // elId -> last CONFIRMED T-code announced
-  const pendingStCode = stCodeState.pending; // elId -> a new code seen once, awaiting a second confirming refresh
+  const pendingStCode = stCodeState.pending; // elId -> { code, since, last }: a different code being watched until it has held long enough
+  const heldMinutesBeforeFlip = stCodeState.dur; // elId -> minutes the confirmed direction had been held (decides how strict the hold time is)
   function persistStCodeState() {
     try {
-      localStorage.setItem(ST_CODE_KEY, JSON.stringify({ dateKey: todayIstKey(), prev: previousStCode, pending: pendingStCode }));
+      localStorage.setItem(ST_CODE_KEY, JSON.stringify({ dateKey: todayIstKey(), prev: previousStCode, pending: pendingStCode, dur: heldMinutesBeforeFlip }));
     } catch (e) { /* storage full/unavailable — flip baseline just won't survive a reload today */ }
   }
 
@@ -2483,28 +2486,53 @@
   // the CE/PE Supertrend calculation itself.
   // (pendingStCode is declared above, alongside previousStCode — both persisted together now.)
 
+  // FIX (2026-10-13, "false flip alerts back to back"): the old rule — new code on 2 consecutive refreshes
+  // (~30-60 s) — let a momentary blip (e.g. the still-forming 5-min candle or a glitchy tick) announce
+  // "CE is now PE" and then "PE is now CE" a minute later, with the in-app animation, beep, Alerts entry,
+  // Telegram message and chart arrow all firing together. Now a different code must HOLD, unbroken:
+  //   - 5 minutes normally; 10 minutes if the direction being flipped away from had been held 30+ minutes
+  //     (a real reversal after a long trend still gets through, just with stricter proof);
+  //   - "unbroken" = seen on every refresh: the old direction coming back, or a gap of 90 s+ with no
+  //     reading (tab asleep / feed down), restarts the clock — it can't be "held" while nobody watched.
+  // Telegram + beep also go through the shared once-per-flip record (alertState), so a second open
+  // device no longer sends a duplicate. In-app animation, Alerts entry and chart arrow only ever
+  // happen AFTER the hold time, so a blip shows nothing anywhere.
+  const FLIP_HOLD_MS = 5 * 60 * 1000;
+  const FLIP_HOLD_LONG_MS = 10 * 60 * 1000;
+  const FLIP_LONG_TREND_MIN = 30;
+  const FLIP_GAP_MS = 90 * 1000;
+
   function checkFlipAlert(elId, direction, stCode) {
     const prevCode = previousStCode[elId];
+    const now = Date.now();
 
     if (!prevCode) {
       previousStCode[elId] = stCode; // first-ever reading for this index — just set the baseline
+      heldMinutesBeforeFlip[elId] = (currentDuration[elId] || 0) * 5;
       persistStCodeState();
       return;
     }
 
     if (stCode === prevCode) {
-      delete pendingStCode[elId]; // matches the confirmed baseline — clear any pending change
+      delete pendingStCode[elId]; // matches the confirmed baseline — any blip is over, forget it
+      heldMinutesBeforeFlip[elId] = (currentDuration[elId] || 0) * 5;
       persistStCodeState();
       return;
     }
 
-    if (pendingStCode[elId] !== stCode) {
-      pendingStCode[elId] = stCode; // first time seeing this different code — hold, don't announce yet
+    let pend = pendingStCode[elId];
+    if (!pend || typeof pend !== 'object' || pend.code !== stCode || (now - pend.last) > FLIP_GAP_MS) {
+      pendingStCode[elId] = { code: stCode, since: now, last: now }; // start (or restart) the hold clock
       persistStCodeState();
       return;
     }
+    pend.last = now;
+    const needMs = (heldMinutesBeforeFlip[elId] || 0) >= FLIP_LONG_TREND_MIN ? FLIP_HOLD_LONG_MS : FLIP_HOLD_MS;
+    if (now - pend.since < needMs) { persistStCodeState(); return; } // still proving itself — say nothing
+    const heldMin = Math.floor((now - pend.since) / 60000);
+    const sinceTs = pend.since; // when the new direction actually began — the chart arrow is drawn there, not at the later confirmation
 
-    // Seen on 2 consecutive refreshes now — treat as a real, confirmed flip
+    // Held long enough — treat as a real, confirmed flip
     delete pendingStCode[elId];
     const isCE = direction === "CE";
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -2525,14 +2553,16 @@
     if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
     renderAlerts();
 
-    // Distinct two-tone beep so a flip doesn't sound identical to a Strong trigger
-    playBeep(isCE ? 700 : 350);
-    setTimeout(() => playBeep(isCE ? 900 : 300), 160);
-
-    // Telegram
+    // Beep + Telegram: once per flip across all your open devices (shared record, fail-open like Strong alerts)
     const spot = currentPrice[zoneToPriceEl[elId]];
     const spotLine = spot != null ? `Spot: ${spot.toLocaleString('en-IN')}\n` : '';
-    sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP: ${flipWord}\n${spotLine}${timeStr} IST`);
+    claimStrongAlertInCloud('flip_' + elId, stCode).then(res => {
+      if (res.alreadyAnnounced) return; // another device already announced this exact flip
+      // Distinct two-tone beep so a flip doesn't sound identical to a Strong trigger
+      playBeep(isCE ? 700 : 350);
+      setTimeout(() => playBeep(isCE ? 900 : 300), 160);
+      sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP: ${flipWord}\n${spotLine}held ${heldMin}+ min · ${timeStr} IST`);
+    });
 
     // Animated flip badge in the Manual Spot result box, if it's showing this index
     recentFlipTs[elId] = Date.now();
@@ -2545,10 +2575,11 @@
     // ST line's own color instead of sometimes showing the opposite side mid-trend.
     const flipPriceEl = zoneToPriceEl[elId];
     if (flipPriceEl && flipEventLog[flipPriceEl]) {
-      flipEventLog[flipPriceEl].push({ time: Date.now(), isUp: isCE });
+      flipEventLog[flipPriceEl].push({ time: sinceTs, isUp: isCE });
       persistFlipLog();
     }
     previousStCode[elId] = stCode;
+    heldMinutesBeforeFlip[elId] = heldMin;
     persistStCodeState();
   }
 
