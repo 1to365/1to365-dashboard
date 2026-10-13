@@ -198,10 +198,17 @@
      Only shown at all when logged in as admin (page 2 has nothing for a non-admin user). */
   #page-nav {
     display: none;
-    gap: 8px;
+    gap: 6px;
     margin: 0 0 14px;
   }
   #page-nav.show { display: flex; }
+  #page-nav button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 4px; padding-right: 4px; font-size: 0.78rem; }
+  .op-navbadge { display: inline-block; margin-left: 4px; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent-soft, rgba(26,99,232,0.12)); color: var(--accent); font-size: 0.7rem; font-weight: 800; line-height: 17px; text-align: center; }
+  #page-nav button.active .op-navbadge { background: rgba(255,255,255,0.25); color: #fff; }
+  .op-navdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); margin-left: 4px; vertical-align: middle; box-shadow: 0 0 0 2px #fff; }
+  .op-navdot.hidden { display: none; }
+  .op-collapse-all { font-size: 0.74rem; }
+  #page-nav #page-nav-2 { flex: 1.2; } /* room for the count badge next to "Positions" */
   #page-nav button {
     flex: 1;
     padding: 9px 10px;
@@ -224,16 +231,16 @@
   }
   #pages-track {
     display: flex;
-    width: 200%;
+    width: 300%;
     transition: transform 0.25s ease;
   }
   #pages-track .page {
-    width: 50%;
+    width: 33.3333%;
     flex-shrink: 0;
     min-width: 0;
   }
   #pages-track .page + .page {
-    padding-left: 16px;
+    padding-left: 0; /* was 16px: it indented the Open Positions / Admin pages by 16px compared with the Dashboard */
   }
 
   .card {
@@ -1169,7 +1176,8 @@
      (admin tools). Swipe on #pages-viewport works too — see goToPage()/swipe handlers below. -->
 <div id="page-nav">
   <button id="page-nav-1" class="active" type="button"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg> Dashboard</button>
-  <button id="page-nav-2" type="button"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 3 5-6 5 6 4-3-2 9H5L3 8z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> Admin</button>
+  <button id="page-nav-2" type="button"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Positions <span class="op-navbadge hidden" id="op-nav-badge">0</span><span class="op-navdot hidden" id="op-nav-dot"></span></button>
+  <button id="page-nav-3" type="button"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 3 5-6 5 6 4-3-2 9H5L3 8z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> Admin</button>
 </div>
 
 <div id="pages-viewport">
@@ -1244,10 +1252,26 @@
   </div>
 </div>
 
-<!-- OPEN POSITIONS (2026-10-12) — max 4 positions, modeled on admin's Google Sheet columns -->
+<!-- LIVE INTRADAY CHART -->
+<div class="card" id="live-chart-card" style="grid-column: 1 / -1;">
+  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg> Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button> <span id="chart-price-line" style="font-weight:700; text-transform:none; font-size:0.85em;"></span> <span style="display:inline-block; border:1.5px solid var(--border); border-radius:8px; padding:3px 10px; font-size:0.72rem; font-weight:600; color:var(--muted); text-transform:none; vertical-align:middle; white-space:nowrap;">Green = <span style="color:var(--green); font-weight:800;">Call (CE)</span> · Red = <span style="color:var(--red); font-weight:800;">Put (PE)</span></span></h2>
+  <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = ST 5M (7,3) · Dotted = prev. close</div>
+  <div id="chart-placeholder" class="placeholder" style="font-size:0.9rem;">Tap a tile above or set a spot to see its live chart here</div>
+  <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
+    <canvas id="live-chart"></canvas>
+  </div>
+</div>
+
+</div>
+</div>
+
+<div class="page" id="page-op">
+<div class="dashboard">
+
+<!-- OPEN POSITIONS (2026-10-12) — max 10 positions, modeled on admin's Google Sheet columns -->
 <div class="card theme-teal" id="open-positions-card" style="grid-column: 1 / -1;">
   <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Open Positions <button class="info-icon-btn" data-info="info-openpos">i</button>
-    <span class="op-head-right"><span class="op-count" id="op-count">0/4</span><button class="op-add-btn" id="op-add-btn" type="button">+ Add</button></span>
+    <span class="op-head-right"><button class="op-link op-collapse-all hidden" id="op-collapse-all" type="button">Collapse all</button><span class="op-count" id="op-count">0/10</span><button class="op-add-btn" id="op-add-btn" type="button">+ Add</button></span>
   </h2>
   <div id="info-openpos" class="info-popover hidden">Tap + Add and enter just Qty and Buy price. Then you only type CMP (the current price). Everything else is calculated: profit/loss, HOLD/EXIT, and the stoploss — automatically 40% below your buy price (you can set a custom stoploss for a buy price under Custom stoplosses). HOLD while CMP is above the stoploss, EXIT alarm at or below it. Tap Exit when you sell: re-check the CMP and the profit/loss is kept under Exited today for the day (record it in P\&amp;L yourself). Tap Close to clear an exited card and free the slot. Tap a name to minimise or expand it.</div>
   <div class="op-quick hidden" id="op-quick">
@@ -1284,20 +1308,11 @@
   </div>
 </div>
 
-<!-- LIVE INTRADAY CHART -->
-<div class="card" id="live-chart-card" style="grid-column: 1 / -1;">
-  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg> Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button> <span id="chart-price-line" style="font-weight:700; text-transform:none; font-size:0.85em;"></span> <span style="display:inline-block; border:1.5px solid var(--border); border-radius:8px; padding:3px 10px; font-size:0.72rem; font-weight:600; color:var(--muted); text-transform:none; vertical-align:middle; white-space:nowrap;">Green = <span style="color:var(--green); font-weight:800;">Call (CE)</span> · Red = <span style="color:var(--red); font-weight:800;">Put (PE)</span></span></h2>
-  <div id="info-chart" class="info-popover hidden">Blue = price · Green/Red = ST 5M (7,3) · Dotted = prev. close</div>
-  <div id="chart-placeholder" class="placeholder" style="font-size:0.9rem;">Tap a tile above or set a spot to see its live chart here</div>
-  <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
-    <canvas id="live-chart"></canvas>
-  </div>
-</div>
 
 </div>
 </div>
 
-<div class="page" id="page-2">
+<div class="page" id="page-3">
 <div class="dashboard">
 
 <!-- ACCOUNTS: admin-only card — hidden by default, shown/hidden by applyRoleUI() once role is
@@ -3122,7 +3137,7 @@
   // to Firestore users/{uid}/openPositions/state so phone and desktop show the same positions —
   // that mirror needs one Firestore rule (see BACKLOG.md); until it is published everything simply
   // stays on this device and nothing else is affected.
-  const OP_MAX = 4;
+  const OP_MAX = 10;
   const OP_SL_MAX = 300;
   let opState = { positions: [], slTable: [], exited: [], updatedAt: 0 };
   let opUnsubscribe = null;
@@ -3298,11 +3313,29 @@
   // blank cell in the sheet. Note: Total Points adds points across different quantities, so Total
   // Profit/Loss is the number that truly combines them; Total Points is shown because admin asked.
   function opOngoing() { return opState.positions.filter(p => p.status === 'ONGOING'); }
+  // Tab badge: number of ongoing positions + a red dot when any of them is at/below its stoploss (EXIT)
+  function opUpdateNavBadge() {
+    const badge = document.getElementById('op-nav-badge'), dot = document.getElementById('op-nav-dot');
+    if (!badge || !dot) return;
+    const on = opOngoing();
+    badge.textContent = on.length;
+    badge.classList.toggle('hidden', on.length === 0);
+    dot.classList.toggle('hidden', !on.some(p => opCalc(p, opState.slTable).action === 'EXIT'));
+    // Collapse all / Expand all (only useful with 2+ cards)
+    const btn = document.getElementById('op-collapse-all');
+    if (btn) {
+      const m = opCollapsedLoad();
+      const anyOpen = opState.positions.some(p => !m[p.id]);
+      btn.classList.toggle('hidden', opState.positions.length < 2);
+      btn.textContent = anyOpen ? 'Collapse all' : 'Expand all';
+    }
+  }
   function opRefreshTotals() {
     const hasAny = opOngoing().length > 0;
     opTotalsEl.classList.toggle('hidden', !hasAny);
     opScheduleExitCheck(); // also runs when empty (sign-out / last position removed) so a ringing alarm stops
-    if (!hasAny) return;
+    opUpdateNavBadge();
+    if (!hasAny) { return; }
     let points = 0, capital = 0, pl = 0, balance = 0;
     opOngoing().forEach(p => {
       const c = opCalc(p, opState.slTable);
@@ -3458,6 +3491,7 @@
       if (m[cardId]) delete m[cardId]; else m[cardId] = true;
       opCollapsedSave(m);
       cardEl.classList.toggle('collapsed', !!m[cardId]);
+      opUpdateNavBadge();
       return;
     }
     if (e.target.closest('[data-more-toggle]') && cardEl) {
@@ -3503,6 +3537,16 @@
   function opCollapsedKey() { return 'signa365_op_collapsed_' + (currentUid || 'anon'); }
   function opCollapsedLoad() { try { return JSON.parse(localStorage.getItem(opCollapsedKey())) || {}; } catch (e) { return {}; } }
   function opCollapsedSave(m) { try { localStorage.setItem(opCollapsedKey(), JSON.stringify(m)); } catch (e) { /* best effort */ } }
+  document.getElementById('op-collapse-all').addEventListener('click', () => {
+    const m = opCollapsedLoad();
+    const anyOpen = opState.positions.some(p => !m[p.id]);
+    const next = {};
+    if (anyOpen) opState.positions.forEach(p => { next[p.id] = true; }); // collapse every card (an EXIT one re-opens itself via the alarm)
+    opCollapsedSave(next);
+    opListEl.querySelectorAll('.op-pos').forEach(el => el.classList.toggle('collapsed', !!next[el.getAttribute('data-id')]));
+    opUpdateNavBadge();
+    if (anyOpen) opCheckExits();
+  });
 
   // ---- EXIT a position: re-check CMP -> profit/loss -> kept for the day under "Exited today" ----
   const opExitModalEl = document.getElementById('op-exit-modal');
@@ -3951,17 +3995,21 @@
   // and swipe both call goToPage(); nav strip itself only shows for admin (see applyRoleUI below —
   // page 2 has nothing for a non-admin user, so there's nothing to swipe to).
   const pageNavEl = document.getElementById('page-nav');
-  const pageNavBtns = [document.getElementById('page-nav-1'), document.getElementById('page-nav-2')];
+  const pageNavBtns = [document.getElementById('page-nav-1'), document.getElementById('page-nav-2'), document.getElementById('page-nav-3')];
   const pagesViewportEl = document.getElementById('pages-viewport');
   const pagesTrackEl = document.getElementById('pages-track');
   let currentPageIdx = 0;
+  let pageIsAdmin = false; // set by applyRoleUI — page 3 (Admin) exists only for admin
   function goToPage(idx) {
-    currentPageIdx = idx === 1 ? 1 : 0;
-    pagesTrackEl.style.transform = `translateX(-${currentPageIdx * 50}%)`;
+    const max = pageIsAdmin ? 2 : 1;
+    currentPageIdx = Math.max(0, Math.min(max, idx | 0));
+    pagesTrackEl.style.transform = `translateX(-${currentPageIdx * (100 / 3)}%)`;
     pageNavBtns.forEach((btn, i) => btn.classList.toggle('active', i === currentPageIdx));
+    window.scrollTo({ top: 0 });
   }
   pageNavBtns[0].addEventListener('click', () => goToPage(0));
   pageNavBtns[1].addEventListener('click', () => goToPage(1));
+  pageNavBtns[2].addEventListener('click', () => goToPage(2));
 
   // Swipe left/right on the pages area. Simple threshold-based touch handler — ignores mostly-
   // vertical swipes (normal scrolling) and only acts once per gesture.
@@ -3979,8 +4027,8 @@
     const dy = touch.clientY - swipeStartY;
     swipeStartX = null; swipeStartY = null;
     if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return; // too short, or more vertical than horizontal
-    if (!pageNavEl.classList.contains('show')) return; // no page 2 to swipe to (non-admin)
-    if (dx < 0) goToPage(1); else goToPage(0);
+    if (!pageNavEl.classList.contains('show')) return; // not signed in — nothing to swipe to
+    if (dx < 0) goToPage(currentPageIdx + 1); else goToPage(currentPageIdx - 1); // goToPage clamps (non-admin stops at Open Positions)
   }, { passive: true });
 
   const logoutBtn = document.getElementById('logout-btn');
@@ -4051,8 +4099,11 @@
     else { stopAdminExpiryPingLoop(); stopPresenceRefreshLoop(); }
     // PAGE NAV: only admin has anything on page 2 — show the tab strip only for admin, and if a
     // non-admin somehow ends up on page 2 (e.g. role changes mid-session), snap back to page 1.
-    pageNavEl.classList.toggle('show', isAdmin);
-    if (!isAdmin) goToPage(0);
+    // Everyone signed in gets Dashboard + Open Positions; only admin also gets the Admin tab/page.
+    pageIsAdmin = isAdmin;
+    pageNavEl.classList.toggle('show', loggedIn);
+    pageNavBtns[2].style.display = isAdmin ? '' : 'none';
+    if (!loggedIn) goToPage(0); else goToPage(currentPageIdx); // re-clamp (e.g. role changed mid-session)
     logoutBtn.style.display = loggedIn ? '' : 'none';
     currentUsernameEl.style.display = loggedIn ? '' : 'none';
     currentUsernameEl.textContent = loggedIn ? (currentUsername || '') : '';
