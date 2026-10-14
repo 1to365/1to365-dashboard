@@ -563,6 +563,11 @@
   .op-cmpwrap .op-k { font-size: 0.66rem; }
   .op-cmpwrap .op-cmp { width: 84px; }
   .op-l3 .op-v { min-height: 0; }
+  .op-confirm { margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: var(--amber-soft); border: 1px solid var(--amber); color: var(--text); font-size: 0.8rem; font-weight: 600; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .op-confirm.hidden { display: none; }
+  .op-confirm strong { color: var(--red); }
+  .op-confirm button { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 0.78rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+  .op-confirm button.yes { background: var(--red); border-color: var(--red); color: #fff; }
   .op-more { margin-top: 8px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .op-more.hidden { display: none; }
   .op-pos.exited { border-style: dashed; }
@@ -3320,7 +3325,7 @@
     const on = opOngoing();
     badge.textContent = on.length;
     badge.classList.toggle('hidden', on.length === 0);
-    dot.classList.toggle('hidden', !on.some(p => opCalc(p, opState.slTable).action === 'EXIT'));
+    dot.classList.toggle('hidden', !on.some(p => !opCmpSuspect[p.id] && opCalc(p, opState.slTable).action === 'EXIT')); // a CMP waiting for "is that right?" is not shown as an exit
     // Collapse all / Expand all (only useful with 2+ cards)
     const btn = document.getElementById('op-collapse-all');
     if (btn) {
@@ -3387,6 +3392,7 @@
               (exited ? '' : '<label class="op-cmpwrap"><span class="op-k">CMP ₹</span><input class="op-in op-cmp" data-f="cmp" type="number" inputmode="decimal" value="' + v(p.cmp) + '"></label>') +
               '<span class="op-v" data-o="action"></span>' +
             '</div>' +
+            '<div class="op-confirm hidden" data-confirm="1"></div>' +
             '<div class="op-more hidden" data-more="1">' +
               '<div class="op-field"><span class="op-k">Capital</span><span class="op-v" data-o="capital"></span></div>' +
               '<div class="op-field"><span class="op-k">Points</span><span class="op-v" data-o="points"></span></div>' +
@@ -3401,6 +3407,7 @@
     opRefreshTotals();
     opRenderExited();
     opRenderSlList();
+    opRenderSuspects();
   }
   function opRenderSlList() {
     opSlToggleEl.textContent = 'Custom stoplosses (' + opState.slTable.length + ') ' + (opSlPanelEl.classList.contains('hidden') ? '▾' : '▴');
@@ -3499,6 +3506,10 @@
       if (more) more.classList.toggle('hidden');
       return;
     }
+    const yes = e.target.closest('[data-cmp-yes]');
+    if (yes && pos) { opLastGoodCmp[pos.id] = pos.cmp; delete opCmpSuspect[pos.id]; opCheckExits(); return; }
+    const fix = e.target.closest('[data-cmp-fix]');
+    if (fix && cardEl) { const inp = cardEl.querySelector('[data-f="cmp"]'); if (inp) { inp.focus(); inp.select(); } return; }
     const ex = e.target.closest('[data-exit]');
     if (ex && pos) { opOpenExit(pos); return; }
     const undo = e.target.closest('[data-undo]');
@@ -3671,6 +3682,7 @@
   function opStartForCurrentUser() {
     opPendingCloud = null;
     opState = opLoadLocal();
+    opState.positions.forEach(p => { if (p.cmp != null && /^ONGOING$/i.test(p.status)) opLastGoodCmp[p.id] = p.cmp; }); // saved CMPs are trusted; only NEW entries are checked
     opRender();
     subscribeToOpenPositions();
   }
@@ -3702,29 +3714,80 @@
     const dismissed = opExitLoadDismissed();
     let dismissedChanged = false;
     const nowExiting = {};
+    const stillThere = {};
     opState.positions.forEach(p => {
+      stillThere[p.id] = true;
       const c = opCalc(p, opState.slTable);
-      const live = c.action === 'EXIT' && /^ONGOING$/i.test(p.status);
+      const ongoing = /^ONGOING$/i.test(p.status);
+      // TYPO GUARD (2026-10-14): a CMP more than 50% below the last accepted CMP (or below the buy price if there
+      // is none yet) is probably half-typed ("15" of 155) — no alarm, no Telegram, ask first.
+      let suspect = false;
+      if (ongoing && p.cmp != null) {
+        const ref = opLastGoodCmp[p.id] != null ? opLastGoodCmp[p.id] : p.buy;
+        if (ref != null && ref > 0 && p.cmp < ref * OP_DROP_GUARD) { suspect = true; opCmpSuspect[p.id] = { from: ref, to: p.cmp }; }
+        else { delete opCmpSuspect[p.id]; opLastGoodCmp[p.id] = p.cmp; }
+      } else { delete opCmpSuspect[p.id]; if (!ongoing) delete opLastGoodCmp[p.id]; }
+      const live = !suspect && c.action === 'EXIT' && ongoing;
       if (!live) {
-        // back above SL (or closed/removed values): re-arm, forget any dismissal, free the shared Telegram claim
+        // back above SL (or closed/removed values/suspect): re-arm, forget any dismissal, cancel a waiting Telegram, free the shared claim
+        opTgCancel(p.id);
         if (dismissed[p.id]) { delete dismissed[p.id]; dismissedChanged = true; }
-        if (opExitActive[p.id] || opExitTelegramSent[p.id]) { delete opExitTelegramSent[p.id]; opExitReleaseClaim(p.id); }
+        if (!suspect && (opExitActive[p.id] || opExitTelegramSent[p.id])) { delete opExitTelegramSent[p.id]; opExitReleaseClaim(p.id); }
         return;
       }
       if (!freshToday) return;
       const stamp = opExitStamp(p, c.sl);
       if (dismissed[p.id] === stamp) return; // you already dismissed this one
       nowExiting[p.id] = { label: p.label || 'Position', cmp: p.cmp, sl: c.sl, pl: c.pl, qty: p.qty, buy: p.buy, stamp: stamp };
-      if (!opExitActive[p.id] && !opExitTelegramSent[p.id]) {
-        opExitTelegramSent[p.id] = true;
-        opExitSendTelegram(p.id, nowExiting[p.id]);
-      }
+      // Telegram only once this CMP has stayed unchanged (and still at/below the stoploss) for 30 s
+      if (!opExitTelegramSent[p.id]) opTgSchedule(p.id, nowExiting[p.id]);
     });
+    Object.keys(opCmpSuspect).forEach(id => { if (!stillThere[id]) delete opCmpSuspect[id]; });
     if (dismissedChanged) opExitSaveDismissed(dismissed);
     opExitActive = nowExiting;
     opExitApply();
+    opRenderSuspects();
   }
   const opExitTelegramSent = {};
+  // ---- Typo guard + steady-CMP Telegram wait (2026-10-14) ----
+  const OP_DROP_GUARD = 0.5;       // a CMP below 50% of the last accepted one needs a "Yes" tap
+  const OP_TG_DELAY_MS = 30000;    // Telegram only after the CMP has stayed put this long
+  const opLastGoodCmp = {};        // id -> last accepted CMP
+  const opCmpSuspect = {};         // id -> { from, to } awaiting "Yes, alert" / "Fix"
+  const opTgTimers = {};           // id -> { cmp, t }
+  function opTgCancel(id) { const cur = opTgTimers[id]; if (cur) { clearTimeout(cur.t); delete opTgTimers[id]; } }
+  function opTgSchedule(id, e) {
+    const cur = opTgTimers[id];
+    if (cur && cur.cmp === e.cmp) return; // already waiting on this same CMP
+    opTgCancel(id);
+    opTgTimers[id] = { cmp: e.cmp, t: setTimeout(() => opTgFire(id, e.cmp), OP_TG_DELAY_MS) };
+  }
+  function opTgFire(id, cmp) {
+    delete opTgTimers[id];
+    const p = opState.positions.find(x => x.id === id);
+    if (!p || !/^ONGOING$/i.test(p.status) || p.cmp !== cmp || opCmpSuspect[id] || opExitTelegramSent[id]) return;
+    const c = opCalc(p, opState.slTable);
+    if (c.action !== 'EXIT') return;
+    opExitTelegramSent[id] = true;
+    opExitSendTelegram(id, { label: p.label || 'Position', cmp: p.cmp, sl: c.sl, pl: c.pl, qty: p.qty, buy: p.buy });
+  }
+  function opRenderSuspects() {
+    const cm = opCollapsedLoad(); let cmChanged = false;
+    opListEl.querySelectorAll('.op-pos').forEach(el => {
+      const id = el.getAttribute('data-id');
+      const box = el.querySelector('[data-confirm]');
+      const sp = opCmpSuspect[id];
+      if (!box) return;
+      if (sp) {
+        box.innerHTML = '<span>CMP dropped <strong>' + opEsc(opFmt(sp.from, false, false)) + ' → ' + opEsc(opFmt(sp.to, false, false)) + '</strong> — is that right?</span>' +
+          '<button type="button" class="yes" data-cmp-yes="' + opEsc(id) + '">Yes, alert</button><button type="button" data-cmp-fix="' + opEsc(id) + '">Fix</button>';
+        box.classList.remove('hidden');
+        if (cm[id]) { delete cm[id]; cmChanged = true; }
+        el.classList.remove('collapsed');
+      } else { box.classList.add('hidden'); box.innerHTML = ''; }
+    });
+    if (cmChanged) opCollapsedSave(cm);
+  }
   function opExitClaimKey(id) { return 'op_' + String(currentUid || 'anon').slice(0, 10) + '_' + id; }
   function opExitSendTelegram(id, e) {
     claimStrongAlertInCloud(opExitClaimKey(id), 'EXIT').then(res => {
