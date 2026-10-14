@@ -634,6 +634,103 @@
     .op-grid { grid-template-columns: repeat(4, 1fr); }
   }
 
+  /* ===== POSITIONS PAGE REDESIGN (2026-10-14) — summary tiles, status-coloured cards, stoploss bar,
+     slide-up Add form, floating Add button, emojis. Uses only the existing palette variables. ===== */
+  #page-op .dashboard { padding-bottom: 96px; }
+  .op-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .op-tile { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .op-tile .op-k { font-size: 0.66rem; color: var(--muted); }
+  .op-tile .op-v { font-size: 1.15rem; font-weight: 800; min-height: 0; }
+  .op-tile.hero { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; background: linear-gradient(135deg, var(--card-mint), var(--panel)); border-color: var(--card-mint-border); }
+  .op-tile.hero > div { display: flex; flex-direction: column; gap: 2px; }
+  .op-tile.hero .op-herov { font-size: 1.7rem; }
+  .op-heror { text-align: right; align-items: flex-end; }
+  .op-heror .op-v { font-size: 1.05rem; color: var(--heading); }
+  .op-totals { background: none; border: none; box-shadow: none; padding: 0; margin: 0; }
+  .op-tile.hero.neg { background: linear-gradient(135deg, var(--card-rose), var(--panel)); border-color: var(--card-rose-border); }
+  .op-mini .op-pill.good { display: none; }
+  .op-pos.collapsed .op-name { font-size: 0.95rem; }
+  #page-nav #page-nav-2 { flex: 1.3; }
+  .op-xrow { display: grid; grid-template-columns: 1fr auto auto; gap: 2px 8px; align-items: center; }
+  .op-xrow .op-xname { grid-column: 1; grid-row: 1; white-space: normal; overflow: visible; }
+  .op-xrow .op-xpl { grid-column: 2; grid-row: 1; }
+  .op-xrow .op-del { grid-column: 3; grid-row: 1 / span 2; }
+  .op-xrow .op-xdet { grid-column: 1 / span 2; grid-row: 2; }
+  .op-usedbar { height: 6px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+  .op-usedbar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 4px; transition: width .25s; }
+  .op-usedbar i.full { background: var(--red); }
+  .op-secbar { display: flex; justify-content: space-between; align-items: center; margin: 4px 2px 8px; }
+  .op-sectitle { font-size: 0.98rem; font-weight: 800; color: var(--heading); }
+  .op-sectitle .op-count { margin-left: 4px; }
+  .op-pos { background: var(--panel); border: 1px solid var(--border); border-left: 5px solid var(--accent); border-radius: 14px; padding: 12px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .op-pos.st-hold { border-left-color: var(--green); }
+  .op-pos.st-exit { border-left-color: var(--red); border-color: var(--red); background: linear-gradient(var(--red-soft), var(--red-soft)), var(--panel); }
+  .op-pos.st-done { border-left-color: var(--amber); }
+  .op-pos .op-name { font-size: 1rem; font-weight: 800; color: var(--text); }
+  .op-idx { font-weight: 800; }
+  .op-idx.i-nifty { color: var(--nifty); }
+  .op-idx.i-banknifty { color: var(--banknifty); }
+  .op-idx.i-sensex { color: var(--sensex); }
+  .op-ty { font-size: 0.74rem; font-weight: 800; padding: 2px 8px; border-radius: 20px; margin-left: 3px; white-space: nowrap; }
+  .op-ty.ce { background: var(--green-soft); color: var(--green); }
+  .op-ty.pe { background: var(--red-soft); color: var(--red); }
+  .op-chipwrap { flex: none; }
+  .op-pos.collapsed .op-chipwrap { display: none; }
+  .op-pill { font-size: 0.74rem; padding: 4px 10px; }
+  .op-pill.good { background: var(--green-soft); color: var(--green); }
+  .op-pill.bad { background: var(--red); color: #fff; }
+  .op-pill.flat { background: var(--amber-soft); color: var(--amber); }
+  .op-pos.st-exit .op-pill.bad { animation: opExitGlow 1s ease-in-out infinite; }
+  .op-sub { margin: 4px 0 8px; font-size: 0.82rem; }
+  .op-sub strong { color: var(--heading); }
+  .op-auto { color: var(--accent); }
+  .op-bigpl { font-size: 1.45rem !important; }
+  .op-pos .op-bigpl { font-size: 1.45rem; }
+  .op-pct { font-size: 0.82rem; }
+  .op-cmpwrap .op-cmp { width: 96px; font-size: 1.15rem; font-weight: 800; padding: 8px 10px; border-radius: 12px; border: 2px solid var(--accent); color: var(--text); text-align: right; }
+  .op-cmpwrap .op-k { color: var(--accent); font-size: 0.68rem; }
+  .op-meterwrap { margin: 12px 2px 2px; }
+  .op-meter { position: relative; height: 8px; border-radius: 5px; background: linear-gradient(90deg, var(--red), #f0b93d 45%, var(--green)); }
+  .op-meter i { position: absolute; top: -4px; width: 4px; height: 16px; background: var(--text); border-radius: 2px; transform: translateX(-2px); box-shadow: 0 0 0 2px var(--panel); }
+  .op-meter-l { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--muted); margin-top: 5px; font-weight: 600; }
+  .op-meter-l .l-sl { color: var(--red); }
+  .op-meter-l .l-cmp { color: var(--accent); }
+  .op-more { grid-template-columns: repeat(3, 1fr); padding-top: 10px; margin-top: 10px; border-top: 1px dashed var(--border); }
+  .op-more .op-v { font-size: 0.95rem; }
+  .op-btns { display: flex; gap: 6px; margin-top: 10px; }
+  .op-btn { flex: 1; padding: 9px 6px; border-radius: 11px; border: 1px solid var(--border); background: var(--panel); color: var(--accent); font-size: 0.8rem; font-weight: 800; cursor: pointer; font-family: inherit; text-align: center; white-space: nowrap; }
+  .op-btn.red { background: var(--red); border-color: var(--red); color: #fff; flex: 2; }
+  .op-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .op-btn.mut { color: var(--muted); flex: 0 0 44px; }
+  .op-confirm { background: var(--amber-soft); border-color: var(--amber); }
+  .op-empty { text-align: center; padding: 26px 14px 30px; background: var(--panel); border: 1px dashed var(--border); border-radius: 14px; margin-bottom: 10px; }
+  .op-empty .e1 { font-size: 2.4rem; }
+  .op-empty .e2 { font-weight: 800; color: var(--heading); margin: 6px 0 4px; font-size: 1rem; }
+  .op-empty .e3 { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+  .op-exited { border-top: 3px solid var(--amber); }
+  .op-xtotal { font-size: 0.95rem; }
+  .op-fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; width: calc(100% - 32px); max-width: 560px; z-index: 800; padding: 15px; border-radius: 16px; border: none; background: var(--accent); color: #fff; font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer; box-shadow: 0 8px 22px rgba(26,99,232,0.4); }
+  .op-fab.hidden { display: none; }
+  .op-fab:disabled { background: var(--muted); box-shadow: none; cursor: not-allowed; }
+  .op-sheet-wrap { position: fixed; inset: 0; z-index: 9400; background: rgba(15,23,42,0.5); display: flex; align-items: flex-end; justify-content: center; }
+  .op-sheet-wrap.hidden { display: none; }
+  .op-sheet { width: 100%; max-width: 480px; background: var(--panel); color: var(--text); border-radius: 24px 24px 0 0; padding: 16px 16px 22px; max-height: 92vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.25); animation: opSheetUp .22s ease-out; }
+  @keyframes opSheetUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .op-sheet-title { font-size: 1.1rem; font-weight: 800; color: var(--heading); margin-bottom: 12px; }
+  .op-f { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; min-width: 0; }
+  .op-f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .op-sheet .op-in { padding: 11px 12px; border-radius: 11px; font-size: 1rem; font-weight: 700; background: var(--panel-alt); }
+  .op-seg { display: flex; gap: 6px; }
+  .op-seg button { flex: 1; padding: 10px 4px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--panel); color: var(--text); font-weight: 800; font-size: 0.82rem; cursor: pointer; font-family: inherit; }
+  .op-seg button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .op-seg button.ce.on { background: var(--green-soft); border-color: var(--green); color: var(--green); }
+  .op-seg button.pe.on { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+  .op-autobox { background: var(--accent-soft); border-radius: 11px; padding: 10px 12px; font-size: 0.85rem; margin: 2px 0 12px; color: var(--heading); }
+  .op-qerr { font-size: 0.78rem; color: var(--red); min-height: 1em; margin-bottom: 4px; }
+  .op-sheet-btns { display: flex; gap: 8px; }
+  .op-sheet-btns .op-btn { padding: 13px; font-size: 0.92rem; }
+  .op-sheet-btns .op-btn.primary { flex: 2; }
+
   .badge {
     display: inline-block;
     padding: 4px 10px;
@@ -985,6 +1082,23 @@
 </head>
 <body>
 <div id="op-exit-banner" class="op-exit-banner hidden" role="alert" aria-live="assertive"></div>
+<button class="op-fab hidden" id="op-add-btn" type="button">＋ Add position</button>
+<div id="op-quick" class="op-sheet-wrap hidden" role="dialog" aria-modal="true">
+  <div class="op-sheet">
+    <div class="op-sheet-title" id="op-sheet-title">➕ Add position</div>
+    <div class="op-f"><span class="op-k">Index</span><div class="op-seg" id="op-q-idx"><button type="button" data-idx="NIFTY">NIFTY</button><button type="button" data-idx="BANKNIFTY">BANKNIFTY</button><button type="button" data-idx="SENSEX">SENSEX</button></div></div>
+    <div class="op-f"><span class="op-k">Type</span><div class="op-seg" id="op-q-type"><button type="button" data-ty="CE" class="ce">📈 CE</button><button type="button" data-ty="PE" class="pe">📉 PE</button></div></div>
+    <div class="op-f"><span class="op-k">Strike</span><input class="op-in" id="op-q-strike" type="number" inputmode="numeric" enterkeyhint="next" placeholder="e.g. 73400"></div>
+    <div class="op-f2">
+      <div class="op-f"><span class="op-k">Qty</span><input class="op-in" id="op-q-qty" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Qty"></div>
+      <div class="op-f"><span class="op-k">Buy ₹</span><input class="op-in" id="op-q-buy" type="number" inputmode="decimal" enterkeyhint="done" placeholder="Buy ₹"></div>
+    </div>
+    <div class="op-autobox" id="op-q-auto">🛑 Auto stoploss and 💰 capital show here</div>
+    <div class="op-f"><span class="op-k">Custom name (optional)</span><input class="op-in" id="op-q-name" type="text" maxlength="40" enterkeyhint="done" placeholder="Only if you want your own name"></div>
+    <div id="op-q-err" class="op-qerr"></div>
+    <div class="op-sheet-btns"><button class="op-btn" id="op-q-cancel" type="button">Cancel</button><button class="op-btn primary" id="op-q-add" type="button">✅ Save position</button></div>
+  </div>
+</div>
 <div id="op-exit-modal" class="op-modal hidden" role="dialog" aria-modal="true">
   <div class="op-modal-box">
     <div class="op-modal-title" id="op-x-title">Exit position</div>
@@ -1275,32 +1389,21 @@
 
 <!-- OPEN POSITIONS (2026-10-12) — max 10 positions, modeled on admin's Google Sheet columns -->
 <div class="card theme-teal" id="open-positions-card" style="grid-column: 1 / -1;">
-  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Open Positions <button class="info-icon-btn" data-info="info-openpos">i</button>
-    <span class="op-head-right"><button class="op-link op-collapse-all hidden" id="op-collapse-all" type="button">Collapse all</button><span class="op-count" id="op-count">0/10</span><button class="op-add-btn" id="op-add-btn" type="button">+ Add</button></span>
-  </h2>
-  <div id="info-openpos" class="info-popover hidden">Tap + Add and enter just Qty and Buy price. Then you only type CMP (the current price). Everything else is calculated: profit/loss, HOLD/EXIT, and the stoploss — automatically 40% below your buy price (you can set a custom stoploss for a buy price under Custom stoplosses). HOLD while CMP is above the stoploss, EXIT alarm at or below it. Tap Exit when you sell: re-check the CMP and the profit/loss is kept under Exited today for the day (record it in P\&amp;L yourself). Tap Close to clear an exited card and free the slot. Tap a name to minimise or expand it.</div>
-  <div class="op-quick hidden" id="op-quick">
-    <div class="op-quick-row">
-      <input class="op-in" id="op-q-qty" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Qty">
-      <input class="op-in" id="op-q-buy" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Buy ₹">
-      <button class="op-add-btn" id="op-q-add" type="button">Add</button>
-      <button class="op-del" id="op-q-cancel" type="button" aria-label="Cancel">×</button>
-    </div>
-    <input class="op-in" id="op-q-name" type="text" maxlength="40" enterkeyhint="done" placeholder="Name (optional), e.g. SENSEX 73200 PE" style="margin-top:6px;">
-    <div id="op-q-err" style="font-size:0.75rem; color:var(--red); margin-top:4px; min-height:1em;"></div>
-  </div>
-  <div id="op-list"></div>
+  <h2>💼 Open Positions <button class="info-icon-btn" data-info="info-openpos">i</button></h2>
+  <div id="info-openpos" class="info-popover hidden">Tap “＋ Add position” and enter the index, strike, Qty and Buy price. After that you only type the CMP (the current price) — press Next on the keypad to jump to the next position. Everything else is calculated: profit/loss, 🟢 HOLD / 🔴 EXIT, and the stoploss (automatically 40% below your buy price; use 🎯 SL on a card for a custom one). The alarm rings when the CMP is at or below the stoploss. Tap Exit when you sell: the profit/loss is kept under Exited today for the day (record it in P&amp;L yourself). Close clears an exited card and frees the slot. Tap a name to minimise or expand it. Cards in danger move to the top.</div>
   <div class="op-totals hidden" id="op-totals">
-    <div class="op-totals-title">Total — all open positions</div>
-    <div class="op-grid">
-      <div class="op-field"><span class="op-k">Total Points</span><span class="op-v" data-o="tpoints"></span></div>
-      <div class="op-field"><span class="op-k">Total Capital</span><span class="op-v" data-o="tcapital"></span></div>
-      <div class="op-field"><span class="op-k">Total Profit / Loss</span><span class="op-v" data-o="tpl"></span></div>
-      <div class="op-field"><span class="op-k">Total Balance (Grand Total)</span><span class="op-v" data-o="tbalance"></span></div>
+    <div class="op-sum">
+      <div class="op-tile hero"><div><span class="op-k">📊 Open P&amp;L</span><span class="op-v op-herov" data-o="tpl"></span></div><div class="op-heror"><span class="op-k">🏦 Balance</span><span class="op-v" data-o="tbalance"></span></div></div>
+      <div class="op-tile"><span class="op-k">💰 Capital in</span><span class="op-v" data-o="tcapital"></span></div>
+      <div class="op-tile"><span class="op-k">🧾 Exited today</span><span class="op-v" data-o="texited"></span></div>
+      <div class="op-tile"><span class="op-k">🎯 Total points</span><span class="op-v" data-o="tpoints"></span></div>
+      <div class="op-tile"><span class="op-k">📌 Positions used</span><span class="op-v" data-o="tused"></span><div class="op-usedbar"><i id="op-used-bar"></i></div></div>
     </div>
   </div>
+  <div class="op-secbar"><span class="op-sectitle">📋 Your positions <span class="op-count" id="op-count">0/10</span></span><button class="op-link op-collapse-all hidden" id="op-collapse-all" type="button">⇅ Collapse all</button></div>
+  <div id="op-list"></div>
   <div class="op-exited hidden" id="op-exited"></div>
-  <div style="margin-top:2px;"><button class="op-link" id="op-sl-toggle" type="button">Custom stoplosses ▾</button></div>
+  <div style="margin-top:2px;"><button class="op-link" id="op-sl-toggle" type="button">⚙️ Custom stoplosses ▾</button></div>
   <div class="op-sl-panel hidden" id="op-sl-panel">
     <div class="op-sl-add">
       <input class="op-in" id="op-sl-price" type="number" inputmode="decimal" placeholder="Buy ₹">
@@ -3260,6 +3363,25 @@
     if (buy == null || buy <= 0) return null;
     return Math.round(buy * 0.6 * 20) / 20;
   }
+  // Position name -> coloured "NIFTY 73200 [📈 CE]" (falls back to the plain label for custom names)
+  function opNameHtml(label) {
+    const m = /^\s*(NIFTY|BANKNIFTY|SENSEX)\s+(\d+(?:\.\d+)?)\s*(CE|PE)\s*$/i.exec(label || '');
+    if (!m) return opEsc(label || 'Position');
+    const idx = m[1].toUpperCase(), ty = m[3].toUpperCase();
+    return '<span class="op-idx i-' + idx.toLowerCase() + '">' + idx + '</span> ' + opEsc(m[2]) +
+      ' <span class="op-ty ' + ty.toLowerCase() + '">' + (ty === 'CE' ? '📈 CE' : '📉 PE') + '</span>';
+  }
+  // Stoploss bar: SL at the left end, Buy in the middle, the marker is where the CMP is now
+  function opMeterHtml(p, c) {
+    if (p.status === 'EXITED' || c.sl == null || p.buy == null) return '';
+    const hi = p.buy + (p.buy - c.sl);
+    let marker = '';
+    if (p.cmp != null && hi > c.sl) {
+      const pct = Math.max(0, Math.min(100, ((p.cmp - c.sl) / (hi - c.sl)) * 100));
+      marker = '<i style="left:' + pct.toFixed(1) + '%"></i>';
+    }
+    return '<div class="op-meter">' + marker + '</div><div class="op-meter-l"><span class="l-sl">🛑 SL ' + opFmt(c.sl, false, false) + '</span><span>Buy ' + opFmt(p.buy, false, false) + '</span><span class="l-cmp">' + (p.cmp != null ? 'CMP ' + opFmt(p.cmp, false, false) : 'CMP —') + '</span></div>';
+  }
   function opCalc(p, table) {
     const qty = p.qty, buy = p.buy, cmp = p.cmp;
     const capital = (qty != null && buy != null) ? qty * buy : null;
@@ -3291,25 +3413,30 @@
     const c = opCalc(p, opState.slTable);
     const exited = p.status === 'EXITED';
     const sign = (n) => n == null ? '' : (n > 0 ? 'pos' : (n < 0 ? 'neg' : ''));
-    opSetCell(cardEl, 'pl', c.pl == null ? '<span class="op-hint">Enter CMP</span>' : opFmt(c.pl, true, true), sign(c.pl));
+    cardEl.classList.remove('st-hold', 'st-exit', 'st-done');
+    cardEl.classList.add(exited ? 'st-done' : (c.action === 'EXIT' ? 'st-exit' : (c.action === 'HOLD' ? 'st-hold' : 'st-wait')));
+    opSetCell(cardEl, 'pl', c.pl == null ? '<span class="op-hint">⌨️ Enter CMP</span>' : opFmt(c.pl, true, true), sign(c.pl));
+    opSetCell(cardEl, 'meter', opMeterHtml(p, c));
     opSetCell(cardEl, 'pct', c.pct == null ? '' : '(' + (c.pct > 0 ? '+' : '') + c.pct.toFixed(1) + '%)', sign(c.pct));
     let actionHtml;
-    if (exited) actionHtml = c.outcome ? '<span class="op-pill ' + (c.outcome === 'PROFIT' ? 'good' : (c.outcome === 'LOSS' ? 'bad' : 'flat')) + '">' + c.outcome + '</span>' : '';
-    else if (c.action) actionHtml = '<span class="op-pill ' + (c.action === 'HOLD' ? 'good' : 'bad') + '">' + c.action + '</span>';
+    const oIc = (o) => o === 'PROFIT' ? '✅ ' : (o === 'LOSS' ? '❌ ' : '➖ ');
+    const aIc = (a) => a === 'HOLD' ? '🟢 ' : '🔴 ';
+    if (exited) actionHtml = c.outcome ? '<span class="op-pill ' + (c.outcome === 'PROFIT' ? 'good' : (c.outcome === 'LOSS' ? 'bad' : 'flat')) + '">' + oIc(c.outcome) + c.outcome + '</span>' : '';
+    else if (c.action) actionHtml = '<span class="op-pill ' + (c.action === 'HOLD' ? 'good' : 'bad') + '">' + aIc(c.action) + c.action + '</span>';
     else actionHtml = '';
     opSetCell(cardEl, 'action', actionHtml);
     // one-line summary shown when the card is minimised
-    const miniPl = c.pl == null ? '<span class="op-hint">Enter CMP</span>' : '<span class="op-minipl ' + sign(c.pl) + '">' + opFmt(c.pl, true, true) + '</span>';
-    opSetCell(cardEl, 'mini', miniPl + (exited ? '<span class="op-pill flat">EXITED</span>' : (c.action ? '<span class="op-pill ' + (c.action === 'HOLD' ? 'good' : 'bad') + '">' + c.action + '</span>' : '')));
+    const miniPl = c.pl == null ? '<span class="op-hint">⌨️ Enter CMP</span>' : '<span class="op-minipl ' + sign(c.pl) + '">' + opFmt(c.pl, true, true) + '</span>';
+    opSetCell(cardEl, 'mini', miniPl + (exited ? '<span class="op-pill flat">🚪 EXITED</span>' : (c.action ? '<span class="op-pill ' + (c.action === 'HOLD' ? 'good' : 'bad') + '">' + aIc(c.action) + c.action + '</span>' : '')));
     opSetCell(cardEl, 'points', opFmt(c.points, true, false), sign(c.points));
     opSetCell(cardEl, 'outcome', c.outcome ? '<span class="op-pill ' + (c.outcome === 'PROFIT' ? 'good' : (c.outcome === 'LOSS' ? 'bad' : 'flat')) + '">' + c.outcome + '</span>' : '—');
     opSetCell(cardEl, 'balance', opFmt(c.balance, false, true));
     opSetCell(cardEl, 'capital', opFmt(c.capital, false, true));
     // Read-only line: qty × buy = capital · stoploss (auto = 40% below buy unless a custom one is saved)
     let sub;
-    if (p.qty == null || p.buy == null) sub = 'Qty / Buy missing — tap Edit';
+    if (p.qty == null || p.buy == null) sub = '⚠️ Qty / Buy missing — tap Edit';
     else if (exited) sub = '<strong>' + opFmt(p.qty, false, false) + '</strong> × <strong>₹' + opFmt(p.buy, false, false) + '</strong> → exit <strong>₹' + opFmt(p.exitPrice != null ? p.exitPrice : p.cmp, false, false) + '</strong>';
-    else sub = '<strong>' + opFmt(p.qty, false, false) + '</strong> × <strong>₹' + opFmt(p.buy, false, false) + '</strong> · SL <strong>' + opFmt(c.sl, false, true) + '</strong>' + (c.slAuto ? ' <span class="op-auto">auto</span>' : '');
+    else sub = '<strong>' + opFmt(p.qty, false, false) + '</strong> × <strong>₹' + opFmt(p.buy, false, false) + '</strong> · 🛑 SL <strong>' + opFmt(c.sl, false, true) + '</strong>' + (c.slAuto ? ' <span class="op-auto">auto</span>' : ' <span class="op-auto">custom</span>');
     opSetCell(cardEl, 'sub', sub);
     opRefreshTotals();
   }
@@ -3332,15 +3459,15 @@
       const m = opCollapsedLoad();
       const anyOpen = opState.positions.some(p => !m[p.id]);
       btn.classList.toggle('hidden', opState.positions.length < 2);
-      btn.textContent = anyOpen ? 'Collapse all' : 'Expand all';
+      btn.textContent = anyOpen ? '⇅ Collapse all' : '⇅ Expand all';
     }
   }
   function opRefreshTotals() {
     const hasAny = opOngoing().length > 0;
-    opTotalsEl.classList.toggle('hidden', !hasAny);
+    const exToday = opState.exited.filter(x => x.day === opIstDay(Date.now()));
+    opTotalsEl.classList.toggle('hidden', !(hasAny || opState.positions.length > 0 || exToday.length > 0));
     opScheduleExitCheck(); // also runs when empty (sign-out / last position removed) so a ringing alarm stops
     opUpdateNavBadge();
-    if (!hasAny) { return; }
     let points = 0, capital = 0, pl = 0, balance = 0;
     opOngoing().forEach(p => {
       const c = opCalc(p, opState.slTable);
@@ -3355,6 +3482,12 @@
     opSetCell(opTotalsEl, 'tcapital', opFmt(r2(capital), false, true));
     opSetCell(opTotalsEl, 'tpl', opFmt(r2(pl), true, true), sign(r2(pl)));
     opSetCell(opTotalsEl, 'tbalance', opFmt(r2(balance), false, true));
+    const heroEl = opTotalsEl.querySelector('.hero'); if (heroEl) heroEl.classList.toggle('neg', r2(pl) < 0);
+    const exTotal = r2(exToday.reduce((a, x) => a + x.pl, 0));
+    opSetCell(opTotalsEl, 'texited', exToday.length ? opFmt(exTotal, true, true) : '—', exToday.length ? sign(exTotal) : '');
+    opSetCell(opTotalsEl, 'tused', opState.positions.length + ' / ' + OP_MAX);
+    const bar = document.getElementById('op-used-bar');
+    if (bar) { bar.style.width = Math.min(100, opState.positions.length / OP_MAX * 100) + '%'; bar.classList.toggle('full', opState.positions.length >= OP_MAX); }
   }
   function opRefreshAll() {
     opListEl.querySelectorAll('.op-pos').forEach(el => {
@@ -3366,39 +3499,50 @@
   function opRender() {
     opCountEl.textContent = opState.positions.length + '/' + OP_MAX;
     opAddBtn.disabled = opState.positions.length >= OP_MAX;
+    opAddBtn.textContent = opState.positions.length >= OP_MAX ? '🚫 Max ' + OP_MAX + ' positions' : '＋ Add position';
     if (opState.positions.length >= OP_MAX && !opEditingId) opQuickEl.classList.add('hidden');
     if (opState.positions.length === 0) {
-      opListEl.innerHTML = '<p class="placeholder" style="font-size:0.9rem; margin-bottom:8px;">No open positions yet. Tap + Add, enter Qty and Buy price — that is all.</p>';
+      opListEl.innerHTML = '<div class="op-empty"><div class="e1">💼</div><div class="e2">No open positions yet</div><div class="e3">Tap <strong>＋ Add position</strong> below.<br>Enter index, strike, Qty and Buy price — then just type the CMP.</div></div>';
     } else {
       const collapsedMap = opCollapsedLoad();
-      opListEl.innerHTML = opState.positions.map(p => {
+      // most urgent first: at/below stoploss, then closest to its stoploss, then no CMP yet, then exited
+      const rank = (p) => {
+        if (p.status === 'EXITED') return [3, 0];
+        const c = opCalc(p, opState.slTable);
+        if (c.action === 'EXIT') return [0, 0];
+        if (c.action === 'HOLD' && c.sl) return [1, (p.cmp - c.sl) / c.sl];
+        return [2, 0];
+      };
+      const sorted = opState.positions.map((p, i) => ({ p, i, r: rank(p) }))
+        .sort((x, y) => (x.r[0] - y.r[0]) || (x.r[1] - y.r[1]) || (x.i - y.i)).map(x => x.p);
+      opListEl.innerHTML = sorted.map(p => {
         const v = (n) => n == null ? '' : n;
         const exited = p.status === 'EXITED';
         const id = opEsc(p.id);
         const acts = exited
-          ? '<button class="op-link" type="button" data-undo="' + id + '">Undo</button><button class="op-closebtn" type="button" data-close="' + id + '">Close</button>'
-          : '<button class="op-exitbtn" type="button" data-exit="' + id + '">Exit</button><button class="op-link op-edit" type="button" data-edit="' + id + '">Edit</button><button class="op-del" type="button" data-del="' + id + '" aria-label="Remove position">×</button>';
+          ? '<button class="op-btn" type="button" data-undo="' + id + '">↩️ Undo</button><button class="op-btn" type="button" data-close="' + id + '">✖️ Close</button>'
+          : '<button class="op-btn red" type="button" data-exit="' + id + '">🚪 Exit position</button><button class="op-btn" type="button" data-edit="' + id + '">✏️ Edit</button><button class="op-btn" type="button" data-customsl="' + id + '" title="Custom stoploss">🎯 SL</button><button class="op-btn mut" type="button" data-del="' + id + '" aria-label="Remove position">🗑️</button>';
         return '<div class="op-pos' + (exited ? ' exited' : '') + (collapsedMap[p.id] ? ' collapsed' : '') + '" data-id="' + id + '">' +
           '<div class="op-l1">' +
             '<button class="op-chev" type="button" data-collapse="1" aria-label="Minimise or expand">▾</button>' +
-            '<div class="op-name" data-collapse="1">' + opEsc(p.label) + '</div>' +
+            '<div class="op-name" data-collapse="1">' + opNameHtml(p.label) + '</div>' +
             '<span class="op-mini" data-o="mini"></span>' +
-            '<span class="op-acts">' + acts + '</span>' +
+            '<span class="op-chipwrap" data-o="action"></span>' +
           '</div>' +
           '<div class="op-body">' +
-            '<div class="op-sub"><span data-o="sub"></span>' + (exited ? '' : ' <button class="op-link" type="button" data-more-toggle="1" style="font-size:0.74rem;">More</button>') + '</div>' +
+            '<div class="op-sub"><span data-o="sub"></span>' + (exited ? '' : ' <button class="op-link" type="button" data-more-toggle="1" style="font-size:0.74rem;">▾ More</button>') + '</div>' +
             '<div class="op-l3">' +
               '<div class="op-plbox"><span class="op-v op-bigpl" data-o="pl"></span> <span class="op-pct" data-o="pct"></span></div>' +
-              (exited ? '' : '<label class="op-cmpwrap"><span class="op-k">CMP ₹</span><input class="op-in op-cmp" data-f="cmp" type="number" inputmode="decimal" value="' + v(p.cmp) + '"></label>') +
-              '<span class="op-v" data-o="action"></span>' +
+              (exited ? '' : '<label class="op-cmpwrap"><span class="op-k">💲 CMP ₹</span><input class="op-in op-cmp" data-f="cmp" type="number" inputmode="decimal" enterkeyhint="next" value="' + v(p.cmp) + '"></label>') +
             '</div>' +
+            '<div class="op-meterwrap" data-o="meter"></div>' +
             '<div class="op-confirm hidden" data-confirm="1"></div>' +
             '<div class="op-more hidden" data-more="1">' +
-              '<div class="op-field"><span class="op-k">Capital</span><span class="op-v" data-o="capital"></span></div>' +
-              '<div class="op-field"><span class="op-k">Points</span><span class="op-v" data-o="points"></span></div>' +
-              '<div class="op-field"><span class="op-k">Outcome</span><span class="op-v" data-o="outcome"></span></div>' +
-              '<div class="op-field"><span class="op-k">Balance</span><span class="op-v" data-o="balance"></span></div>' +
+              '<div class="op-field"><span class="op-k">💰 Capital</span><span class="op-v" data-o="capital"></span></div>' +
+              '<div class="op-field"><span class="op-k">🎯 Points</span><span class="op-v" data-o="points"></span></div>' +
+              '<div class="op-field"><span class="op-k">🏦 Balance</span><span class="op-v" data-o="balance"></span></div>' +
             '</div>' +
+            '<div class="op-btns">' + acts + '</div>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -3410,7 +3554,7 @@
     opRenderSuspects();
   }
   function opRenderSlList() {
-    opSlToggleEl.textContent = 'Custom stoplosses (' + opState.slTable.length + ') ' + (opSlPanelEl.classList.contains('hidden') ? '▾' : '▴');
+    opSlToggleEl.textContent = '⚙️ Custom stoplosses (' + opState.slTable.length + ') ' + (opSlPanelEl.classList.contains('hidden') ? '▾' : '▴');
     const rows = opState.slTable.slice().sort((a, b) => a.price - b.price);
     opSlListEl.innerHTML = rows.length === 0
       ? '<p class="placeholder" style="font-size:0.82rem;">None needed — every position already gets a stoploss 40% below its buy price. Add a row here only to use a different stoploss for one buy price.</p>'
@@ -3433,25 +3577,58 @@
   const opQErrEl = document.getElementById('op-q-err');
   let opEditingId = null; // set while the quick form is being used to correct an existing position
   const opQAddBtn = document.getElementById('op-q-add');
+  const opQStrikeEl = document.getElementById('op-q-strike');
+  const opQAutoEl = document.getElementById('op-q-auto');
+  const opQIdxEl = document.getElementById('op-q-idx');
+  const opQTypeEl = document.getElementById('op-q-type');
+  let opLastIdx = null, opLastType = null; // remembered between adds so the next one is quicker
+  function opSegGet(el, attr) { const b = el.querySelector('button.on'); return b ? b.getAttribute(attr) : ''; }
+  function opSegSet(el, attr, val) { el.querySelectorAll('button').forEach(b => b.classList.toggle('on', !!val && b.getAttribute(attr) === val)); }
+  function opQPreview() {
+    const qty = opNum(opQQtyEl.value), buy = opNum(opQBuyEl.value);
+    if (buy == null || buy <= 0) { opQAutoEl.textContent = '🛑 Auto stoploss and 💰 capital show here'; return; }
+    const sl = opLookupSL(buy, opState.slTable), auto = sl == null;
+    const slv = auto ? opAutoSL(buy) : sl;
+    opQAutoEl.innerHTML = '🛑 ' + (auto ? 'Auto stoploss' : 'Custom stoploss') + ' <strong>' + opFmt(slv, false, true) + '</strong>' + (auto ? ' (−40%)' : '') +
+      (qty != null && qty > 0 ? ' · 💰 Capital <strong>' + opFmt(qty * buy, false, true) + '</strong>' : '');
+  }
   function opOpenQuick(open, pos) {
     opEditingId = open && pos ? pos.id : null;
-    opQAddBtn.textContent = opEditingId ? 'Save' : 'Add';
+    opQAddBtn.textContent = opEditingId ? '✅ Save changes' : '✅ Save position';
+    document.getElementById('op-sheet-title').textContent = opEditingId ? '✏️ Edit position' : '➕ Add position';
     opQuickEl.classList.toggle('hidden', !open);
     opQErrEl.textContent = '';
+    opSyncFab();
     if (open) {
       opQQtyEl.value = pos && pos.qty != null ? pos.qty : '';
       opQBuyEl.value = pos && pos.buy != null ? pos.buy : '';
-      opQNameEl.value = pos ? pos.label : '';
-      opQQtyEl.focus();
-      opQuickEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const m = pos ? /^\s*(NIFTY|BANKNIFTY|SENSEX)\s+(\d+(?:\.\d+)?)\s*(CE|PE)\s*$/i.exec(pos.label || '') : null;
+      if (pos && m) { opSegSet(opQIdxEl, 'data-idx', m[1].toUpperCase()); opSegSet(opQTypeEl, 'data-ty', m[3].toUpperCase()); opQStrikeEl.value = m[2]; opQNameEl.value = ''; }
+      else if (pos) { opSegSet(opQIdxEl, 'data-idx', ''); opSegSet(opQTypeEl, 'data-ty', ''); opQStrikeEl.value = ''; opQNameEl.value = pos.label || ''; }
+      else { opSegSet(opQIdxEl, 'data-idx', opLastIdx); opSegSet(opQTypeEl, 'data-ty', opLastType); opQStrikeEl.value = ''; opQNameEl.value = ''; }
+      opQPreview();
+      (pos ? opQQtyEl : opQStrikeEl).focus();
     }
+  }
+  // Name for the card: your own name if typed, else "INDEX STRIKE CE/PE". Returns null (and shows why) if incomplete.
+  function opQLabel() {
+    const idx = opSegGet(opQIdxEl, 'data-idx'), ty = opSegGet(opQTypeEl, 'data-ty'), strike = opQStrikeEl.value.trim();
+    const custom = opQNameEl.value.trim();
+    if (custom) return custom.slice(0, 40);
+    if (strike || idx || ty) {
+      if (!idx || !ty || !strike) { opQErrEl.textContent = 'Pick the index, CE / PE and the strike (or clear them).'; return null; }
+      return idx + ' ' + strike + ' ' + ty;
+    }
+    return '';
   }
   function opQuickAdd() {
     const qty = opNum(opQQtyEl.value), buy = opNum(opQBuyEl.value);
     if (qty == null || qty <= 0 || buy == null || buy <= 0) { opQErrEl.textContent = 'Enter Qty and Buy price.'; return; }
+    const label = opQLabel();
+    if (label === null) return;
     if (opEditingId) {
       const p = opState.positions.find(x => x.id === opEditingId);
-      if (p) { p.qty = qty; p.buy = buy; p.label = (opQNameEl.value.trim() || p.label || 'Position').slice(0, 40); }
+      if (p) { p.qty = qty; p.buy = buy; p.label = (label || p.label || 'Position').slice(0, 40); }
       opOpenQuick(false);
       opTouchAndSave();
       opRender();
@@ -3459,22 +3636,37 @@
     }
     if (opState.positions.length >= OP_MAX) { opQErrEl.textContent = 'Max ' + OP_MAX + ' positions.'; return; }
     const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const name = opQNameEl.value.trim() || ('Position ' + (opState.positions.length + 1));
+    const name = label || ('Position ' + (opState.positions.length + 1));
+    opLastIdx = opSegGet(opQIdxEl, 'data-idx') || opLastIdx; opLastType = opSegGet(opQTypeEl, 'data-ty') || opLastType;
     opState.positions.push({ id, label: name.slice(0, 40), status: 'ONGOING', qty, buy, cmp: null });
     opOpenQuick(false);
     opTouchAndSave();
     opRender();
     const cmpEl = opListEl.querySelector('[data-id="' + id + '"] [data-f="cmp"]');
-    if (cmpEl) cmpEl.focus(); // straight to the one number you update during the day
+    if (cmpEl) { cmpEl.focus(); cmpEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } // straight to the one number you update during the day
   }
   opAddBtn.addEventListener('click', () => {
     if (opState.positions.length >= OP_MAX) return;
-    // closed -> open a blank Add form; open for adding -> close it; open for editing -> switch to a blank Add form
-    opOpenQuick(opQuickEl.classList.contains('hidden') || !!opEditingId);
+    opOpenQuick(true);
   });
   opQAddBtn.addEventListener('click', opQuickAdd);
   document.getElementById('op-q-cancel').addEventListener('click', () => opOpenQuick(false));
-  [opQQtyEl, opQBuyEl, opQNameEl].forEach(el => el.addEventListener('keydown', (e) => { if (e.key === 'Enter') opQuickAdd(); }));
+  opQuickEl.addEventListener('click', (e) => { if (e.target === opQuickEl) opOpenQuick(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !opQuickEl.classList.contains('hidden')) opOpenQuick(false); });
+  [opQIdxEl, opQTypeEl].forEach(g => g.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const was = b.classList.contains('on');
+    g.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+    if (!was) b.classList.add('on');
+    opQErrEl.textContent = '';
+  }));
+  [opQQtyEl, opQBuyEl].forEach(el => el.addEventListener('input', opQPreview));
+  [opQStrikeEl, opQQtyEl, opQBuyEl, opQNameEl].forEach(el => el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (el === opQStrikeEl) opQQtyEl.focus(); else if (el === opQQtyEl) opQBuyEl.focus(); else opQuickAdd(); } }));
+  // Floating "＋ Add position" button: only on the Positions page, only when signed in, hidden while the Add form is open
+  function opSyncFab() {
+    const on = typeof currentPageIdx !== 'undefined' && currentPageIdx === 1 && pageNavEl.classList.contains('show') && opQuickEl.classList.contains('hidden');
+    opAddBtn.classList.toggle('hidden', !on);
+  }
 
   // Typing: update just that field + that card's computed cells (no re-render, so the cursor stays put).
   opListEl.addEventListener('input', (e) => {
@@ -3487,6 +3679,13 @@
     p[f] = opNum(input.value); // CMP is the only box on a card; everything else is read-only or set via Edit
     opRefreshCard(cardEl, p);
     opTouchAndSave();
+  });
+  opListEl.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || !e.target.matches || !e.target.matches('.op-cmp')) return;
+    e.preventDefault();
+    const all = Array.from(opListEl.querySelectorAll('.op-pos:not(.collapsed) .op-cmp'));
+    const nxt = all[all.indexOf(e.target) + 1];
+    if (nxt) { nxt.focus(); nxt.select(); nxt.scrollIntoView({ block: 'center', behavior: 'smooth' }); } else { e.target.blur(); }
   });
   opListEl.addEventListener('click', (e) => {
     const cardEl = e.target.closest('.op-pos');
@@ -3534,6 +3733,16 @@
       opTouchAndSave();
       opRender();
       opCheckExits();
+      return;
+    }
+    const csl = e.target.closest('[data-customsl]');
+    if (csl && pos) {
+      opSlPanelEl.classList.remove('hidden');
+      opRenderSlList();
+      const pe = document.getElementById('op-sl-price'), ve = document.getElementById('op-sl-val');
+      pe.value = pos.buy != null ? pos.buy : '';
+      opSlPanelEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => ve.focus(), 250);
       return;
     }
     const ed = e.target.closest('[data-edit]');
@@ -3616,12 +3825,12 @@
     if (!rows.length) { opExitedEl.innerHTML = ''; return; }
     const total = Math.round(rows.reduce((a, x) => a + x.pl, 0) * 100) / 100;
     const sg = (n) => n > 0 ? 'pos' : (n < 0 ? 'neg' : '');
-    opExitedEl.innerHTML = '<div class="op-totals-title">Exited today — to record in P&amp;L</div>' +
-      rows.map(x => '<div class="op-xrow"><span class="op-xname">' + opEsc(x.label) + '</span>' +
+    opExitedEl.innerHTML = '<div class="op-totals-title">🧾 Exited today — to record in P&amp;L</div>' +
+      rows.map(x => '<div class="op-xrow"><span class="op-xname">' + (x.pl > 0 ? '✅ ' : (x.pl < 0 ? '❌ ' : '➖ ')) + opNameHtml(x.label) + '</span>' +
         '<span class="op-xdet">' + opEsc(opFmt(x.qty, false, false)) + ' × ' + opEsc(opFmt(x.buy, false, false)) + ' → ' + opEsc(opFmt(x.exit, false, false)) + '</span>' +
         '<span class="op-xpl ' + sg(x.pl) + '">' + opEsc(opFmt(x.pl, true, true)) + '</span>' +
         '<button class="op-del" type="button" data-xdel="' + opEsc(x.id) + '" aria-label="Remove from list">×</button></div>').join('') +
-      '<div class="op-xtotal"><span>Day total</span><span class="op-xpl ' + sg(total) + '" style="min-width:0;">' + opEsc(opFmt(total, true, true)) + '</span></div>';
+      '<div class="op-xtotal"><span>📅 Day total</span><span class="op-xpl ' + sg(total) + '" style="min-width:0;">' + opEsc(opFmt(total, true, true)) + '</span></div>';
   }
   opExitedEl.addEventListener('click', (e) => {
     const d = e.target.closest('[data-xdel]');
@@ -3779,7 +3988,7 @@
       const sp = opCmpSuspect[id];
       if (!box) return;
       if (sp) {
-        box.innerHTML = '<span>CMP dropped <strong>' + opEsc(opFmt(sp.from, false, false)) + ' → ' + opEsc(opFmt(sp.to, false, false)) + '</strong> — is that right?</span>' +
+        box.innerHTML = '<span>⚠️ CMP dropped <strong>' + opEsc(opFmt(sp.from, false, false)) + ' → ' + opEsc(opFmt(sp.to, false, false)) + '</strong> — is that right?</span>' +
           '<button type="button" class="yes" data-cmp-yes="' + opEsc(id) + '">Yes, alert</button><button type="button" data-cmp-fix="' + opEsc(id) + '">Fix</button>';
         box.classList.remove('hidden');
         if (cm[id]) { delete cm[id]; cmChanged = true; }
@@ -3820,7 +4029,11 @@
     opListEl.querySelectorAll('.op-pos').forEach(el => {
       const aid = el.getAttribute('data-id');
       el.classList.toggle('exiting', !!opExitActive[aid]);
-      if (opExitActive[aid]) el.classList.remove('collapsed');
+      if (opExitActive[aid]) {
+        el.classList.remove('collapsed');
+        // an alarming card jumps to the top (not while you are typing in it, so the cursor is never lost)
+        if (opListEl.firstElementChild !== el && !el.contains(document.activeElement)) opListEl.prepend(el);
+      }
     });
     if (!ids.length) {
       opExitBannerEl.classList.add('hidden'); opExitBannerEl.innerHTML = '';
@@ -4069,6 +4282,7 @@
     pagesTrackEl.style.transform = `translateX(-${currentPageIdx * (100 / 3)}%)`;
     pageNavBtns.forEach((btn, i) => btn.classList.toggle('active', i === currentPageIdx));
     window.scrollTo({ top: 0 });
+    if (typeof opSyncFab === 'function') opSyncFab();
   }
   pageNavBtns[0].addEventListener('click', () => goToPage(0));
   pageNavBtns[1].addEventListener('click', () => goToPage(1));
