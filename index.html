@@ -782,7 +782,7 @@
   .op-tile.hero .op-herov { font-size: 1.2rem; }
   .op-heror .op-v { font-size: 0.82rem; }
   .op-pts { font-size: 0.64rem; }
-  .op-pos .op-name { font-size: 0.84rem; }
+  .op-pos .op-name { font-size: 0.84rem; white-space: normal; overflow: visible; text-overflow: clip; }
   .op-ty { font-size: 0.6rem; padding: 1px 5px; }
   .op-pill { font-size: 0.6rem; padding: 2px 7px; }
   .op-pos .op-bigpl, .op-bigpl { font-size: 1rem !important; }
@@ -812,6 +812,58 @@
   #op-sl-toggle { font-size: 0.72rem; }
   .op-empty .e2 { font-size: 0.88rem; }
   .op-empty .e3 { font-size: 0.74rem; }
+
+  /* ===== ACCOUNT TAGS + TODAY SUMMARY + DROPDOWN FORM (2026-10-15) ===== */
+  .op-at, .op-acc { color: #fff; font-weight: 800; border-radius: 6px; text-align: center; }
+  .op-at { font-size: 0.58rem; padding: 2px 6px; margin-right: 5px; vertical-align: 1px; }
+  .a-ici { background: #7c3aed; } .a-stw { background: var(--accent); } .a-oth { background: #0d9488; } .a-old { background: var(--muted); } .a-all { background: var(--heading); }
+  .op-sumbox { background: var(--panel); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: 14px; box-shadow: var(--shadow); padding: 9px 11px; margin-bottom: 10px; }
+  .op-sumtitle { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--heading); margin-bottom: 4px; }
+  .op-sumhd, .op-sumln { display: grid; grid-template-columns: 40px 1fr 1.15fr 1fr; gap: 6px; align-items: center; }
+  .op-sumhd { font-size: 0.55rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 0 4px; border-bottom: 1px solid var(--border); }
+  .op-sumhd span:not(:first-child), .op-sumln > span:not(:first-child) { text-align: right; }
+  .op-sumln { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 800; }
+  .op-sumln.hidden { display: none; }
+  .op-sumln .op-v { display: block; font-size: 0.8rem; min-height: 0; }
+  .op-sumln .op-acc { font-size: 0.6rem; padding: 3px 0; }
+  .op-plc small { display: block; font-size: 0.5rem; font-weight: 800; letter-spacing: 0.04em; }
+  .op-sumall { background: var(--panel-alt); border: none; border-radius: 10px; padding: 6px; margin-top: 5px; }
+  .op-sumfoot { display: flex; justify-content: space-between; align-items: center; font-size: 0.66rem; color: var(--muted); font-weight: 600; margin-top: 7px; }
+  .op-sumfoot b { color: var(--text); }
+  .op-sumfoot b.pos { color: var(--green); } .op-sumfoot b.neg { color: var(--red); }
+  .op-sumfoot .op-usedbar { display: inline-block; width: 60px; vertical-align: middle; margin: 0 0 0 5px; }
+  .op-row3 { display: grid; grid-template-columns: 1fr 1.3fr 0.95fr; gap: 8px; }
+  .op-row3b { grid-template-columns: 1fr 1fr 1fr; }
+  .op-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; }
+  .op-sheet .op-sel { font-weight: 800; font-size: 0.9rem; padding: 10px 6px; }
+  .op-sheet .op-in { font-size: 0.92rem; padding: 10px 10px; }
+  .op-sheet .op-autobox { margin: 0 0 10px; padding: 8px 10px; font-size: 0.74rem; line-height: 1.4; }
+  .op-sheet .op-link { margin: 0 0 10px; }
+  .op-f.hidden { display: none; }
+  .op-link.hidden { display: none; }
+
+  /* ===== WEEKLY PROGRESS GRAPH (2026-10-15) — in the P&L panel, above Weekly Totals ===== */
+  .wk-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .wk-title { font-size: 0.8rem; font-weight: 800; color: var(--heading); }
+  .wk-total { font-size: 0.92rem; font-weight: 800; }
+  .wk-total.pos { color: var(--green); } .wk-total.neg { color: var(--red); }
+  .wk-nav { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--muted); font-weight: 700; margin-bottom: 4px; gap: 6px; }
+  .wk-nav > span:first-child { white-space: nowrap; display: inline-flex; align-items: center; }
+  .wk-arrow { border: none; background: none; color: var(--accent); font-size: 0.95rem; padding: 2px 7px; cursor: pointer; font-family: inherit; }
+  .wk-arrow:disabled { color: var(--border); cursor: default; }
+  .wk-tg { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; flex: none; }
+  .wk-tg button { border: none; background: var(--panel); color: var(--muted); font-size: 0.64rem; font-weight: 800; padding: 5px 7px; cursor: pointer; font-family: inherit; }
+  .wk-tg button.on { background: var(--accent); color: #fff; }
+  .wk-chartbox { position: relative; height: 160px; }
+  .wk-empty { text-align: center; font-size: 0.82rem; color: var(--muted); font-style: italic; padding: 28px 0; }
+  .wk-empty.hidden, .wk-detail.hidden, .wk-chartbox.hidden { display: none; }
+  .wk-detail { border: 1.5px solid var(--accent); background: var(--accent-soft); border-radius: 12px; padding: 8px 10px; margin-top: 4px; }
+  .wk-dh { display: flex; justify-content: space-between; font-size: 0.74rem; font-weight: 800; color: var(--heading); margin-bottom: 4px; }
+  .wk-dt { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; padding: 4px 0; border-bottom: 1px solid var(--border); font-weight: 700; }
+  .wk-dt small { display: block; font-size: 0.62rem; color: var(--muted); font-weight: 600; }
+  .wk-dn { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 800; padding-top: 6px; }
+  .wk-pos { color: var(--green); } .wk-neg { color: var(--red); }
+  .wk-hint { font-size: 0.66rem; color: var(--muted); text-align: center; margin-top: 5px; }
 
   .badge {
     display: inline-block;
@@ -1168,15 +1220,22 @@
 <div id="op-quick" class="op-sheet-wrap hidden" role="dialog" aria-modal="true">
   <div class="op-sheet">
     <div class="op-sheet-title" id="op-sheet-title">➕ Add position</div>
-    <div class="op-f"><span class="op-k">Index</span><div class="op-seg" id="op-q-idx"><button type="button" data-idx="NIFTY">NIFTY</button><button type="button" data-idx="BANKNIFTY">BANKNIFTY</button><button type="button" data-idx="SENSEX">SENSEX</button></div></div>
-    <div class="op-f"><span class="op-k">Type</span><div class="op-seg" id="op-q-type"><button type="button" data-ty="CE" class="ce">📈 CE</button><button type="button" data-ty="PE" class="pe">📉 PE</button></div></div>
-    <div class="op-f"><span class="op-k">Strike</span><input class="op-in" id="op-q-strike" type="number" inputmode="numeric" enterkeyhint="next" placeholder="e.g. 73400"></div>
-    <div class="op-f2">
-      <div class="op-f"><span class="op-k">Qty</span><input class="op-in" id="op-q-qty" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Qty"></div>
-      <div class="op-f"><span class="op-k">Buy ₹</span><input class="op-in" id="op-q-buy" type="number" inputmode="decimal" enterkeyhint="done" placeholder="Buy ₹"></div>
+    <div class="op-row3">
+      <div class="op-f"><span class="op-k">Account</span><select class="op-in op-sel" id="op-q-acct"><option value="" disabled selected hidden>Account</option><option value="ICI">ICI</option><option value="STW">STW</option><option value="OTH">OTH</option></select></div>
+      <div class="op-f"><span class="op-k">Index</span><select class="op-in op-sel" id="op-q-idx"><option value="" disabled selected hidden>Index</option><option value="NIFTY">NIFTY</option><option value="BANKNIFTY">BANKNIFTY</option><option value="SENSEX">SENSEX</option></select></div>
+      <div class="op-f"><span class="op-k">Type</span><select class="op-in op-sel" id="op-q-type"><option value="" disabled selected hidden>CE / PE</option><option value="CE">📈 CE</option><option value="PE">📉 PE</option></select></div>
     </div>
-    <div class="op-autobox" id="op-q-auto">🛑 Auto stoploss and 💰 capital show here</div>
-    <div class="op-f"><span class="op-k">Custom name (optional)</span><input class="op-in" id="op-q-name" type="text" maxlength="40" enterkeyhint="done" placeholder="Only if you want your own name"></div>
+    <div class="op-row3 op-row3b">
+      <div class="op-f"><span class="op-k">Strike</span><input class="op-in" id="op-q-strike" type="number" inputmode="numeric" enterkeyhint="next" placeholder="72700"></div>
+      <div class="op-f"><span class="op-k">Qty</span><input class="op-in" id="op-q-qty" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Qty"></div>
+      <div class="op-f"><span class="op-k">Buy ₹</span><input class="op-in" id="op-q-buy" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Buy ₹"></div>
+    </div>
+    <div class="op-row2">
+      <div class="op-f"><span class="op-k">CMP ₹ (optional)</span><input class="op-in" id="op-q-cmp" type="number" inputmode="decimal" enterkeyhint="done" placeholder="now or later"></div>
+      <div class="op-autobox" id="op-q-auto">🛑 SL and 💰 capital show here</div>
+    </div>
+    <button class="op-link" id="op-q-name-link" type="button">✏️ custom name</button>
+    <div class="op-f hidden" id="op-q-name-wrap"><span class="op-k">Custom name</span><input class="op-in" id="op-q-name" type="text" maxlength="30" enterkeyhint="done" placeholder="Only if you want your own name"></div>
     <div id="op-q-err" class="op-qerr"></div>
     <div class="op-sheet-btns"><button class="op-btn" id="op-q-cancel" type="button">Cancel</button><button class="op-btn primary" id="op-q-add" type="button">✅ Save position</button></div>
   </div>
@@ -1344,6 +1403,19 @@
       </div>
 
       <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
+      <div id="wk-graph">
+        <div class="wk-head"><span class="wk-title" id="wk-title">📈 This week — daily result</span><span class="wk-total" id="wk-total"></span></div>
+        <div class="wk-nav">
+          <span><button type="button" class="wk-arrow" id="wk-prev" aria-label="Earlier week">◀</button><span id="wk-range"></span><button type="button" class="wk-arrow" id="wk-next" aria-label="Later week">▶</button></span>
+          <span class="wk-tg"><button type="button" class="on" id="wk-tog-d">Daily</button><button type="button" id="wk-tog-r">Running total</button></span>
+        </div>
+        <div class="wk-chartbox" id="wk-chartbox"><canvas id="wk-chart"></canvas></div>
+        <div class="wk-empty hidden" id="wk-empty">No trades logged this week</div>
+        <div class="wk-detail hidden" id="wk-detail"></div>
+        <div class="wk-hint" id="wk-hint">Tap a day to see its trades</div>
+      </div>
+
+      <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
       <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Weekly Totals</p>
       <div id="weekly-list"></div>
 
@@ -1475,11 +1547,15 @@
   <h2>💼 Open Positions <button class="info-icon-btn" data-info="info-openpos">i</button></h2>
   <div id="info-openpos" class="info-popover hidden">Tap “＋ Add position” and enter the index, strike, Qty and Buy price. After that you only type the CMP (the current price) — press Next on the keypad to jump to the next position. Everything else is calculated: profit/loss, 🟢 HOLD / 🔴 EXIT, and the stoploss (automatically 40% below your buy price; use 🎯 SL on a card for a custom one). The alarm rings when the CMP is at or below the stoploss. Tap Exit when you sell: the profit/loss is kept under Exited today for the day (record it in P&amp;L yourself). Close clears an exited card and frees the slot. Tap a name to minimise or expand it. Cards in danger move to the top.</div>
   <div class="op-totals hidden" id="op-totals">
-    <div class="op-sum">
-      <div class="op-tile hero"><div><span class="op-k">📊 Open P&amp;L</span><span class="op-v op-herov" data-o="tpl"></span></div><div class="op-heror"><span class="op-k">🏦 Balance</span><span class="op-v" data-o="tbalance"></span><span class="op-pts">🎯 <span data-o="tpoints"></span> pts</span></div></div>
-      <div class="op-tile"><span class="op-k">💰 Capital</span><span class="op-v" data-o="tcapital"></span></div>
-      <div class="op-tile"><span class="op-k">🧾 Exited</span><span class="op-v" data-o="texited"></span></div>
-      <div class="op-tile"><span class="op-k">📌 Used</span><span class="op-v" data-o="tused"></span><div class="op-usedbar"><i id="op-used-bar"></i></div></div>
+    <div class="op-sumbox">
+      <div class="op-sumtitle">📅 Today summary — open positions</div>
+      <div class="op-sumhd"><span>Acct</span><span>Capital</span><span>Profit / Loss</span><span>Balance</span></div>
+      <div class="op-sumln" data-row="ICI"><span class="op-acc a-ici">ICI</span><span class="op-v" data-o="cap_ICI"></span><span class="op-v op-plc" data-o="pl_ICI"></span><span class="op-v" data-o="bal_ICI"></span></div>
+      <div class="op-sumln" data-row="STW"><span class="op-acc a-stw">STW</span><span class="op-v" data-o="cap_STW"></span><span class="op-v op-plc" data-o="pl_STW"></span><span class="op-v" data-o="bal_STW"></span></div>
+      <div class="op-sumln" data-row="OTH"><span class="op-acc a-oth">OTH</span><span class="op-v" data-o="cap_OTH"></span><span class="op-v op-plc" data-o="pl_OTH"></span><span class="op-v" data-o="bal_OTH"></span></div>
+      <div class="op-sumln hidden" data-row="OLD"><span class="op-acc a-old">OLD</span><span class="op-v" data-o="cap_OLD"></span><span class="op-v op-plc" data-o="pl_OLD"></span><span class="op-v" data-o="bal_OLD"></span></div>
+      <div class="op-sumln op-sumall" data-row="ALL"><span class="op-acc a-all">ALL</span><span class="op-v" data-o="cap_ALL"></span><span class="op-v op-plc" data-o="pl_ALL"></span><span class="op-v" data-o="bal_ALL"></span></div>
+      <div class="op-sumfoot"><span>📌 Used <b data-o="tused"></b><span class="op-usedbar"><i id="op-used-bar"></i></span></span><span>🎯 Points <b data-o="tpoints"></b></span></div>
     </div>
   </div>
   <div class="op-secbar"><span class="op-sectitle">📋 Your positions <span class="op-count" id="op-count">0/10</span></span><button class="op-link op-collapse-all hidden" id="op-collapse-all" type="button">⇅ Collapse all</button></div>
@@ -2239,6 +2315,7 @@
     updatePnL();
     renderMonthlySummary();
     renderWeeklySummary();
+    renderWeekGraph();
     input.value = '';
   });
 
@@ -3262,6 +3339,121 @@
   }
 
   // ---- FEATURE 6: WEEKLY TOTALS (new — same pattern as renderMonthlySummary, grouped Mon–Sun) ----
+  // ---- WEEKLY PROGRESS GRAPH (2026-10-15) ----
+  // One point per trading day (Mon-Fri; Sat/Sun only if something was logged then) = the NET of every
+  // trade logged that day in the P&L log (same numbers as Weekly Totals). Daily | Running total toggle,
+  // arrows for earlier weeks, tap a day to list its trades. Reads tjLoad() only — Weekly/Monthly Totals untouched.
+  let wkChart = null, wkOffset = 0, wkMode = 'daily', wkSel = null;
+  const wkEl = (id) => document.getElementById(id);
+  const wkPad = (n) => String(n).padStart(2, '0');
+  const wkDayKeyOfDate = (d) => d.getFullYear() + '-' + wkPad(d.getMonth() + 1) + '-' + wkPad(d.getDate());
+  const wkIstKey = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const wkMoney = (n, plus) => (n < 0 ? '−' : (plus && n > 0 ? '+' : '')) + '₹' + Math.abs(Math.round(n)).toLocaleString('en-IN');
+  function wkWeek() {
+    const monday = weekStartKey(Date.now());
+    monday.setDate(monday.getDate() - wkOffset * 7);
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      days.push({ key: wkDayKeyOfDate(d), date: d, name: d.toLocaleDateString('en-IN', { weekday: 'short' }), trades: [] });
+    }
+    const byKey = {}; days.forEach(d => { byKey[d.key] = d; });
+    tjLoad().forEach(t => { const d = byKey[wkIstKey(t.ts)]; if (d) d.trades.push(t); });
+    days.forEach(d => { d.trades.sort((a, b) => a.ts - b.ts); d.net = d.trades.reduce((a, t) => a + (t.pnl || 0), 0); });
+    // Mon-Fri always shown; Sat/Sun only when they have trades
+    const shown = days.filter((d, i) => i < 5 || d.trades.length > 0);
+    return { days: shown, all: days, monday, sunday: days[6].date };
+  }
+  function wkRenderDetail(week) {
+    const box = wkEl('wk-detail'), hint = wkEl('wk-hint');
+    const d = week.days.find(x => x.key === wkSel);
+    if (!d || d.trades.length === 0) { box.classList.add('hidden'); box.innerHTML = ''; hint.classList.remove('hidden'); return; }
+    hint.classList.add('hidden');
+    box.classList.remove('hidden');
+    const fmtT = (ts) => new Date(ts).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
+    box.innerHTML = '<div class="wk-dh"><span>📅 ' + d.date.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }) + ' — ' + d.trades.length + (d.trades.length === 1 ? ' trade' : ' trades') + '</span><span class="' + (d.net >= 0 ? 'wk-pos' : 'wk-neg') + '">' + wkMoney(d.net, true) + '</span></div>' +
+      d.trades.map(t => {
+        const p = t.pnl || 0;
+        const detail = (t.index && t.index !== 'QUICK' && t.qty != null) ? (String(t.index) + ' ' + String(t.type || '') + ' ' + t.qty + ' × ' + t.entry + ' → ' + t.exit) : ('logged ' + fmtT(t.ts));
+        return '<div class="wk-dt"><span>' + (p > 0 ? '✅ Profit' : (p < 0 ? '❌ Loss' : '➖ Flat')) + '<small>' + opEsc(detail) + '</small></span><strong class="' + (p >= 0 ? 'wk-pos' : 'wk-neg') + '">' + wkMoney(p, true) + '</strong></div>';
+      }).join('') +
+      '<div class="wk-dn"><span>Net for the day</span><span class="' + (d.net >= 0 ? 'wk-pos' : 'wk-neg') + '">' + wkMoney(d.net, true) + '</span></div>';
+  }
+  function renderWeekGraph() {
+    if (!wkEl('wk-chart')) return;
+    const week = wkWeek();
+    const total = week.all.reduce((a, d) => a + d.net, 0);
+    const anyTrades = week.all.some(d => d.trades.length > 0);
+    const totEl = wkEl('wk-total');
+    totEl.textContent = anyTrades ? wkMoney(total, true) : '';
+    totEl.classList.toggle('pos', total > 0); totEl.classList.toggle('neg', total < 0);
+    wkEl('wk-title').textContent = '📈 ' + (wkOffset === 0 ? 'This week' : 'Week') + ' — ' + (wkMode === 'daily' ? 'daily result' : 'running total');
+    const f = (d) => d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+    wkEl('wk-range').textContent = f(week.monday) + ' – ' + f(week.days[week.days.length - 1].date);
+    wkEl('wk-next').disabled = wkOffset === 0;
+    wkEl('wk-tog-d').classList.toggle('on', wkMode === 'daily');
+    wkEl('wk-tog-r').classList.toggle('on', wkMode === 'run');
+    wkEl('wk-chartbox').classList.toggle('hidden', !anyTrades);
+    wkEl('wk-empty').classList.toggle('hidden', anyTrades);
+    if (!anyTrades) { if (wkChart) { wkChart.destroy(); wkChart = null; } wkSel = null; wkRenderDetail(week); wkEl('wk-hint').classList.add('hidden'); return; }
+    if (!week.days.some(d => d.key === wkSel)) wkSel = null;
+    if (wkSel == null && wkOffset === 0) { const td = week.days.find(d => d.key === wkIstKey(Date.now()) && d.trades.length); if (td) wkSel = td.key; }
+    // chart values: a day with no trades is empty; running total carries on to the last traded day
+    const lastIdx = week.days.reduce((a, d, i) => d.trades.length ? i : a, -1);
+    let run = 0;
+    const values = week.days.map((d, i) => {
+      run += d.net;
+      if (wkMode === 'daily') return d.trades.length ? d.net : null;
+      return i <= lastIdx ? run : null;
+    });
+    const labels = week.days.map(d => d.name);
+    const selIdx = week.days.findIndex(d => d.key === wkSel);
+    const colors = values.map(v => v == null ? '#64748b' : (v >= 0 ? '#0f7a3d' : '#c81e3a')); // canvas can't read CSS vars — locked green/red hex
+    if (wkChart) wkChart.destroy();
+    wkChart = new Chart(wkEl('wk-chart').getContext('2d'), {
+      type: 'line',
+      data: { labels, datasets: [{ data: values, borderColor: '#1a63e8', borderWidth: 2.4, tension: 0, spanGaps: true,
+        pointBackgroundColor: colors, pointBorderColor: '#ffffff', pointBorderWidth: 2,
+        pointRadius: values.map((v, i) => i === selIdx ? 7 : 4.5), pointHoverRadius: 7 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        layout: { padding: { top: 24, bottom: 6, left: 30, right: 30 } },
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: {
+          x: { ticks: { color: '#64748b', font: (c) => ({ size: 10, weight: c.index === selIdx ? '800' : '600' }) }, grid: { display: false }, border: { display: false } },
+          y: { grace: '25%', ticks: { display: false }, border: { display: false },
+               grid: { color: (c) => c.tick && c.tick.value === 0 ? '#cbd5e1' : 'transparent', lineWidth: 1 } }
+        },
+        onClick: (e, els, chart) => {
+          const idx = Math.round(chart.scales.x.getValueForPixel(e.x));
+          if (idx == null || idx < 0 || idx >= week.days.length) return;
+          const k = week.days[idx].key;
+          wkSel = (wkSel === k) ? null : k;
+          setTimeout(renderWeekGraph, 0); // redraw after Chart.js finishes handling this click (it destroys the chart)
+        }
+      },
+      plugins: [{
+        id: 'wkLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart; const meta = chart.getDatasetMeta(0);
+          ctx.save(); ctx.font = '800 10.5px Inter, system-ui, sans-serif'; ctx.textAlign = 'center';
+          meta.data.forEach((pt, i) => {
+            const v = values[i]; if (v == null) return;
+            ctx.fillStyle = v >= 0 ? '#0f7a3d' : '#c81e3a';
+            ctx.textBaseline = v >= 0 ? 'alphabetic' : 'top';
+            ctx.fillText(wkMoney(v, true), pt.x, v >= 0 ? pt.y - 10 : pt.y + 10);
+          });
+          ctx.restore();
+        }
+      }]
+    });
+    wkRenderDetail(week);
+  }
+  wkEl('wk-prev').addEventListener('click', () => { wkOffset++; wkSel = null; renderWeekGraph(); });
+  wkEl('wk-next').addEventListener('click', () => { if (wkOffset > 0) { wkOffset--; wkSel = null; renderWeekGraph(); } });
+  wkEl('wk-tog-d').addEventListener('click', () => { wkMode = 'daily'; renderWeekGraph(); });
+  wkEl('wk-tog-r').addEventListener('click', () => { wkMode = 'run'; renderWeekGraph(); });
+
   const weeklyListEl = document.getElementById('weekly-list');
   function weekStartKey(ts) {
     // Convert to an IST calendar date, then find that week's Monday, as a stable sortable key
@@ -3360,6 +3552,7 @@
         out.positions.push({
           id: String(p.id || ('p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6))),
           label: String(p.label || '').slice(0, 40),
+          acct: opAcctClean(p.acct),
           status: String(p.status || 'ONGOING').toUpperCase().replace('CLOSED', 'EXITED').slice(0, 14),
           qty: opNum(p.qty), buy: opNum(p.buy), cmp: opNum(p.cmp), exitPrice: opNum(p.exitPrice)
         });
@@ -3377,7 +3570,7 @@
         if (!x || typeof x !== 'object' || x.day !== today) return; // "kept for the day" — yesterday's list is dropped
         const pl = opNum(x.pl);
         if (pl == null) return;
-        out.exited.push({ id: String(x.id || ''), label: String(x.label || '').slice(0, 40), qty: opNum(x.qty), buy: opNum(x.buy), exit: opNum(x.exit), pl, day: x.day, ts: typeof x.ts === 'number' ? x.ts : 0 });
+        out.exited.push({ id: String(x.id || ''), label: String(x.label || '').slice(0, 40), acct: opAcctClean(x.acct), qty: opNum(x.qty), buy: opNum(x.buy), exit: opNum(x.exit), pl, day: x.day, ts: typeof x.ts === 'number' ? x.ts : 0 });
       });
     }
     out.updatedAt = typeof o.updatedAt === 'number' ? o.updatedAt : 0;
@@ -3444,13 +3637,25 @@
     if (buy == null || buy <= 0) return null;
     return Math.round(buy * 0.6 * 20) / 20;
   }
-  // Position name -> coloured "NIFTY 73200 [📈 CE]" (falls back to the plain label for custom names)
-  function opNameHtml(label) {
-    const m = /^\s*(NIFTY|BANKNIFTY|SENSEX)\s+(\d+(?:\.\d+)?)\s*(CE|PE)\s*$/i.exec(label || '');
-    if (!m) return opEsc(label || 'Position');
-    const idx = m[1].toUpperCase(), ty = m[3].toUpperCase();
-    return '<span class="op-idx i-' + idx.toLowerCase() + '">' + idx + '</span> ' + opEsc(m[2]) +
-      ' <span class="op-ty ' + ty.toLowerCase() + '">' + (ty === 'CE' ? '📈 CE' : '📉 PE') + '</span>';
+  // Accounts: ICI / STW / OTH (2026-10-15). A position stores its account in p.acct; the name is "STW SENSEX PE 72700".
+  function opAcctClean(a) { a = String(a || '').toUpperCase(); return (a === 'ICI' || a === 'STW' || a === 'OTH') ? a : ''; }
+  // Understands the new name "STW SENSEX PE 72700" and the older "SENSEX 73200 CE"; returns null for custom names
+  function opParseLabel(label) {
+    let m = /^\s*(ICI|STW|OTH)\s+(NIFTY|BANKNIFTY|SENSEX)\s+(CE|PE)\s+(\d+(?:\.\d+)?)\s*$/i.exec(label || '');
+    if (m) return { acct: m[1].toUpperCase(), idx: m[2].toUpperCase(), ty: m[3].toUpperCase(), strike: m[4] };
+    m = /^\s*(NIFTY|BANKNIFTY|SENSEX)\s+(\d+(?:\.\d+)?)\s*(CE|PE)\s*$/i.exec(label || '');
+    if (m) return { acct: '', idx: m[1].toUpperCase(), ty: m[3].toUpperCase(), strike: m[2] };
+    return null;
+  }
+  function opAcctOf(p) { return opAcctClean(p && p.acct) || ((opParseLabel(p && p.label) || {}).acct || ''); }
+  function opNameHtml(label, acct) {
+    const m = opParseLabel(label);
+    const a = opAcctClean(acct) || (m && m.acct) || '';
+    const chip = a ? '<span class="op-at a-' + a.toLowerCase() + '">' + a + '</span>' : '';
+    if (!m) return chip + opEsc(label || 'Position');
+    return chip + '<span class="op-idx i-' + m.idx.toLowerCase() + '">' + m.idx + '</span> ' +
+      (a && /^\s*(ICI|STW|OTH)\s/i.test(label || '') ? '<span class="op-ty ' + m.ty.toLowerCase() + '">' + (m.ty === 'CE' ? '📈 CE' : '📉 PE') + '</span> ' + opEsc(m.strike)
+        : opEsc(m.strike) + ' <span class="op-ty ' + m.ty.toLowerCase() + '">' + (m.ty === 'CE' ? '📈 CE' : '📉 PE') + '</span>');
   }
   // Stoploss bar: SL at the left end, Buy in the middle, the marker is where the CMP is now
   function opMeterHtml(p, c) {
@@ -3544,31 +3749,34 @@
     }
   }
   function opRefreshTotals() {
-    const hasAny = opOngoing().length > 0;
-    const exToday = opState.exited.filter(x => x.day === opIstDay(Date.now()));
-    opTotalsEl.classList.toggle('hidden', !(hasAny || opState.positions.length > 0 || exToday.length > 0));
+    opTotalsEl.classList.toggle('hidden', opState.positions.length === 0);
     opScheduleExitCheck(); // also runs when empty (sign-out / last position removed) so a ringing alarm stops
     opUpdateNavBadge();
-    let points = 0, capital = 0, pl = 0, balance = 0;
-    opOngoing().forEach(p => {
-      const c = opCalc(p, opState.slTable);
-      if (c.points != null) points += c.points;
-      if (c.capital != null) capital += c.capital;
-      if (c.pl != null) pl += c.pl;
-      if (c.balance != null) balance += c.balance;
-    });
     const r2 = (n) => Math.round(n * 100) / 100; // keep float dust (e.g. 0.1+0.2) out of the display
     const sign = (n) => n > 0 ? 'pos' : (n < 0 ? 'neg' : '');
-    opSetCell(opTotalsEl, 'tpoints', opFmt(r2(points), true, false), sign(r2(points)));
-    opSetCell(opTotalsEl, 'tcapital', opFmt(r2(capital), false, true));
-    opSetCell(opTotalsEl, 'tpl', opFmt(r2(pl), true, true), sign(r2(pl)));
-    opSetCell(opTotalsEl, 'tbalance', opFmt(r2(balance), false, true));
-    const heroEl = opTotalsEl.querySelector('.hero'); if (heroEl) heroEl.classList.toggle('neg', r2(pl) < 0);
-    const exTotal = r2(exToday.reduce((a, x) => a + x.pl, 0));
-    opSetCell(opTotalsEl, 'texited', exToday.length ? opFmt(exTotal, true, true) : '—', exToday.length ? sign(exTotal) : '');
+    // Today summary: ONLY positions still open count — an exited or removed position drops out at once (Undo brings it back)
+    const g = { ICI: { n: 0, k: 0, c: 0, pl: 0 }, STW: { n: 0, k: 0, c: 0, pl: 0 }, OTH: { n: 0, k: 0, c: 0, pl: 0 }, OLD: { n: 0, k: 0, c: 0, pl: 0 }, ALL: { n: 0, k: 0, c: 0, pl: 0 } };
+    let points = 0;
+    opOngoing().forEach(p => {
+      const c = opCalc(p, opState.slTable);
+      const k = opAcctOf(p) || 'OLD';
+      [g[k], g.ALL].forEach(x => { x.n++; if (c.capital != null) x.c += c.capital; if (c.pl != null) { x.pl += c.pl; x.k++; } });
+      if (c.points != null) points += c.points;
+    });
+    Object.keys(g).forEach(k => {
+      const x = g[k];
+      const row = opTotalsEl.querySelector('[data-row="' + k + '"]');
+      if (k === 'OLD' && row) row.classList.toggle('hidden', x.n === 0);
+      if (x.n === 0) { opSetCell(opTotalsEl, 'cap_' + k, '—'); opSetCell(opTotalsEl, 'pl_' + k, '—'); opSetCell(opTotalsEl, 'bal_' + k, '—'); return; }
+      const cap = r2(x.c), pl = r2(x.pl);
+      opSetCell(opTotalsEl, 'cap_' + k, opFmt(cap, false, true));
+      opSetCell(opTotalsEl, 'pl_' + k, x.k === 0 ? '—<small>NO CMP</small>' : opFmt(Math.abs(pl), false, true) + '<small>' + (pl > 0 ? 'PROFIT' : (pl < 0 ? 'LOSS' : 'FLAT')) + '</small>', x.k === 0 ? '' : sign(pl));
+      opSetCell(opTotalsEl, 'bal_' + k, opFmt(r2(cap + pl), false, true));
+    });
     opSetCell(opTotalsEl, 'tused', opState.positions.length + ' / ' + OP_MAX);
     const bar = document.getElementById('op-used-bar');
     if (bar) { bar.style.width = Math.min(100, opState.positions.length / OP_MAX * 100) + '%'; bar.classList.toggle('full', opState.positions.length >= OP_MAX); }
+    opSetCell(opTotalsEl, 'tpoints', opFmt(r2(points), true, false), sign(r2(points)));
   }
   function opRefreshAll() {
     opListEl.querySelectorAll('.op-pos').forEach(el => {
@@ -3608,7 +3816,7 @@
         return '<div class="op-pos' + (exited ? ' exited' : '') + (collapsedMap[p.id] ? ' collapsed' : '') + '" data-id="' + id + '">' +
           '<div class="op-l1">' +
             '<button class="op-chev" type="button" data-collapse="1" aria-label="Minimise or expand">▾</button>' +
-            '<div class="op-name" data-collapse="1">' + opNameHtml(p.label) + '</div>' +
+            '<div class="op-name" data-collapse="1">' + opNameHtml(p.label, p.acct) + '</div>' +
             '<span class="op-mini" data-o="mini"></span>' +
             '<span class="op-chipwrap" data-o="action"></span>' +
           '</div>' +
@@ -3665,19 +3873,26 @@
   const opQAddBtn = document.getElementById('op-q-add');
   const opQStrikeEl = document.getElementById('op-q-strike');
   const opQAutoEl = document.getElementById('op-q-auto');
+  const opQAcctEl = document.getElementById('op-q-acct');
   const opQIdxEl = document.getElementById('op-q-idx');
   const opQTypeEl = document.getElementById('op-q-type');
-  let opLastIdx = null, opLastType = null; // remembered between adds so the next one is quicker
-  function opSegGet(el, attr) { const b = el.querySelector('button.on'); return b ? b.getAttribute(attr) : ''; }
-  function opSegSet(el, attr, val) { el.querySelectorAll('button').forEach(b => b.classList.toggle('on', !!val && b.getAttribute(attr) === val)); }
+  const opQCmpEl = document.getElementById('op-q-cmp');
+  const opQNameWrapEl = document.getElementById('op-q-name-wrap');
+  const opQNameLinkEl = document.getElementById('op-q-name-link');
+  // last Account / Index / Type are remembered on this device so the next add needs no taps there
+  function opLastKey() { return 'signa365_op_last_' + (currentUid || 'anon'); }
+  function opLastLoad() { try { return JSON.parse(localStorage.getItem(opLastKey())) || {}; } catch (e) { return {}; } }
+  function opLastSave(o) { try { localStorage.setItem(opLastKey(), JSON.stringify(o)); } catch (e) { /* best effort */ } }
+  function opSelSet(el, v) { el.value = ''; if (v) { el.value = v; if (el.value !== v) el.value = ''; } }
   function opQPreview() {
     const qty = opNum(opQQtyEl.value), buy = opNum(opQBuyEl.value);
-    if (buy == null || buy <= 0) { opQAutoEl.textContent = '🛑 Auto stoploss and 💰 capital show here'; return; }
+    if (buy == null || buy <= 0) { opQAutoEl.textContent = '🛑 SL and 💰 capital show here'; return; }
     const sl = opLookupSL(buy, opState.slTable), auto = sl == null;
     const slv = auto ? opAutoSL(buy) : sl;
-    opQAutoEl.innerHTML = '🛑 ' + (auto ? 'Auto stoploss' : 'Custom stoploss') + ' <strong>' + opFmt(slv, false, true) + '</strong>' + (auto ? ' (−40%)' : '') +
-      (qty != null && qty > 0 ? ' · 💰 Capital <strong>' + opFmt(qty * buy, false, true) + '</strong>' : '');
+    opQAutoEl.innerHTML = '🛑 SL <strong>' + opFmt(slv, false, true) + '</strong>' + (auto ? '' : ' (custom)') +
+      (qty != null && qty > 0 ? '<br>💰 <strong>' + opFmt(qty * buy, false, true) + '</strong>' : '');
   }
+  function opShowNameBox(show) { opQNameWrapEl.classList.toggle('hidden', !show); opQNameLinkEl.classList.toggle('hidden', show); }
   function opOpenQuick(open, pos) {
     opEditingId = open && pos ? pos.id : null;
     opQAddBtn.textContent = opEditingId ? '✅ Save changes' : '✅ Save position';
@@ -3688,33 +3903,46 @@
     if (open) {
       opQQtyEl.value = pos && pos.qty != null ? pos.qty : '';
       opQBuyEl.value = pos && pos.buy != null ? pos.buy : '';
-      const m = pos ? /^\s*(NIFTY|BANKNIFTY|SENSEX)\s+(\d+(?:\.\d+)?)\s*(CE|PE)\s*$/i.exec(pos.label || '') : null;
-      if (pos && m) { opSegSet(opQIdxEl, 'data-idx', m[1].toUpperCase()); opSegSet(opQTypeEl, 'data-ty', m[3].toUpperCase()); opQStrikeEl.value = m[2]; opQNameEl.value = ''; }
-      else if (pos) { opSegSet(opQIdxEl, 'data-idx', ''); opSegSet(opQTypeEl, 'data-ty', ''); opQStrikeEl.value = ''; opQNameEl.value = pos.label || ''; }
-      else { opSegSet(opQIdxEl, 'data-idx', opLastIdx); opSegSet(opQTypeEl, 'data-ty', opLastType); opQStrikeEl.value = ''; opQNameEl.value = ''; }
+      opQCmpEl.value = pos && pos.cmp != null ? pos.cmp : '';
+      const m = pos ? opParseLabel(pos.label) : null;
+      if (pos) {
+        opSelSet(opQAcctEl, opAcctOf(pos));
+        if (m) { opSelSet(opQIdxEl, m.idx); opSelSet(opQTypeEl, m.ty); opQStrikeEl.value = m.strike; opQNameEl.value = ''; opShowNameBox(false); }
+        else { opSelSet(opQIdxEl, ''); opSelSet(opQTypeEl, ''); opQStrikeEl.value = ''; opQNameEl.value = pos.label || ''; opShowNameBox(true); }
+      } else {
+        const last = opLastLoad();
+        opSelSet(opQAcctEl, last.acct); opSelSet(opQIdxEl, last.idx); opSelSet(opQTypeEl, last.ty);
+        opQStrikeEl.value = ''; opQNameEl.value = ''; opShowNameBox(false);
+      }
       opQPreview();
-      (pos ? opQQtyEl : opQStrikeEl).focus();
+      const first = [opQAcctEl, opQIdxEl, opQTypeEl].find(e => !e.value);
+      (first || (pos ? opQQtyEl : opQStrikeEl)).focus();
     }
   }
-  // Name for the card: your own name if typed, else "INDEX STRIKE CE/PE". Returns null (and shows why) if incomplete.
+  // Name for the card: "STW SENSEX PE 72700" (or your own name). Account is always required. Returns null (and says why) if incomplete.
   function opQLabel() {
-    const idx = opSegGet(opQIdxEl, 'data-idx'), ty = opSegGet(opQTypeEl, 'data-ty'), strike = opQStrikeEl.value.trim();
-    const custom = opQNameEl.value.trim();
-    if (custom) return custom.slice(0, 40);
-    if (strike || idx || ty) {
-      if (!idx || !ty || !strike) { opQErrEl.textContent = 'Pick the index, CE / PE and the strike (or clear them).'; return null; }
-      return idx + ' ' + strike + ' ' + ty;
-    }
-    return '';
+    const acct = opQAcctEl.value, idx = opQIdxEl.value, ty = opQTypeEl.value, strike = opQStrikeEl.value.trim(), custom = opQNameEl.value.trim();
+    if (!acct) { opQErrEl.textContent = 'Pick the account — ICI, STW or OTH.'; return null; }
+    if (custom) return { acct, label: custom.slice(0, 40) };
+    if (!idx) { opQErrEl.textContent = 'Pick the index.'; return null; }
+    if (!ty) { opQErrEl.textContent = 'Pick CE or PE.'; return null; }
+    const sv = opNum(strike);
+    if (sv == null || sv <= 0) { opQErrEl.textContent = 'Enter the strike.'; return null; }
+    return { acct, label: (acct + ' ' + idx + ' ' + ty + ' ' + strike).slice(0, 40) };
   }
   function opQuickAdd() {
+    opQErrEl.textContent = '';
+    const nm = opQLabel();
+    if (nm === null) return;
     const qty = opNum(opQQtyEl.value), buy = opNum(opQBuyEl.value);
     if (qty == null || qty <= 0 || buy == null || buy <= 0) { opQErrEl.textContent = 'Enter Qty and Buy price.'; return; }
-    const label = opQLabel();
-    if (label === null) return;
+    const cmpRaw = opQCmpEl.value.trim(), cmp = opNum(cmpRaw);
+    if (cmpRaw !== '' && (cmp == null || cmp <= 0)) { opQErrEl.textContent = 'CMP must be a number — or leave it empty.'; return; }
+    const last = opLastLoad();
+    opLastSave({ acct: nm.acct, idx: opQIdxEl.value || last.idx || '', ty: opQTypeEl.value || last.ty || '' });
     if (opEditingId) {
       const p = opState.positions.find(x => x.id === opEditingId);
-      if (p) { p.qty = qty; p.buy = buy; p.label = (label || p.label || 'Position').slice(0, 40); }
+      if (p) { p.qty = qty; p.buy = buy; p.label = nm.label; p.acct = nm.acct; if (cmp != null) p.cmp = cmp; }
       opOpenQuick(false);
       opTouchAndSave();
       opRender();
@@ -3722,14 +3950,14 @@
     }
     if (opState.positions.length >= OP_MAX) { opQErrEl.textContent = 'Max ' + OP_MAX + ' positions.'; return; }
     const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const name = label || ('Position ' + (opState.positions.length + 1));
-    opLastIdx = opSegGet(opQIdxEl, 'data-idx') || opLastIdx; opLastType = opSegGet(opQTypeEl, 'data-ty') || opLastType;
-    opState.positions.push({ id, label: name.slice(0, 40), status: 'ONGOING', qty, buy, cmp: null });
+    opState.positions.push({ id, label: nm.label, acct: nm.acct, status: 'ONGOING', qty, buy, cmp: cmp != null ? cmp : null });
     opOpenQuick(false);
     opTouchAndSave();
     opRender();
-    const cmpEl = opListEl.querySelector('[data-id="' + id + '"] [data-f="cmp"]');
-    if (cmpEl) { cmpEl.focus(); cmpEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } // straight to the one number you update during the day
+    if (cmp == null) {
+      const cmpEl = opListEl.querySelector('[data-id="' + id + '"] [data-f="cmp"]');
+      if (cmpEl) { cmpEl.focus(); cmpEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } // straight to the one number you update during the day
+    }
   }
   opAddBtn.addEventListener('click', () => {
     if (opState.positions.length >= OP_MAX) return;
@@ -3739,15 +3967,16 @@
   document.getElementById('op-q-cancel').addEventListener('click', () => opOpenQuick(false));
   opQuickEl.addEventListener('click', (e) => { if (e.target === opQuickEl) opOpenQuick(false); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !opQuickEl.classList.contains('hidden')) opOpenQuick(false); });
-  [opQIdxEl, opQTypeEl].forEach(g => g.addEventListener('click', (e) => {
-    const b = e.target.closest('button'); if (!b) return;
-    const was = b.classList.contains('on');
-    g.querySelectorAll('button').forEach(x => x.classList.remove('on'));
-    if (!was) b.classList.add('on');
-    opQErrEl.textContent = '';
-  }));
+  opQNameLinkEl.addEventListener('click', () => { opShowNameBox(true); opQNameEl.focus(); });
+  [opQAcctEl, opQIdxEl, opQTypeEl].forEach(el => el.addEventListener('change', () => { opQErrEl.textContent = ''; }));
   [opQQtyEl, opQBuyEl].forEach(el => el.addEventListener('input', opQPreview));
-  [opQStrikeEl, opQQtyEl, opQBuyEl, opQNameEl].forEach(el => el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (el === opQStrikeEl) opQQtyEl.focus(); else if (el === opQQtyEl) opQBuyEl.focus(); else opQuickAdd(); } }));
+  const opQOrder = [opQStrikeEl, opQQtyEl, opQBuyEl, opQCmpEl];
+  [opQStrikeEl, opQQtyEl, opQBuyEl, opQCmpEl, opQNameEl].forEach(el => el.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const i = opQOrder.indexOf(el);
+    if (i >= 0 && i < opQOrder.length - 1) opQOrder[i + 1].focus(); else opQuickAdd();
+  }));
   // Floating "＋ Add position" button: only on the Positions page, only when signed in, hidden while the Add form is open
   function opSyncFab() {
     const on = typeof currentPageIdx !== 'undefined' && currentPageIdx === 1 && pageNavEl.classList.contains('show') && opQuickEl.classList.contains('hidden');
@@ -3890,7 +4119,7 @@
     const pl = Math.round((v - p.buy) * p.qty * 100) / 100;
     p.status = 'EXITED'; p.exitPrice = v; p.cmp = v;
     opState.exited = opState.exited.filter(x => x.id !== p.id);
-    opState.exited.push({ id: p.id, label: p.label, qty: p.qty, buy: p.buy, exit: v, pl, day: opIstDay(Date.now()), ts: Date.now() });
+    opState.exited.push({ id: p.id, label: p.label, acct: opAcctOf(p), qty: p.qty, buy: p.buy, exit: v, pl, day: opIstDay(Date.now()), ts: Date.now() });
     opCloseExit();
     opTouchAndSave();
     opRender();
@@ -3912,7 +4141,7 @@
     const total = Math.round(rows.reduce((a, x) => a + x.pl, 0) * 100) / 100;
     const sg = (n) => n > 0 ? 'pos' : (n < 0 ? 'neg' : '');
     opExitedEl.innerHTML = '<div class="op-totals-title">🧾 Exited today — to record in P&amp;L</div>' +
-      rows.map(x => '<div class="op-xrow"><span class="op-xname">' + (x.pl > 0 ? '✅ ' : (x.pl < 0 ? '❌ ' : '➖ ')) + opNameHtml(x.label) + '</span>' +
+      rows.map(x => '<div class="op-xrow"><span class="op-xname">' + (x.pl > 0 ? '✅ ' : (x.pl < 0 ? '❌ ' : '➖ ')) + opNameHtml(x.label, x.acct) + '</span>' +
         '<span class="op-xdet">' + opEsc(opFmt(x.qty, false, false)) + ' × ' + opEsc(opFmt(x.buy, false, false)) + ' → ' + opEsc(opFmt(x.exit, false, false)) + '</span>' +
         '<span class="op-xpl ' + sg(x.pl) + '">' + opEsc(opFmt(x.pl, true, true)) + '</span>' +
         '<button class="op-del" type="button" data-xdel="' + opEsc(x.id) + '" aria-label="Remove from list">×</button></div>').join('') +
@@ -4160,6 +4389,7 @@
     e.stopPropagation();
     renderMonthlySummary();
     renderWeeklySummary();
+    renderWeekGraph();
     positionRibbonPanel(pnlPanelEl);
     pnlPanelEl.classList.toggle('hidden');
   });
@@ -4696,6 +4926,7 @@
         updatePnL();
         renderMonthlySummary();
         renderWeeklySummary();
+        renderWeekGraph();
         // One-time per login: push any trades that existed locally before cloud sync was
         // ever set up for this account, so older history still shows up on other devices.
         if (!fbMigratedOnce) {
@@ -5552,6 +5783,7 @@
         updatePnL();
         renderMonthlySummary();
         renderWeeklySummary();
+        renderWeekGraph();
       } catch (err) {
         console.warn('Signa365: auth check failed:', err);
         forceSignOutWithMessage("Something went wrong signing you in. Check your connection and try again.");
