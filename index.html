@@ -711,8 +711,27 @@
   .op-empty .e3 { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
   .op-exited { border-top: 3px solid var(--amber); }
   .op-xtotal { font-size: 0.95rem; }
-  .op-fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; width: calc(100% - 32px); max-width: 560px; z-index: 800; padding: 15px; border-radius: 16px; border: none; background: var(--accent); color: #fff; font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer; box-shadow: 0 8px 22px rgba(26,99,232,0.4); }
+  .op-fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 32px); max-width: 560px; z-index: 800; padding: 15px; border-radius: 16px; border: none; background: var(--accent); color: #fff; font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer; box-shadow: 0 8px 22px rgba(26,99,232,0.4); }
   .op-fab.hidden { display: none; }
+
+  /* Add to P&L (2026-10-19): tick boxes on Exited today lines */
+  #op-exited .op-xrow.has-cb { grid-template-columns: auto 1fr auto auto; }
+  #op-exited .op-xrow.has-cb .op-xname { grid-column: 2; }
+  #op-exited .op-xrow.has-cb .op-xpl { grid-column: 3; }
+  #op-exited .op-xrow.has-cb .op-del { grid-column: 4; grid-row: 1 / span 2; }
+  #op-exited .op-xrow.has-cb .op-xdet { grid-column: 2 / span 2; grid-row: 2; }
+  #op-exited .op-xrow.has-cb .op-xcb { grid-column: 1; grid-row: 1 / span 2; }
+  .op-xcb { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); background: var(--panel); color: #fff; font-size: 0.8rem; font-weight: 900; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; font-family: inherit; }
+  .op-xcb.on { background: var(--accent); border-color: var(--accent); }
+  .op-xcb.done { background: var(--panel-alt); border-color: var(--border); color: var(--muted); cursor: default; }
+  .op-xrow.xdone { opacity: 0.62; }
+  .op-xbadge { font-size: 0.62rem; font-weight: 800; color: var(--green); background: rgba(15,122,61,0.12); border-radius: 8px; padding: 1px 7px; margin-left: 6px; white-space: nowrap; }
+  .op-xacts { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  .op-xall { flex: none; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel); color: var(--accent); font-weight: 700; font-size: 0.74rem; cursor: pointer; font-family: inherit; }
+  .op-xadd { flex: 1 1 auto; padding: 10px; border: none; border-radius: 12px; background: var(--accent); color: #fff; font-weight: 800; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
+  .op-xadd:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+  .op-xlist { font-size: 0.78rem; margin: 8px 0 2px; }
+  .op-xlist div { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
   .op-fab:disabled { background: var(--muted); box-shadow: none; cursor: not-allowed; }
   .op-sheet-wrap { position: fixed; inset: 0; z-index: 9400; background: rgba(15,23,42,0.5); display: flex; align-items: flex-end; justify-content: center; }
   .op-sheet-wrap.hidden { display: none; }
@@ -851,9 +870,6 @@
   .wk-nav > span:first-child { white-space: nowrap; display: inline-flex; align-items: center; }
   .wk-arrow { border: none; background: none; color: var(--accent); font-size: 0.95rem; padding: 2px 7px; cursor: pointer; font-family: inherit; }
   .wk-arrow:disabled { color: var(--border); cursor: default; }
-  .wk-tg { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; flex: none; }
-  .wk-tg button { border: none; background: var(--panel); color: var(--muted); font-size: 0.64rem; font-weight: 800; padding: 5px 7px; cursor: pointer; font-family: inherit; }
-  .wk-tg button.on { background: var(--accent); color: #fff; }
   .wk-chartbox { position: relative; height: 160px; }
   .wk-empty { text-align: center; font-size: 0.82rem; color: var(--muted); font-style: italic; padding: 28px 0; }
   .wk-empty.hidden, .wk-detail.hidden, .wk-chartbox.hidden { display: none; }
@@ -1240,6 +1256,16 @@
     <div class="op-sheet-btns"><button class="op-btn" id="op-q-cancel" type="button">Cancel</button><button class="op-btn primary" id="op-q-add" type="button">✅ Save position</button></div>
   </div>
 </div>
+<div id="op-pl-modal" class="op-modal hidden" role="dialog" aria-modal="true">
+  <div class="op-modal-box">
+    <div class="op-modal-title">Add to P&amp;L?</div>
+    <div class="op-modal-sub" id="op-pl-sub"></div>
+    <div class="op-xlist" id="op-pl-list"></div>
+    <div class="op-x-result" id="op-pl-net"></div>
+    <div class="op-modal-btns"><button class="op-link" id="op-pl-cancel" type="button">Cancel</button><button class="op-exitbtn big" id="op-pl-ok" type="button" style="background:var(--accent);">Yes, add</button></div>
+  </div>
+</div>
+
 <div id="op-exit-modal" class="op-modal hidden" role="dialog" aria-modal="true">
   <div class="op-modal-box">
     <div class="op-modal-title" id="op-x-title">Exit position</div>
@@ -1407,7 +1433,6 @@
         <div class="wk-head"><span class="wk-title" id="wk-title">📈 This week — daily result</span><span class="wk-total" id="wk-total"></span></div>
         <div class="wk-nav">
           <span><button type="button" class="wk-arrow" id="wk-prev" aria-label="Earlier week">◀</button><span id="wk-range"></span><button type="button" class="wk-arrow" id="wk-next" aria-label="Later week">▶</button></span>
-          <span class="wk-tg"><button type="button" class="on" id="wk-tog-d">Daily</button><button type="button" id="wk-tog-r">Running total</button></span>
         </div>
         <div class="wk-chartbox" id="wk-chartbox"><canvas id="wk-chart"></canvas></div>
         <div class="wk-empty hidden" id="wk-empty">No trades logged this week</div>
@@ -3341,9 +3366,8 @@
   // ---- FEATURE 6: WEEKLY TOTALS (new — same pattern as renderMonthlySummary, grouped Mon–Sun) ----
   // ---- WEEKLY PROGRESS GRAPH (2026-10-15) ----
   // One point per trading day (Mon-Fri; Sat/Sun only if something was logged then) = the NET of every
-  // trade logged that day in the P&L log (same numbers as Weekly Totals). Daily | Running total toggle,
-  // arrows for earlier weeks, tap a day to list its trades. Reads tjLoad() only — Weekly/Monthly Totals untouched.
-  let wkChart = null, wkOffset = 0, wkMode = 'daily', wkSel = null;
+  // trade logged that day in the P&L log (same numbers as Weekly Totals). arrows for earlier weeks, tap a day to list its trades. Reads tjLoad() only — Weekly/Monthly Totals untouched.
+  let wkChart = null, wkOffset = 0, wkSel = null;
   const wkEl = (id) => document.getElementById(id);
   const wkPad = (n) => String(n).padStart(2, '0');
   const wkDayKeyOfDate = (d) => d.getFullYear() + '-' + wkPad(d.getMonth() + 1) + '-' + wkPad(d.getDate());
@@ -3374,7 +3398,7 @@
     box.innerHTML = '<div class="wk-dh"><span>📅 ' + d.date.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }) + ' — ' + d.trades.length + (d.trades.length === 1 ? ' trade' : ' trades') + '</span><span class="' + (d.net >= 0 ? 'wk-pos' : 'wk-neg') + '">' + wkMoney(d.net, true) + '</span></div>' +
       d.trades.map(t => {
         const p = t.pnl || 0;
-        const detail = (t.index && t.index !== 'QUICK' && t.qty != null) ? (String(t.index) + ' ' + String(t.type || '') + ' ' + t.qty + ' × ' + t.entry + ' → ' + t.exit) : ('logged ' + fmtT(t.ts));
+        const detail = t.label ? (String(t.label) + ' · ' + t.qty + ' × ' + t.entry + ' → ' + t.exit) : ((t.index && t.index !== 'QUICK' && t.qty != null) ? (String(t.index) + ' ' + String(t.type || '') + ' ' + t.qty + ' × ' + t.entry + ' → ' + t.exit) : ('logged ' + fmtT(t.ts)));
         return '<div class="wk-dt"><span>' + (p > 0 ? '✅ Profit' : (p < 0 ? '❌ Loss' : '➖ Flat')) + '<small>' + opEsc(detail) + '</small></span><strong class="' + (p >= 0 ? 'wk-pos' : 'wk-neg') + '">' + wkMoney(p, true) + '</strong></div>';
       }).join('') +
       '<div class="wk-dn"><span>Net for the day</span><span class="' + (d.net >= 0 ? 'wk-pos' : 'wk-neg') + '">' + wkMoney(d.net, true) + '</span></div>';
@@ -3387,25 +3411,17 @@
     const totEl = wkEl('wk-total');
     totEl.textContent = anyTrades ? wkMoney(total, true) : '';
     totEl.classList.toggle('pos', total > 0); totEl.classList.toggle('neg', total < 0);
-    wkEl('wk-title').textContent = '📈 ' + (wkOffset === 0 ? 'This week' : 'Week') + ' — ' + (wkMode === 'daily' ? 'daily result' : 'running total');
+    wkEl('wk-title').textContent = '📈 ' + (wkOffset === 0 ? 'This week' : 'Week') + ' — daily result';
     const f = (d) => d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
     wkEl('wk-range').textContent = f(week.monday) + ' – ' + f(week.days[week.days.length - 1].date);
     wkEl('wk-next').disabled = wkOffset === 0;
-    wkEl('wk-tog-d').classList.toggle('on', wkMode === 'daily');
-    wkEl('wk-tog-r').classList.toggle('on', wkMode === 'run');
     wkEl('wk-chartbox').classList.toggle('hidden', !anyTrades);
     wkEl('wk-empty').classList.toggle('hidden', anyTrades);
     if (!anyTrades) { if (wkChart) { wkChart.destroy(); wkChart = null; } wkSel = null; wkRenderDetail(week); wkEl('wk-hint').classList.add('hidden'); return; }
     if (!week.days.some(d => d.key === wkSel)) wkSel = null;
     if (wkSel == null && wkOffset === 0) { const td = week.days.find(d => d.key === wkIstKey(Date.now()) && d.trades.length); if (td) wkSel = td.key; }
-    // chart values: a day with no trades is empty; running total carries on to the last traded day
-    const lastIdx = week.days.reduce((a, d, i) => d.trades.length ? i : a, -1);
-    let run = 0;
-    const values = week.days.map((d, i) => {
-      run += d.net;
-      if (wkMode === 'daily') return d.trades.length ? d.net : null;
-      return i <= lastIdx ? run : null;
-    });
+    // chart values: one point per day = that day's net; a day with no trades is empty
+    const values = week.days.map(d => d.trades.length ? d.net : null);
     const labels = week.days.map(d => d.name);
     const selIdx = week.days.findIndex(d => d.key === wkSel);
     const colors = values.map(v => v == null ? '#64748b' : (v >= 0 ? '#0f7a3d' : '#c81e3a')); // canvas can't read CSS vars — locked green/red hex
@@ -3451,8 +3467,6 @@
   }
   wkEl('wk-prev').addEventListener('click', () => { wkOffset++; wkSel = null; renderWeekGraph(); });
   wkEl('wk-next').addEventListener('click', () => { if (wkOffset > 0) { wkOffset--; wkSel = null; renderWeekGraph(); } });
-  wkEl('wk-tog-d').addEventListener('click', () => { wkMode = 'daily'; renderWeekGraph(); });
-  wkEl('wk-tog-r').addEventListener('click', () => { wkMode = 'run'; renderWeekGraph(); });
 
   const weeklyListEl = document.getElementById('weekly-list');
   function weekStartKey(ts) {
@@ -3570,7 +3584,7 @@
         if (!x || typeof x !== 'object' || x.day !== today) return; // "kept for the day" — yesterday's list is dropped
         const pl = opNum(x.pl);
         if (pl == null) return;
-        out.exited.push({ id: String(x.id || ''), label: String(x.label || '').slice(0, 40), acct: opAcctClean(x.acct), qty: opNum(x.qty), buy: opNum(x.buy), exit: opNum(x.exit), pl, day: x.day, ts: typeof x.ts === 'number' ? x.ts : 0 });
+        out.exited.push({ id: String(x.id || ''), label: String(x.label || '').slice(0, 40), acct: opAcctClean(x.acct), qty: opNum(x.qty), buy: opNum(x.buy), exit: opNum(x.exit), pl, day: x.day, ts: typeof x.ts === 'number' ? x.ts : 0, inPnl: x.inPnl === true });
       });
     }
     out.updatedAt = typeof o.updatedAt === 'number' ? o.updatedAt : 0;
@@ -3981,7 +3995,30 @@
   function opSyncFab() {
     const on = typeof currentPageIdx !== 'undefined' && currentPageIdx === 1 && pageNavEl.classList.contains('show') && opQuickEl.classList.contains('hidden');
     opAddBtn.classList.toggle('hidden', !on);
+    if (on) opPlaceFab();
   }
+  // iPhone fix: a plain "position:fixed; bottom" can sit below the visible screen until the page is scrolled to the very
+  // bottom (Safari toolbar / zoomed-out layout). So pin the button to the VISIBLE screen (visual viewport) instead.
+  // If visualViewport isn't available, the CSS bottom (with safe-area) is used as before.
+  let opFabRaf = 0;
+  function opPlaceFab() {
+    const vv = window.visualViewport;
+    if (!vv || opAddBtn.classList.contains('hidden')) return;
+    const h = opAddBtn.offsetHeight || 50;
+    const w = Math.min(vv.width - 32, 560);
+    opAddBtn.style.bottom = 'auto';
+    opAddBtn.style.top = Math.max(0, vv.offsetTop + vv.height - h - 18) + 'px';
+    opAddBtn.style.left = (vv.offsetLeft + vv.width / 2) + 'px';
+    opAddBtn.style.width = w + 'px';
+  }
+  function opPlaceFabSoon() { if (opFabRaf) return; opFabRaf = requestAnimationFrame(() => { opFabRaf = 0; opPlaceFab(); }); }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', opPlaceFabSoon);
+    window.visualViewport.addEventListener('scroll', opPlaceFabSoon);
+  }
+  window.addEventListener('scroll', opPlaceFabSoon, { passive: true });
+  window.addEventListener('resize', opPlaceFabSoon);
+  window.addEventListener('orientationchange', opPlaceFabSoon);
 
   // Typing: update just that field + that card's computed cells (no re-render, so the cursor stays put).
   opListEl.addEventListener('input', (e) => {
@@ -4028,6 +4065,8 @@
     if (ex && pos) { opOpenExit(pos); return; }
     const undo = e.target.closest('[data-undo]');
     if (undo && pos) {
+      const xr = opState.exited.find(x => x.id === pos.id);
+      if (xr && opXInPnl(xr) && !confirm('This exit is already in P&L. Undoing it will NOT remove it from P&L. Undo anyway?')) return;
       pos.status = 'ONGOING';
       opState.exited = opState.exited.filter(x => x.id !== pos.id);
       opTouchAndSave(); opRender(); opCheckExits();
@@ -4133,6 +4172,10 @@
 
   // "Exited today": results kept for the day (saved with the positions, synced, reset next day) — to record in P&L
   const opExitedEl = document.getElementById('op-exited');
+  // ---- Add to P&L (2026-10-19): tick today's exited lines and add them to the P&L log (nothing is automatic) ----
+  const opXSel = {};                                   // ticked line ids (this device, this session only)
+  const opPlTradeId = (x) => 'xp_' + String(x.id).replace(/[^A-Za-z0-9_-]/g, '') + '_' + (x.ts || 0); // fixed id => the same exit can never be added twice, even from two devices
+  function opXInPnl(x) { return x.inPnl === true || tjLoad().some(t => String(t.id) === opPlTradeId(x)); }
   function opRenderExited() {
     const today = opIstDay(Date.now());
     const rows = opState.exited.filter(x => x.day === today);
@@ -4140,17 +4183,67 @@
     if (!rows.length) { opExitedEl.innerHTML = ''; return; }
     const total = Math.round(rows.reduce((a, x) => a + x.pl, 0) * 100) / 100;
     const sg = (n) => n > 0 ? 'pos' : (n < 0 ? 'neg' : '');
+    const done = {}; rows.forEach(x => { done[x.id] = opXInPnl(x); if (done[x.id]) delete opXSel[x.id]; });
+    Object.keys(opXSel).forEach(id => { if (!rows.some(x => x.id === id)) delete opXSel[id]; });
+    const open = rows.filter(x => !done[x.id]);
+    const picked = open.filter(x => opXSel[x.id]);
+    const net = Math.round(picked.reduce((a, x) => a + x.pl, 0) * 100) / 100;
     opExitedEl.innerHTML = '<div class="op-totals-title">🧾 Exited today — to record in P&amp;L</div>' +
-      rows.map(x => '<div class="op-xrow"><span class="op-xname">' + (x.pl > 0 ? '✅ ' : (x.pl < 0 ? '❌ ' : '➖ ')) + opNameHtml(x.label, x.acct) + '</span>' +
+      rows.map(x => '<div class="op-xrow has-cb' + (done[x.id] ? ' xdone' : '') + '">' +
+        (done[x.id] ? '<span class="op-xcb done" aria-label="Already in P&amp;L">✔</span>'
+                    : '<button class="op-xcb' + (opXSel[x.id] ? ' on' : '') + '" type="button" data-xsel="' + opEsc(x.id) + '" role="checkbox" aria-checked="' + (opXSel[x.id] ? 'true' : 'false') + '" aria-label="Select to add to P&amp;L">' + (opXSel[x.id] ? '✔' : '') + '</button>') +
+        '<span class="op-xname">' + (x.pl > 0 ? '✅ ' : (x.pl < 0 ? '❌ ' : '➖ ')) + opNameHtml(x.label, x.acct) + (done[x.id] ? '<span class="op-xbadge">✔ In P&amp;L</span>' : '') + '</span>' +
         '<span class="op-xdet">' + opEsc(opFmt(x.qty, false, false)) + ' × ' + opEsc(opFmt(x.buy, false, false)) + ' → ' + opEsc(opFmt(x.exit, false, false)) + '</span>' +
         '<span class="op-xpl ' + sg(x.pl) + '">' + opEsc(opFmt(x.pl, true, true)) + '</span>' +
         '<button class="op-del" type="button" data-xdel="' + opEsc(x.id) + '" aria-label="Remove from list">×</button></div>').join('') +
-      '<div class="op-xtotal"><span>📅 Day total</span><span class="op-xpl ' + sg(total) + '" style="min-width:0;">' + opEsc(opFmt(total, true, true)) + '</span></div>';
+      '<div class="op-xtotal"><span>📅 Day total</span><span class="op-xpl ' + sg(total) + '" style="min-width:0;">' + opEsc(opFmt(total, true, true)) + '</span></div>' +
+      (open.length ? '<div class="op-xacts"><button class="op-xall" type="button" data-xall="1">' + (picked.length === open.length ? 'Clear' : 'Select all') + '</button>' +
+        '<button class="op-xadd" type="button" data-xadd="1"' + (picked.length ? '' : ' disabled') + '>' +
+        (picked.length ? '➕ Add ' + picked.length + ' selected to P&amp;L (' + opEsc(opFmt(net, true, true)) + ')' : '➕ Add selected to P&amp;L') + '</button></div>' : '');
   }
+  const opPlModalEl = document.getElementById('op-pl-modal');
+  function opPlClose() { opPlModalEl.classList.add('hidden'); }
+  function opPlOpen() {
+    const today = opIstDay(Date.now());
+    const picked = opState.exited.filter(x => x.day === today && opXSel[x.id] && !opXInPnl(x));
+    if (!picked.length) return;
+    const net = Math.round(picked.reduce((a, x) => a + x.pl, 0) * 100) / 100;
+    document.getElementById('op-pl-sub').textContent = picked.length + (picked.length === 1 ? ' trade' : ' trades') + ' will be added to today’s P&L.';
+    document.getElementById('op-pl-list').innerHTML = picked.map(x => '<div><span>' + opEsc(x.label) + '</span><strong class="' + (x.pl >= 0 ? 'wk-pos' : 'wk-neg') + '">' + opEsc(opFmt(x.pl, true, true)) + '</strong></div>').join('');
+    const nEl = document.getElementById('op-pl-net');
+    nEl.textContent = 'Net ' + opFmt(net, true, true);
+    nEl.className = 'op-x-result ' + (net > 0 ? 'pos' : (net < 0 ? 'neg' : ''));
+    opPlModalEl.classList.remove('hidden');
+  }
+  function opPlConfirm() {
+    const today = opIstDay(Date.now());
+    const picked = opState.exited.filter(x => x.day === today && opXSel[x.id] && !opXInPnl(x));
+    opPlClose();
+    if (!picked.length) return;
+    picked.forEach(x => {
+      tjAddTrade({ id: opPlTradeId(x), index: x.label, type: '', qty: x.qty, entry: x.buy, exit: x.exit, pnl: x.pl, ts: x.ts > 0 ? x.ts : Date.now(), label: x.label, acct: x.acct || '', src: 'positions' });
+      x.inPnl = true; delete opXSel[x.id];
+    });
+    opTouchAndSave();
+    opRenderExited();
+    updatePnL(); renderMonthlySummary(); renderWeeklySummary(); renderWeekGraph();
+  }
+  document.getElementById('op-pl-cancel').addEventListener('click', opPlClose);
+  document.getElementById('op-pl-ok').addEventListener('click', opPlConfirm);
   opExitedEl.addEventListener('click', (e) => {
+    const sel = e.target.closest('[data-xsel]');
+    if (sel) { const id = sel.getAttribute('data-xsel'); if (opXSel[id]) delete opXSel[id]; else opXSel[id] = true; opRenderExited(); return; }
+    if (e.target.closest('[data-xall]')) {
+      const today = opIstDay(Date.now());
+      const open = opState.exited.filter(x => x.day === today && !opXInPnl(x));
+      const all = open.length > 0 && open.every(x => opXSel[x.id]);
+      open.forEach(x => { if (all) delete opXSel[x.id]; else opXSel[x.id] = true; });
+      opRenderExited(); return;
+    }
+    if (e.target.closest('[data-xadd]')) { opPlOpen(); return; }
     const d = e.target.closest('[data-xdel]');
     if (!d) return;
-    if (!confirm('Remove this line from Exited today?')) return;
+    if (!confirm('Remove this line from Exited today?\n(This does not touch P&L.)')) return;
     opState.exited = opState.exited.filter(x => x.id !== d.getAttribute('data-xdel'));
     opTouchAndSave();
     opRenderExited();
