@@ -713,6 +713,11 @@
   .op-xtotal { font-size: 0.95rem; }
   .op-fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 32px); max-width: 560px; z-index: 800; padding: 15px; border-radius: 16px; border: none; background: var(--accent); color: #fff; font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer; box-shadow: 0 8px 22px rgba(26,99,232,0.4); }
   .op-fab.hidden { display: none; }
+  /* Stoploss box on the card (2026-10-19) */
+  .op-slwrap { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; }
+  .op-slwrap .op-k { font-size: 0.64rem; white-space: nowrap; }
+  .op-slwrap .op-sl { width: 62px; font-size: 0.82rem; font-weight: 700; padding: 4px 6px; border-radius: 8px; text-align: right; }
+  .op-slwrap .op-sl.custom { border: 2px solid var(--amber); }
 
   /* Add to P&L (2026-10-19): tick boxes on Exited today lines */
   #op-exited .op-xrow.has-cb { grid-template-columns: auto 1fr auto auto; }
@@ -1570,7 +1575,7 @@
 <div class="op-exited hidden" id="op-exited" style="grid-column: 1 / -1;"></div>
 <div class="card theme-teal" id="open-positions-card" style="grid-column: 1 / -1;">
   <h2>💼 Open Positions <button class="info-icon-btn" data-info="info-openpos">i</button></h2>
-  <div id="info-openpos" class="info-popover hidden">Tap “＋ Add position” and enter the index, strike, Qty and Buy price. After that you only type the CMP (the current price) — press Next on the keypad to jump to the next position. Everything else is calculated: profit/loss, 🟢 HOLD / 🔴 EXIT, and the stoploss (automatically 40% below your buy price; use 🎯 SL on a card for a custom one). The alarm rings when the CMP is at or below the stoploss. Tap Exit when you sell: the profit/loss is kept under Exited today for the day (record it in P&amp;L yourself). Close clears an exited card and frees the slot. Tap a name to minimise or expand it. Cards in danger move to the top.</div>
+  <div id="info-openpos" class="info-popover hidden">Tap “＋ Add position” and enter the index, strike, Qty and Buy price. After that you only type the CMP (the current price) — press Next on the keypad to jump to the next position. Everything else is calculated: profit/loss, 🟢 HOLD / 🔴 EXIT, and the stoploss (automatically 40% below your buy price; to use your own, just type it in the SL box on the card — clear the box to go back to automatic). The alarm rings when the CMP is at or below the stoploss. Tap Exit when you sell: the profit/loss is kept under Exited today for the day (record it in P&amp;L yourself). Close clears an exited card and frees the slot. Tap a name to minimise or expand it. Cards in danger move to the top. If you hold the same option (same index, strike and CE/PE) in two accounts, typing the CMP on one card fills it on the other too.</div>
   <div class="op-totals hidden" id="op-totals">
     <div class="op-sumbox">
       <div class="op-sumtitle">📅 Today summary — open positions</div>
@@ -1585,17 +1590,6 @@
   </div>
   <div class="op-secbar"><span class="op-sectitle">📋 Your positions <span class="op-count" id="op-count">0/10</span></span><button class="op-link op-collapse-all hidden" id="op-collapse-all" type="button">⇅ Collapse all</button></div>
   <div id="op-list"></div>
-  <div style="margin-top:2px;"><button class="op-link" id="op-sl-toggle" type="button">⚙️ Custom stoplosses ▾</button></div>
-  <div class="op-sl-panel hidden" id="op-sl-panel">
-    <div class="op-sl-add">
-      <input class="op-in" id="op-sl-price" type="number" inputmode="decimal" placeholder="Buy ₹">
-      <input class="op-in" id="op-sl-val" type="number" inputmode="decimal" placeholder="Stoploss ₹">
-      <button class="op-add-btn" id="op-sl-add-btn" type="button">Add</button>
-    </div>
-    <textarea class="op-sl-paste" id="op-sl-paste" placeholder="Optional: paste two columns from your sheet (Buy price, Stoploss), one pair per line"></textarea>
-    <div style="margin-bottom:8px;"><button class="op-link" id="op-sl-import-btn" type="button">Import pasted rows</button> <span id="op-sl-msg" style="font-size:0.75rem; color:var(--muted);"></span></div>
-    <div id="op-sl-list"></div>
-  </div>
 </div>
 
 
@@ -3543,10 +3537,6 @@
   const opTotalsEl = document.getElementById('op-totals');
   const opAddBtn = document.getElementById('op-add-btn');
   const opCountEl = document.getElementById('op-count');
-  const opSlToggleEl = document.getElementById('op-sl-toggle');
-  const opSlPanelEl = document.getElementById('op-sl-panel');
-  const opSlListEl = document.getElementById('op-sl-list');
-  const opSlMsgEl = document.getElementById('op-sl-msg');
 
   function opKey() { return currentUid ? ('signa365_openpos_' + currentUid) : 'signa365_openpos'; }
   function opEsc(s) {
@@ -3736,8 +3726,15 @@
     let sub;
     if (p.qty == null || p.buy == null) sub = '⚠️ Qty / Buy missing — tap Edit';
     else if (exited) sub = '<strong>' + opFmt(p.qty, false, false) + '</strong> × <strong>₹' + opFmt(p.buy, false, false) + '</strong> → exit <strong>₹' + opFmt(p.exitPrice != null ? p.exitPrice : p.cmp, false, false) + '</strong>';
-    else sub = '<strong>' + opFmt(p.qty, false, false) + '</strong> × <strong>₹' + opFmt(p.buy, false, false) + '</strong> · 🛑 SL <strong>' + opFmt(c.sl, false, true) + '</strong>' + (c.slAuto ? '' : ' <span class="op-auto">custom</span>');
+    else sub = '<strong>' + opFmt(p.qty, false, false) + '</strong> × <strong>₹' + opFmt(p.buy, false, false) + '</strong> ·';
     opSetCell(cardEl, 'sub', sub);
+    // Stoploss box on the card: shows the automatic (40% below buy) or your custom stoploss; typing a number saves a custom one
+    const slIn = cardEl.querySelector('[data-f="sl"]');
+    if (slIn) {
+      if (document.activeElement !== slIn) slIn.value = c.sl == null ? '' : c.sl;
+      slIn.classList.toggle('custom', c.sl != null && !c.slAuto);
+      slIn.disabled = p.buy == null;
+    }
     opRefreshTotals();
   }
   // Totals across ALL positions (2026-10-12): Σ Points, Σ Capital, Σ P/L, Σ Balance (= Σ Capital +
@@ -3826,7 +3823,7 @@
         const rowBtns = exited
           ? '<button class="op-sbtn" type="button" data-undo="' + id + '">↩️ Undo</button><button class="op-sbtn" type="button" data-close="' + id + '">✖️ Close</button>'
           : exitBtn + '<button class="op-link op-moretog" type="button" data-more-toggle="1">▾ More</button>';
-        const moreBtns = '<button class="op-btn" type="button" data-edit="' + id + '">✏️ Edit</button><button class="op-btn" type="button" data-customsl="' + id + '" title="Custom stoploss">🎯 Custom SL</button><button class="op-btn mut" type="button" data-del="' + id + '" aria-label="Remove position">🗑️</button>';
+        const moreBtns = '<button class="op-btn" type="button" data-edit="' + id + '">✏️ Edit</button><button class="op-btn mut" type="button" data-del="' + id + '" aria-label="Remove position">🗑️</button>';
         return '<div class="op-pos' + (exited ? ' exited' : '') + (collapsedMap[p.id] ? ' collapsed' : '') + '" data-id="' + id + '">' +
           '<div class="op-l1">' +
             '<button class="op-chev" type="button" data-collapse="1" aria-label="Minimise or expand">▾</button>' +
@@ -3839,7 +3836,7 @@
               '<div class="op-plbox"><span class="op-v op-bigpl" data-o="pl"></span> <span class="op-pct" data-o="pct"></span></div>' +
               (exited ? '' : '<label class="op-cmpwrap"><span class="op-k">CMP</span><input class="op-in op-cmp" data-f="cmp" type="number" inputmode="decimal" enterkeyhint="next" value="' + v(p.cmp) + '"></label>') +
             '</div>' +
-            '<div class="op-sub"><span class="op-subtxt" data-o="sub"></span><span class="op-subbtns">' + rowBtns + '</span></div>' +
+            '<div class="op-sub"><span class="op-subtxt"><span data-o="sub"></span>' + (exited ? '' : ' <label class="op-slwrap"><span class="op-k">🛑 SL</span><input class="op-in op-sl" data-f="sl" type="number" inputmode="decimal" enterkeyhint="done" placeholder="auto" title="Stoploss — type your own, or clear it for the automatic 40% below buy"></label>') + '</span><span class="op-subbtns">' + rowBtns + '</span></div>' +
             '<div class="op-confirm hidden" data-confirm="1"></div>' +
             (exited ? '' :
             '<div class="op-more hidden" data-more="1">' +
@@ -3858,16 +3855,7 @@
     }
     opRefreshTotals();
     opRenderExited();
-    opRenderSlList();
     opRenderSuspects();
-  }
-  function opRenderSlList() {
-    opSlToggleEl.textContent = '⚙️ Custom stoplosses (' + opState.slTable.length + ') ' + (opSlPanelEl.classList.contains('hidden') ? '▾' : '▴');
-    const rows = opState.slTable.slice().sort((a, b) => a.price - b.price);
-    opSlListEl.innerHTML = rows.length === 0
-      ? '<p class="placeholder" style="font-size:0.82rem;">None needed — every position already gets a stoploss 40% below its buy price. Add a row here only to use a different stoploss for one buy price.</p>'
-      : rows.map(r => '<div class="op-sl-row"><span>Buy <strong>₹' + opEsc(r.price) + '</strong> → SL <strong>₹' + opEsc(r.sl) + '</strong></span>' +
-          '<button class="op-del" type="button" data-sl-del="' + opEsc(r.price) + '" aria-label="Remove row">×</button></div>').join('');
   }
   function opUpsertSL(price, sl) {
     const i = opState.slTable.findIndex(r => Math.abs(r.price - price) < 0.005);
@@ -4028,11 +4016,48 @@
     const p = cardEl && opState.positions.find(x => x.id === cardEl.getAttribute('data-id'));
     if (!p) return;
     const f = input.getAttribute('data-f');
-    p[f] = opNum(input.value); // CMP is the only box on a card; everything else is read-only or set via Edit
+    if (f !== 'cmp') return; // the stoploss box saves when you leave it (see the 'change' handler below)
+    p[f] = opNum(input.value); // CMP is typed here; everything else is read-only or set via Edit
     opRefreshCard(cardEl, p);
+    opShareCmp(p); // same option in another account -> same CMP
     opTouchAndSave();
   });
+  // Same option (same index + CE/PE + strike) held in another account: typing the CMP once updates all of its ONGOING cards.
+  function opOptKey(p) { const m = opParseLabel(p && p.label); return m ? m.idx + '|' + m.ty + '|' + Number(m.strike) : null; }
+  function opShareCmp(p) {
+    const key = opOptKey(p);
+    if (!key || p.status !== 'ONGOING') return;
+    const cards = Array.from(opListEl.querySelectorAll('.op-pos'));
+    opState.positions.forEach(q => {
+      if (q === p || q.status !== 'ONGOING' || opOptKey(q) !== key) return;
+      q.cmp = p.cmp;
+      const el = cards.find(c => c.getAttribute('data-id') === q.id);
+      if (!el) return;
+      const inp = el.querySelector('[data-f="cmp"]');
+      if (inp && document.activeElement !== inp) inp.value = p.cmp == null ? '' : p.cmp;
+      opRefreshCard(el, q);
+    });
+  }
+  // Stoploss box: saved when you leave the box (or press Enter). Empty / same as automatic = automatic 40% again.
+  opListEl.addEventListener('change', (e) => {
+    const inp = e.target.closest('.op-sl');
+    if (!inp) return;
+    const cardEl = inp.closest('.op-pos');
+    const p = cardEl && opState.positions.find(x => x.id === cardEl.getAttribute('data-id'));
+    if (!p || p.buy == null) return;
+    const raw = String(inp.value).trim();
+    const v = opNum(raw);
+    if (raw !== '' && (v == null || v <= 0)) { opRefreshAll(); return; } // not a usable number — put the old value back
+    const auto = opAutoSL(p.buy);
+    if (raw === '' || Math.abs(v - auto) < 0.005) {
+      opState.slTable = opState.slTable.filter(r => Math.abs(r.price - p.buy) >= 0.005); // back to automatic
+    } else if (opUpsertSL(p.buy, v) === 'full') { alert('Custom stoploss list is full (' + OP_SL_MAX + '). Clear some first.'); opRefreshAll(); return; }
+    opTouchAndSave();
+    opRefreshAll();
+    opCheckExits();
+  });
   opListEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.matches && e.target.matches('.op-sl')) { e.preventDefault(); e.target.blur(); return; }
     if (e.key !== 'Enter' || !e.target.matches || !e.target.matches('.op-cmp')) return;
     e.preventDefault();
     const all = Array.from(opListEl.querySelectorAll('.op-pos:not(.collapsed) .op-cmp'));
@@ -4058,7 +4083,11 @@
       return;
     }
     const yes = e.target.closest('[data-cmp-yes]');
-    if (yes && pos) { opLastGoodCmp[pos.id] = pos.cmp; delete opCmpSuspect[pos.id]; opCheckExits(); return; }
+    if (yes && pos) {
+      const k = opOptKey(pos); // one "Yes" covers the same option in the other account
+      opState.positions.forEach(q => { if (q === pos || (k && q.status === 'ONGOING' && opOptKey(q) === k && q.cmp === pos.cmp)) { opLastGoodCmp[q.id] = q.cmp; delete opCmpSuspect[q.id]; } });
+      opCheckExits(); return;
+    }
     const fix = e.target.closest('[data-cmp-fix]');
     if (fix && cardEl) { const inp = cardEl.querySelector('[data-f="cmp"]'); if (inp) { inp.focus(); inp.select(); } return; }
     const ex = e.target.closest('[data-exit]');
@@ -4087,16 +4116,6 @@
       opTouchAndSave();
       opRender();
       opCheckExits();
-      return;
-    }
-    const csl = e.target.closest('[data-customsl]');
-    if (csl && pos) {
-      opSlPanelEl.classList.remove('hidden');
-      opRenderSlList();
-      const pe = document.getElementById('op-sl-price'), ve = document.getElementById('op-sl-val');
-      pe.value = pos.buy != null ? pos.buy : '';
-      opSlPanelEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => ve.focus(), 250);
       return;
     }
     const ed = e.target.closest('[data-edit]');
@@ -4247,45 +4266,6 @@
     opState.exited = opState.exited.filter(x => x.id !== d.getAttribute('data-xdel'));
     opTouchAndSave();
     opRenderExited();
-  });
-  opSlToggleEl.addEventListener('click', () => {
-    opSlPanelEl.classList.toggle('hidden');
-    opRenderSlList();
-  });
-  document.getElementById('op-sl-add-btn').addEventListener('click', () => {
-    const priceEl = document.getElementById('op-sl-price'), valEl = document.getElementById('op-sl-val');
-    const price = opNum(priceEl.value), sl = opNum(valEl.value);
-    if (price == null || sl == null) { opSlMsgEl.textContent = 'Enter both a Buy price and a Stoploss.'; return; }
-    const r = opUpsertSL(price, sl);
-    opSlMsgEl.textContent = r === 'full' ? 'Table is full (' + OP_SL_MAX + ' rows).' : (r === 'updated' ? 'Updated.' : 'Added.');
-    priceEl.value = ''; valEl.value = '';
-    opTouchAndSave();
-    opRenderSlList();
-    opRefreshAll();
-  });
-  document.getElementById('op-sl-import-btn').addEventListener('click', () => {
-    const ta = document.getElementById('op-sl-paste');
-    let added = 0, updated = 0, skipped = 0;
-    ta.value.split(/\r?\n/).forEach(line => {
-      const nums = line.split(/[\t,;\s]+/).map(opNum).filter(n => n != null);
-      if (nums.length < 2) { if (line.trim()) skipped++; return; }
-      const r = opUpsertSL(nums[0], nums[1]);
-      if (r === 'added') added++; else if (r === 'updated') updated++; else skipped++;
-    });
-    opSlMsgEl.textContent = added + ' added, ' + updated + ' updated' + (skipped ? ', ' + skipped + ' skipped' : '') + '.';
-    if (added || updated) ta.value = '';
-    opTouchAndSave();
-    opRenderSlList();
-    opRefreshAll();
-  });
-  document.getElementById('op-sl-list').addEventListener('click', (e) => {
-    const del = e.target.closest('[data-sl-del]');
-    if (!del) return;
-    const price = opNum(del.getAttribute('data-sl-del'));
-    opState.slTable = opState.slTable.filter(r => Math.abs(r.price - price) >= 0.005);
-    opTouchAndSave();
-    opRenderSlList();
-    opRefreshAll();
   });
   opCardEl.addEventListener('focusout', () => {
     setTimeout(opCheckExits, 80); // finished typing a CMP — check right away instead of waiting out the typing pause
