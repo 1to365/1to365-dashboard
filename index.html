@@ -697,6 +697,13 @@
   .op-meter-l { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--muted); margin-top: 5px; font-weight: 600; }
   .op-meter-l .l-sl { color: var(--red); }
   .op-meter-l .l-cmp { color: var(--accent); }
+  .op-meterbox { position: relative; padding-top: 18px; }
+  .op-cmptag { position: absolute; top: 0; transform: translateX(-50%); font-size: 0.68rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
+  .op-meter-l2 { position: relative; height: 16px; margin-top: 5px; font-size: 0.68rem; color: var(--muted); font-weight: 600; }
+  .op-meter-l2 > span { position: absolute; top: 0; white-space: nowrap; }
+  .op-meter-l2 .l-sl { left: 0; color: var(--red); }
+  .op-meter-l2 .l-buy { transform: translateX(-50%); }
+  .op-meter-l2 .l-tg { right: 0; color: var(--green); }
   .op-more { grid-template-columns: repeat(3, 1fr); padding-top: 10px; margin-top: 10px; border-top: 1px dashed var(--border); }
   .op-more .op-v { font-size: 0.95rem; }
   .op-btns { display: flex; gap: 6px; margin-top: 10px; }
@@ -721,7 +728,7 @@
   /* Stoploss box on the card (2026-10-19) */
   .op-slwrap { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; }
   .op-slwrap .op-k { font-size: 0.64rem; white-space: nowrap; }
-  .op-slwrap .op-sl { width: 62px; font-size: 0.82rem; font-weight: 700; padding: 4px 6px; border-radius: 8px; text-align: right; }
+  .op-slwrap .op-sl { width: 76px; font-size: 0.82rem; font-weight: 700; padding: 4px 5px; border-radius: 8px; text-align: right; }
   .op-slwrap .op-sl.custom { border: 2px solid var(--amber); }
 
   /* Add to P&L (2026-10-19): tick boxes on Exited today lines */
@@ -825,6 +832,7 @@
   .op-more .op-k { font-size: 0.56rem; }
   .op-more .op-v { font-size: 0.82rem; }
   .op-meter-l { font-size: 0.58rem; }
+  .op-meter-l2, .op-cmptag { font-size: 0.6rem; }
   .op-more .op-btn { font-size: 0.68rem; padding: 6px 4px; }
   .op-confirm { font-size: 0.7rem; padding: 6px 8px; }
   .op-confirm button { font-size: 0.68rem; padding: 4px 9px; }
@@ -3682,15 +3690,24 @@
         : opEsc(m.strike) + ' <span class="op-ty ' + m.ty.toLowerCase() + '">' + (m.ty === 'CE' ? '📈 CE' : '📉 PE') + '</span>');
   }
   // Stoploss bar: SL at the left end, Buy in the middle, the marker is where the CMP is now
+  // Stoploss-to-Target bar (2026-10-22): left end = stoploss (auto 40% below Buy, or your custom one), right end = Target = Buy + 60%,
+  // the dark pin is where the CMP you typed sits. Display only — HOLD/EXIT, stoploss and alarm logic are not touched.
   function opMeterHtml(p, c) {
     if (p.status === 'EXITED' || c.sl == null || p.buy == null) return '';
-    const hi = p.buy + (p.buy - c.sl);
-    let marker = '';
-    if (p.cmp != null && hi > c.sl) {
-      const pct = Math.max(0, Math.min(100, ((p.cmp - c.sl) / (hi - c.sl)) * 100));
-      marker = '<i style="left:' + pct.toFixed(1) + '%"></i>';
+    const lo = c.sl, hi = Math.round(p.buy * 1.6 * 20) / 20; // Target = Buy x 1.6
+    if (!(hi > lo)) return '';
+    const at = (v) => Math.max(0, Math.min(100, ((v - lo) / (hi - lo)) * 100));
+    const buyPct = at(p.buy);
+    const n = (v) => opFmt(v, false, false);
+    let pin = '', tag = '';
+    if (p.cmp != null) {
+      const pc = at(p.cmp);
+      pin = '<i style="left:' + pc.toFixed(1) + '%"></i>';
+      tag = '<span class="op-cmptag" style="left:' + Math.max(12, Math.min(88, pc)).toFixed(1) + '%">CMP ' + n(p.cmp) + '</span>';
     }
-    return '<div class="op-meter">' + marker + '</div><div class="op-meter-l"><span class="l-sl">🛑 SL ' + opFmt(c.sl, false, false) + '</span><span>Buy ' + opFmt(p.buy, false, false) + '</span><span class="l-cmp">' + (p.cmp != null ? 'CMP ' + opFmt(p.cmp, false, false) : 'CMP —') + '</span></div>';
+    return '<div class="op-meterbox">' + tag +
+      '<div class="op-meter" style="background:linear-gradient(90deg, var(--red), #f0b93d ' + buyPct.toFixed(1) + '%, var(--green));">' + pin + '</div>' +
+      '<div class="op-meter-l2"><span class="l-sl">🛑 SL ' + n(lo) + '</span><span class="l-buy" style="left:' + Math.max(24, Math.min(76, buyPct)).toFixed(1) + '%">Buy ' + n(p.buy) + '</span><span class="l-tg">🎯 Target ' + n(hi) + '</span></div></div>';
   }
   function opCalc(p, table) {
     const qty = p.qty, buy = p.buy, cmp = p.cmp;
@@ -3748,9 +3765,10 @@
     const helpEl = cardEl.querySelector('[data-o="tilehelp"]');
     if (helpEl) {
       let txt = '';
-      if (tOpen === 'capital') txt = c.capital == null ? 'Needs Qty and Buy price.' : '💰 Capital = Qty × Buy = ' + opFmt(p.qty, false, false) + ' × ₹' + opFmt(p.buy, false, false) + ' = ' + opFmt(c.capital, false, true);
-      else if (tOpen === 'points') txt = c.points == null ? '🎯 Enter the CMP to see points.' : '🎯 Points = CMP − Buy = ' + opFmt(p.cmp, false, false) + ' − ' + opFmt(p.buy, false, false) + ' = ' + opFmt(c.points, true, false);
-      else if (tOpen === 'balance') txt = c.balance == null ? 'Needs Qty and Buy price.' : '🏦 Balance = Capital + Profit/Loss = ' + opFmt(c.capital, false, true) + ' ' + (c.pl != null && c.pl < 0 ? '−' : '+') + ' ' + opFmt(Math.abs(c.pl || 0), false, true) + ' = ' + opFmt(c.balance, false, true);
+      const n = (v) => opFmt(v, false, false);
+      if (tOpen === 'capital') txt = c.capital == null ? 'Capital= needs Qty and Buy price' : 'Capital= ' + n(p.qty) + ' (QTY) X ' + n(p.buy) + ' (buy)= rs' + n(c.capital);
+      else if (tOpen === 'points') txt = c.points == null ? 'Points= enter the CMP' : 'Points= ' + n(p.cmp) + ' (CMP) - ' + n(p.buy) + ' (buy)= ' + opFmt(c.points, true, false);
+      else if (tOpen === 'balance') txt = c.balance == null ? 'Balance= needs Qty and Buy price' : 'Balance= ' + n(c.capital) + ' (capital) ' + (c.pl != null && c.pl < 0 ? '-' : '+') + ' ' + n(Math.abs(c.pl || 0)) + ' (P/L)= rs' + n(c.balance);
       helpEl.textContent = txt;
       helpEl.classList.toggle('hidden', !txt);
     }
