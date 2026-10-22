@@ -713,6 +713,11 @@
   .op-xtotal { font-size: 0.95rem; }
   .op-fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 32px); max-width: 560px; z-index: 800; padding: 15px; border-radius: 16px; border: none; background: var(--accent); color: #fff; font-size: 1rem; font-weight: 800; font-family: inherit; cursor: pointer; box-shadow: 0 8px 22px rgba(26,99,232,0.4); }
   .op-fab.hidden { display: none; }
+  /* Capital / Points / Balance tiles (2026-10-22): tap a tile to see how it is calculated */
+  .op-tile { border: 1px solid var(--border); background: var(--panel-alt); border-radius: 10px; padding: 7px 8px; cursor: pointer; text-align: left; font-family: inherit; color: inherit; box-shadow: 0 1px 2px rgba(15,23,42,0.08); }
+  .op-tile.on { border-color: var(--accent); background: var(--accent-soft); }
+  .op-tilehelp { margin-top: 6px; padding: 7px 10px; border-radius: 9px; background: var(--accent-soft); color: var(--text); font-size: 0.76rem; font-weight: 600; }
+  .op-tilehelp.hidden { display: none; }
   /* Stoploss box on the card (2026-10-19) */
   .op-slwrap { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; }
   .op-slwrap .op-k { font-size: 0.64rem; white-space: nowrap; }
@@ -851,6 +856,9 @@
   .op-sumln .op-v { display: block; font-size: 0.8rem; min-height: 0; }
   .op-sumln .op-acc { font-size: 0.6rem; padding: 3px 0; }
   .op-plc small { display: block; font-size: 0.5rem; font-weight: 800; letter-spacing: 0.04em; }
+  .op-sumx { font-size: 0.64rem; font-weight: 700; color: var(--muted); text-align: right; padding: 2px 6px 4px 0; border-bottom: 1px dashed var(--border); }
+  .op-sumx.hidden { display: none; }
+  .op-sumx b.pos { color: var(--green); } .op-sumx b.neg { color: var(--red); }
   .op-sumall { background: var(--panel-alt); border: none; border-radius: 10px; padding: 6px; margin-top: 5px; }
   .op-sumfoot { display: flex; justify-content: space-between; align-items: center; font-size: 0.66rem; color: var(--muted); font-weight: 600; margin-top: 7px; }
   .op-sumfoot b { color: var(--text); }
@@ -1233,6 +1241,13 @@
     font-weight: 700;
     cursor: pointer;
   }
+
+  /* Phone typing fix (2026-10-22): easy-to-hit CMP / SL boxes, no iPhone auto-zoom (needs >=16px text), FAB out of the way while typing */
+  #open-positions-card .op-in, .op-sheet .op-in, .op-sheet select, .op-modal .op-in { font-size: 16px !important; touch-action: manipulation; }
+  .op-cmpwrap { padding: 4px 0; }
+  .op-cmpwrap .op-cmp { min-height: 46px; width: 100px; font-size: 18px !important; }
+  .op-slwrap .op-sl { min-height: 38px; }
+  .op-fab.typing { display: none; }
 </style>
 </head>
 <body>
@@ -1581,10 +1596,15 @@
       <div class="op-sumtitle">📅 Today summary — open positions</div>
       <div class="op-sumhd"><span>Acct</span><span>Capital</span><span>Profit / Loss</span><span>Balance</span></div>
       <div class="op-sumln" data-row="ICI"><span class="op-acc a-ici">ICI</span><span class="op-v" data-o="cap_ICI"></span><span class="op-v op-plc" data-o="pl_ICI"></span><span class="op-v" data-o="bal_ICI"></span></div>
+      <div class="op-sumx hidden" data-xrow="ICI"></div>
       <div class="op-sumln" data-row="STW"><span class="op-acc a-stw">STW</span><span class="op-v" data-o="cap_STW"></span><span class="op-v op-plc" data-o="pl_STW"></span><span class="op-v" data-o="bal_STW"></span></div>
+      <div class="op-sumx hidden" data-xrow="STW"></div>
       <div class="op-sumln" data-row="OTH"><span class="op-acc a-oth">OTH</span><span class="op-v" data-o="cap_OTH"></span><span class="op-v op-plc" data-o="pl_OTH"></span><span class="op-v" data-o="bal_OTH"></span></div>
+      <div class="op-sumx hidden" data-xrow="OTH"></div>
       <div class="op-sumln hidden" data-row="OLD"><span class="op-acc a-old">OLD</span><span class="op-v" data-o="cap_OLD"></span><span class="op-v op-plc" data-o="pl_OLD"></span><span class="op-v" data-o="bal_OLD"></span></div>
+      <div class="op-sumx hidden" data-xrow="OLD"></div>
       <div class="op-sumln op-sumall" data-row="ALL"><span class="op-acc a-all">ALL</span><span class="op-v" data-o="cap_ALL"></span><span class="op-v op-plc" data-o="pl_ALL"></span><span class="op-v" data-o="bal_ALL"></span></div>
+      <div class="op-sumx hidden" data-xrow="ALL"></div>
       <div class="op-sumfoot"><span>📌 Used <b data-o="tused"></b><span class="op-usedbar"><i id="op-used-bar"></i></span></span><span>🎯 Points <b data-o="tpoints"></b></span></div>
     </div>
   </div>
@@ -3722,6 +3742,18 @@
     opSetCell(cardEl, 'outcome', c.outcome ? '<span class="op-pill ' + (c.outcome === 'PROFIT' ? 'good' : (c.outcome === 'LOSS' ? 'bad' : 'flat')) + '">' + c.outcome + '</span>' : '—');
     opSetCell(cardEl, 'balance', opFmt(c.balance, false, true));
     opSetCell(cardEl, 'capital', opFmt(c.capital, false, true));
+    // tap-a-tile explanation (Capital / Points / Balance)
+    const tOpen = cardEl.getAttribute('data-tile-open') || '';
+    cardEl.querySelectorAll('[data-tile]').forEach(t => t.classList.toggle('on', t.getAttribute('data-tile') === tOpen));
+    const helpEl = cardEl.querySelector('[data-o="tilehelp"]');
+    if (helpEl) {
+      let txt = '';
+      if (tOpen === 'capital') txt = c.capital == null ? 'Needs Qty and Buy price.' : '💰 Capital = Qty × Buy = ' + opFmt(p.qty, false, false) + ' × ₹' + opFmt(p.buy, false, false) + ' = ' + opFmt(c.capital, false, true);
+      else if (tOpen === 'points') txt = c.points == null ? '🎯 Enter the CMP to see points.' : '🎯 Points = CMP − Buy = ' + opFmt(p.cmp, false, false) + ' − ' + opFmt(p.buy, false, false) + ' = ' + opFmt(c.points, true, false);
+      else if (tOpen === 'balance') txt = c.balance == null ? 'Needs Qty and Buy price.' : '🏦 Balance = Capital + Profit/Loss = ' + opFmt(c.capital, false, true) + ' ' + (c.pl != null && c.pl < 0 ? '−' : '+') + ' ' + opFmt(Math.abs(c.pl || 0), false, true) + ' = ' + opFmt(c.balance, false, true);
+      helpEl.textContent = txt;
+      helpEl.classList.toggle('hidden', !txt);
+    }
     // Read-only line: qty × buy = capital · stoploss (auto = 40% below buy unless a custom one is saved)
     let sub;
     if (p.qty == null || p.buy == null) sub = '⚠️ Qty / Buy missing — tap Edit';
@@ -3774,10 +3806,21 @@
       [g[k], g.ALL].forEach(x => { x.n++; if (c.capital != null) x.c += c.capital; if (c.pl != null) { x.pl += c.pl; x.k++; } });
       if (c.points != null) points += c.points;
     });
+    // Result of today's exits per account (realised) — a small extra line under each account line
+    const xg = { ICI: { n: 0, pl: 0 }, STW: { n: 0, pl: 0 }, OTH: { n: 0, pl: 0 }, OLD: { n: 0, pl: 0 }, ALL: { n: 0, pl: 0 } };
+    const xday = opIstDay(Date.now());
+    opState.exited.filter(x => x.day === xday).forEach(x => { const k = opAcctClean(x.acct) || 'OLD'; [xg[k], xg.ALL].forEach(y => { y.n++; y.pl += x.pl; }); });
+    Object.keys(xg).forEach(k => {
+      const el = opTotalsEl.querySelector('[data-xrow="' + k + '"]');
+      if (!el) return;
+      const y = xg[k], v = r2(y.pl);
+      el.classList.toggle('hidden', y.n === 0);
+      el.innerHTML = y.n === 0 ? '' : '🚪 Exited today · ' + y.n + ' · <b class="' + sign(v) + '">' + opFmt(v, true, true) + '</b>';
+    });
     Object.keys(g).forEach(k => {
       const x = g[k];
       const row = opTotalsEl.querySelector('[data-row="' + k + '"]');
-      if (k === 'OLD' && row) row.classList.toggle('hidden', x.n === 0);
+      if (k === 'OLD' && row) row.classList.toggle('hidden', x.n === 0 && !xg.OLD.n);
       if (x.n === 0) { opSetCell(opTotalsEl, 'cap_' + k, '—'); opSetCell(opTotalsEl, 'pl_' + k, '—'); opSetCell(opTotalsEl, 'bal_' + k, '—'); return; }
       const cap = r2(x.c), pl = r2(x.pl);
       opSetCell(opTotalsEl, 'cap_' + k, opFmt(cap, false, true));
@@ -3842,10 +3885,11 @@
             '<div class="op-more hidden" data-more="1">' +
               '<div class="op-meterwrap" data-o="meter"></div>' +
               '<div class="op-mgrid">' +
-                '<div class="op-field"><span class="op-k">💰 Capital</span><span class="op-v" data-o="capital"></span></div>' +
-                '<div class="op-field"><span class="op-k">🎯 Points</span><span class="op-v" data-o="points"></span></div>' +
-                '<div class="op-field"><span class="op-k">🏦 Balance</span><span class="op-v" data-o="balance"></span></div>' +
+                '<button class="op-field op-tile" type="button" data-tile="capital"><span class="op-k">💰 Capital</span><span class="op-v" data-o="capital"></span></button>' +
+                '<button class="op-field op-tile" type="button" data-tile="points"><span class="op-k">🎯 Points</span><span class="op-v" data-o="points"></span></button>' +
+                '<button class="op-field op-tile" type="button" data-tile="balance"><span class="op-k">🏦 Balance</span><span class="op-v" data-o="balance"></span></button>' +
               '</div>' +
+              '<div class="op-tilehelp hidden" data-o="tilehelp"></div>' +
               '<div class="op-btns">' + moreBtns + '</div>' +
             '</div>') +
           '</div>' +
@@ -3983,6 +4027,7 @@
   function opSyncFab() {
     const on = typeof currentPageIdx !== 'undefined' && currentPageIdx === 1 && pageNavEl.classList.contains('show') && opQuickEl.classList.contains('hidden');
     opAddBtn.classList.toggle('hidden', !on);
+    opTypingSync();
     if (on) opPlaceFab();
   }
   // iPhone fix: a plain "position:fixed; bottom" can sit below the visible screen until the page is scrolled to the very
@@ -4007,6 +4052,25 @@
   window.addEventListener('scroll', opPlaceFabSoon, { passive: true });
   window.addEventListener('resize', opPlaceFabSoon);
   window.addEventListener('orientationchange', opPlaceFabSoon);
+
+  // Phone typing (2026-10-22): tapping CMP / SL selects the whole number, so you just type the new one (no fiddling to delete the old digits);
+  // the floating "＋ Add position" button hides while any box is being typed in, so it can never sit on top of the keyboard / the box.
+  opListEl.addEventListener('focusin', (e) => {
+    const el = e.target;
+    if (el && el.matches && el.matches('.op-cmp, .op-sl')) { setTimeout(() => { try { el.select(); } catch (err) { /* best effort */ } }, 0); }
+  });
+  function opTypingSync() { const a = (document.activeElement && document.activeElement.getClientRects && document.activeElement.getClientRects().length) ? document.activeElement : null; const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches; opAddBtn.classList.toggle('typing', !!(touch && a && a.matches && a.matches('input, textarea, select'))); } // phones/tablets only — on a desktop there is no keyboard in the way
+  document.addEventListener('focusin', opTypingSync);
+  // iPhone's number keypad has no Done key, and tapping empty space does not always close it — so a tap on anything that is not a
+  // box closes the keyboard (and brings the ＋ Add position button back).
+  document.addEventListener('pointerdown', (e) => {
+    const a = document.activeElement;
+    if (!a || !a.matches || !a.matches('input, textarea, select')) return;
+    if (e.target.closest && e.target.closest('input, textarea, select, label, button, a, [data-more-toggle], [data-collapse]')) return;
+    a.blur();
+  });
+  document.addEventListener('click', () => setTimeout(opTypingSync, 250)); // safety net: a box that disappeared while focused (e.g. the Add form closing) must not leave the button hidden
+  document.addEventListener('focusout', () => setTimeout(opTypingSync, 150)); // short delay so moving from one box to the next doesn't flash the button
 
   // Typing: update just that field + that card's computed cells (no re-render, so the cursor stays put).
   opListEl.addEventListener('input', (e) => {
@@ -4068,6 +4132,13 @@
     const cardEl = e.target.closest('.op-pos');
     const cardId = cardEl ? cardEl.getAttribute('data-id') : null;
     const pos = cardId ? opState.positions.find(x => x.id === cardId) : null;
+    const tile = e.target.closest('[data-tile]');
+    if (tile && cardEl && pos) {
+      const kind = tile.getAttribute('data-tile');
+      cardEl.setAttribute('data-tile-open', cardEl.getAttribute('data-tile-open') === kind ? '' : kind);
+      opRefreshCard(cardEl, pos);
+      return;
+    }
     const col = e.target.closest('[data-collapse]');
     if (col && cardEl) {
       const m = opCollapsedLoad();
@@ -4266,6 +4337,7 @@
     opState.exited = opState.exited.filter(x => x.id !== d.getAttribute('data-xdel'));
     opTouchAndSave();
     opRenderExited();
+    opRefreshTotals();
   });
   opCardEl.addEventListener('focusout', () => {
     setTimeout(opCheckExits, 80); // finished typing a CMP — check right away instead of waiting out the typing pause
@@ -4276,7 +4348,15 @@
     }, 60);
   });
   // Called on every sign-in: load THIS account's saved positions, then start the cloud mirror.
+  function opSuspend() { // Positions switched OFF for this account: stop the cloud mirror and any alarm; saved data stays as it is
+    if (opUnsubscribe) { opUnsubscribe(); opUnsubscribe = null; }
+    Object.keys(opTgTimers).forEach(opTgCancel);
+    opExitActive = {};
+    opExitApply();
+    opExitBannerEl.classList.add('hidden');
+  }
   function opStartForCurrentUser() {
+    if (!opAllowed()) return; // Positions is off for this account — nothing is loaded or checked
     opPendingCloud = null;
     opState = opLoadLocal();
     opState.positions.forEach(p => { if (p.cmp != null && /^ONGOING$/i.test(p.status)) opLastGoodCmp[p.id] = p.cmp; }); // saved CMPs are trusted; only NEW entries are checked
@@ -4307,6 +4387,7 @@
   function opExitStamp(p, sl) { return p.buy + '/' + sl; } // a dismissal applies to this buy price + stoploss only
   function opCheckExits() {
     clearTimeout(opExitTimer);
+    if (currentRole === 'user' && !myPositionsOn) return; // Positions is off for this account: no alarm, no Telegram
     const freshToday = opState.updatedAt && opIstDay(opState.updatedAt) === opIstDay(Date.now());
     const dismissed = opExitLoadDismissed();
     let dismissedChanged = false;
@@ -4665,8 +4746,13 @@
   const pagesTrackEl = document.getElementById('pages-track');
   let currentPageIdx = 0;
   let pageIsAdmin = false; // set by applyRoleUI — page 3 (Admin) exists only for admin
+  let pagePosOn = false;   // set by applyRoleUI — Positions tab shown (admin always; other accounts only when admin switched it on)
+  // POSITIONS ACCESS (2026-10-22): admin always has Positions. Other accounts see it only when admin has switched it ON for
+  // that account (Admin page -> account row -> "Positions"). OFF = tab hidden, nothing loaded, no alarms; their saved data is left untouched.
+  let myPositionsOn = false;
+  function opAllowed() { return currentRole === 'admin' || myPositionsOn; }
   function goToPage(idx) {
-    const max = pageIsAdmin ? 2 : 1;
+    const max = pageIsAdmin ? 2 : (pagePosOn ? 1 : 0);
     currentPageIdx = Math.max(0, Math.min(max, idx | 0));
     pagesTrackEl.style.transform = `translateX(-${currentPageIdx * (100 / 3)}%)`;
     pageNavBtns.forEach((btn, i) => btn.classList.toggle('active', i === currentPageIdx));
@@ -4767,7 +4853,9 @@
     // non-admin somehow ends up on page 2 (e.g. role changes mid-session), snap back to page 1.
     // Everyone signed in gets Dashboard + Open Positions; only admin also gets the Admin tab/page.
     pageIsAdmin = isAdmin;
-    pageNavEl.classList.toggle('show', loggedIn);
+    pagePosOn = isAdmin || myPositionsOn;
+    pageNavEl.classList.toggle('show', loggedIn && pagePosOn);
+    pageNavBtns[1].style.display = pagePosOn ? '' : 'none';
     pageNavBtns[2].style.display = isAdmin ? '' : 'none';
     if (!loggedIn) goToPage(0); else goToPage(currentPageIdx); // re-clamp (e.g. role changed mid-session)
     logoutBtn.style.display = loggedIn ? '' : 'none';
@@ -5043,6 +5131,13 @@
           if (!lockScreenEl.classList.contains('hidden')) {
             refreshPinLockMode();
           }
+          // admin switched this account's Positions tab on/off while the app is open
+          const posNow = data.positionsEnabled === true;
+          if (posNow !== myPositionsOn) {
+            myPositionsOn = posNow;
+            applyRoleUI(currentRole);
+            if (posNow) opStartForCurrentUser(); else opSuspend();
+          }
         }
       },
       (err) => console.warn('Signa365: account status sync unavailable:', err)
@@ -5118,6 +5213,7 @@
           <button data-action="allow-pin-reset" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Allow Password Reset</button>
           <button data-action="clear-device" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Clear Device</button>
           <button data-action="toggle-disable" data-uid="${u.uid}" data-username="${u.username || ''}" data-disabled="${!!u.disabled}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">${u.disabled ? 'Enable' : 'Disable'}</button>
+          <button data-action="toggle-positions" data-uid="${u.uid}" data-username="${u.username || ''}" data-on="${u.positionsEnabled === true}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:${u.positionsEnabled === true ? 'var(--accent-soft)' : 'var(--panel-alt)'}; color:var(--text); font-size:0.72rem; cursor:pointer;">📈 Positions: ${u.positionsEnabled === true ? 'ON' : 'OFF'}</button>
           <button data-action="force-logout" data-uid="${u.uid}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">Force Logout</button>
           <button data-action="copy-link" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">🔗 Copy Link</button>
           <button data-action="view-pnl" data-uid="${u.uid}" data-username="${u.username || ''}" style="flex:1; min-width:80px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.72rem; cursor:pointer;">📊 Loading…</button>
@@ -5273,6 +5369,13 @@
         const verb = isDisabled ? 'Enable' : 'Disable';
         if (!confirm(`${verb} ${tdUsername}'s account?`)) return;
         fbDb.collection('users').doc(uid).update({ disabled: !isDisabled })
+          .then(() => loadAdminUserList())
+          .catch(err => { alert('Could not update account.'); console.warn(err); });
+      } else if (action === 'toggle-positions') {
+        const tpOn = btn.getAttribute('data-on') === 'true';
+        const tpUser = btn.getAttribute('data-username') || 'this user';
+        if (!confirm(`${tpOn ? 'Turn OFF' : 'Turn ON'} the Positions tab for ${tpUser}?${tpOn ? ' Their saved positions are kept, just hidden.' : ''}`)) return;
+        fbDb.collection('users').doc(uid).update({ positionsEnabled: !tpOn })
           .then(() => loadAdminUserList())
           .catch(err => { alert('Could not update account.'); console.warn(err); });
       } else if (action === 'force-logout') {
@@ -5801,6 +5904,7 @@
 
         currentUid = user.uid;
         currentRole = data.role;
+        myPositionsOn = data.role === 'admin' || data.positionsEnabled === true;
         currentUsername = data.username || user.email;
         fbMigratedOnce = false;
         migrateLegacyTradesIfNeeded();
