@@ -898,7 +898,8 @@
   .wk-dh { display: flex; justify-content: space-between; font-size: 0.74rem; font-weight: 800; color: var(--heading); margin-bottom: 4px; }
   .wk-dt { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; padding: 4px 0; border-bottom: 1px solid var(--border); font-weight: 700; }
   .wk-dt small { display: block; font-size: 0.62rem; color: var(--muted); font-weight: 600; }
-  .wk-dn { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 800; padding-top: 6px; }
+  .wk-dt > span { min-width: 0; }
+  .wk-dt > strong { flex: none; white-space: nowrap; margin-left: 10px; }
   .wk-pos { color: var(--green); } .wk-neg { color: var(--red); }
   .wk-hint { font-size: 0.66rem; color: var(--muted); text-align: center; margin-top: 5px; }
 
@@ -3422,8 +3423,7 @@
         const p = t.pnl || 0;
         const detail = t.label ? (String(t.label) + ' · ' + t.qty + ' × ' + t.entry + ' → ' + t.exit) : ((t.index && t.index !== 'QUICK' && t.qty != null) ? (String(t.index) + ' ' + String(t.type || '') + ' ' + t.qty + ' × ' + t.entry + ' → ' + t.exit) : ('logged ' + fmtT(t.ts)));
         return '<div class="wk-dt"><span>' + (p > 0 ? '✅ Profit' : (p < 0 ? '❌ Loss' : '➖ Flat')) + '<small>' + opEsc(detail) + '</small></span><strong class="' + (p >= 0 ? 'wk-pos' : 'wk-neg') + '">' + wkMoney(p, true) + '</strong></div>';
-      }).join('') +
-      '<div class="wk-dn"><span>Net for the day</span><span class="' + (d.net >= 0 ? 'wk-pos' : 'wk-neg') + '">' + wkMoney(d.net, true) + '</span></div>';
+      }).join('');
   }
   function renderWeekGraph() {
     if (!wkEl('wk-chart')) return;
@@ -3766,9 +3766,9 @@
     if (helpEl) {
       let txt = '';
       const n = (v) => opFmt(v, false, false);
-      if (tOpen === 'capital') txt = c.capital == null ? 'Capital= needs Qty and Buy price' : 'Capital= ' + n(p.qty) + ' (QTY) X ' + n(p.buy) + ' (buy)= rs' + n(c.capital);
+      if (tOpen === 'capital') txt = c.capital == null ? 'Capital= needs Qty and Buy price' : 'Capital= ' + n(p.qty) + ' (QTY) X ' + n(p.buy) + ' (buy)= ₹' + n(c.capital);
       else if (tOpen === 'points') txt = c.points == null ? 'Points= enter the CMP' : 'Points= ' + n(p.cmp) + ' (CMP) - ' + n(p.buy) + ' (buy)= ' + opFmt(c.points, true, false);
-      else if (tOpen === 'balance') txt = c.balance == null ? 'Balance= needs Qty and Buy price' : 'Balance= ' + n(c.capital) + ' (capital) ' + (c.pl != null && c.pl < 0 ? '-' : '+') + ' ' + n(Math.abs(c.pl || 0)) + ' (P/L)= rs' + n(c.balance);
+      else if (tOpen === 'balance') txt = c.balance == null ? 'Balance= needs Qty and Buy price' : 'Balance= ' + n(c.capital) + ' (capital) ' + (c.pl != null && c.pl < 0 ? '-' : '+') + ' ' + n(Math.abs(c.pl || 0)) + ' (P/L)= ₹' + n(c.balance);
       helpEl.textContent = txt;
       helpEl.classList.toggle('hidden', !txt);
     }
