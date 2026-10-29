@@ -878,6 +878,8 @@
   .op-sumfoot .op-usedbar { display: inline-block; width: 60px; vertical-align: middle; margin: 0 0 0 5px; }
   .op-row3 { display: grid; grid-template-columns: 1fr 1.3fr 0.95fr; gap: 8px; }
   .op-row3b { grid-template-columns: 1fr 1fr 1fr; }
+  .op-expf { margin-top: 8px; }
+  .op-expf #op-q-expdate { margin-top: 6px; }
   .op-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; }
   .op-sheet .op-sel { font-weight: 800; font-size: 0.9rem; padding: 10px 6px; }
   .op-sheet .op-in { font-size: 0.92rem; padding: 10px 10px; }
@@ -1274,6 +1276,7 @@
       <div class="op-f"><span class="op-k">Index</span><select class="op-in op-sel" id="op-q-idx"><option value="" disabled selected hidden>Index</option><option value="NIFTY">NIFTY</option><option value="BANKNIFTY">BANKNIFTY</option><option value="SENSEX">SENSEX</option></select></div>
       <div class="op-f"><span class="op-k">Type</span><select class="op-in op-sel" id="op-q-type"><option value="" disabled selected hidden>CE / PE</option><option value="CE">📈 CE</option><option value="PE">📉 PE</option></select></div>
     </div>
+    <div class="op-f op-expf"><span class="op-k">Expiry</span><select class="op-in op-sel" id="op-q-exp"><option value="">— pick index first —</option></select><input class="op-in hidden" id="op-q-expdate" type="date" aria-label="Expiry date"></div>
     <div class="op-row3 op-row3b">
       <div class="op-f"><span class="op-k">Strike</span><input class="op-in" id="op-q-strike" type="number" inputmode="numeric" enterkeyhint="next" placeholder="72700"></div>
       <div class="op-f"><span class="op-k">Qty</span><input class="op-in" id="op-q-qty" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Qty"></div>
@@ -3682,6 +3685,9 @@
   function opParseLabel(label) {
     let m = /^\s*(ICI|STW|OTH)\s+(NIFTY|BANKNIFTY|SENSEX)\s+(CE|PE)\s+(\d+(?:\.\d+)?)\s*$/i.exec(label || '');
     if (m) return { acct: m[1].toUpperCase(), idx: m[2].toUpperCase(), ty: m[3].toUpperCase(), strike: m[4] };
+    // with an expiry picked in the Add form (2026-10-29): "ICI NIFTY 03NOV PE 72700"
+    m = /^\s*(ICI|STW|OTH)\s+(NIFTY|BANKNIFTY|SENSEX)\s+(\d{1,2}(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC))\s+(CE|PE)\s+(\d+(?:\.\d+)?)\s*$/i.exec(label || '');
+    if (m) return { acct: m[1].toUpperCase(), idx: m[2].toUpperCase(), ty: m[4].toUpperCase(), strike: m[5], exp: m[3].toUpperCase() };
     m = /^\s*(NIFTY|BANKNIFTY|SENSEX)\s+(\d+(?:\.\d+)?)\s*(CE|PE)\s*$/i.exec(label || '');
     if (m) return { acct: '', idx: m[1].toUpperCase(), ty: m[3].toUpperCase(), strike: m[2] };
     return null;
@@ -3978,6 +3984,8 @@
   const opQIdxEl = document.getElementById('op-q-idx');
   const opQTypeEl = document.getElementById('op-q-type');
   const opQCmpEl = document.getElementById('op-q-cmp');
+  const opQExpEl = document.getElementById('op-q-exp');
+  const opQExpDateEl = document.getElementById('op-q-expdate');
   const opQNameWrapEl = document.getElementById('op-q-name-wrap');
   const opQNameLinkEl = document.getElementById('op-q-name-link');
   // last Account / Index / Type are remembered on this device so the next add needs no taps there
@@ -3993,6 +4001,64 @@
     opQAutoEl.innerHTML = '🛑 SL <strong>' + opFmt(slv, false, true) + '</strong>' + (auto ? '' : ' (custom)') +
       (qty != null && qty > 0 ? '<br>💰 <strong>' + opFmt(qty * buy, false, true) + '</strong>' : '');
   }
+  // ---- Expiry dropdown (2026-10-29): coming expiries for the chosen index ----
+  // NIFTY = every Tuesday (monthly = last Tuesday), SENSEX = every Thursday (monthly = last Thursday),
+  // BANKNIFTY = monthly only (last Tuesday). A holiday-shifted expiry is not known here: use "Other date…".
+  const OP_MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const OP_DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  function opIso(d) { return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'); }
+  function opLastWeekdayOfMonth(y, mo, dow) { const d = new Date(Date.UTC(y, mo + 1, 0)); while (d.getUTCDay() !== dow) d.setUTCDate(d.getUTCDate() - 1); return d; }
+  function opExpiryList(idx) {
+    const out = [];
+    const pr = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(new Date()).forEach(x => { pr[x.type] = x.value; });
+    const hh = parseInt(pr.hour, 10) || 0, mm = parseInt(pr.minute, 10) || 0;
+    const start = new Date(Date.UTC(+pr.year, +pr.month - 1, +pr.day));
+    if (hh > 15 || (hh === 15 && mm >= 30)) start.setUTCDate(start.getUTCDate() + 1); // today's expiry is over after 3:30 pm
+    if (idx === 'NIFTY' || idx === 'SENSEX') {
+      const dow = idx === 'NIFTY' ? 2 : 4, d = new Date(start);
+      while (d.getUTCDay() !== dow) d.setUTCDate(d.getUTCDate() + 1);
+      for (let i = 0; i < 5; i++) {
+        const last = opLastWeekdayOfMonth(d.getUTCFullYear(), d.getUTCMonth(), dow);
+        out.push({ d: new Date(d), monthly: last.getTime() === d.getTime() });
+        d.setUTCDate(d.getUTCDate() + 7);
+      }
+    } else if (idx === 'BANKNIFTY') {
+      let y = start.getUTCFullYear(), mo = start.getUTCMonth();
+      while (out.length < 3) {
+        const l = opLastWeekdayOfMonth(y, mo, 2);
+        if (l.getTime() >= start.getTime()) out.push({ d: l, monthly: true });
+        mo++; if (mo > 11) { mo = 0; y++; }
+      }
+    }
+    return out;
+  }
+  function opExpText(iso) { const d = new Date(iso + 'T00:00:00Z'); return String(d.getUTCDate()).padStart(2, '0') + ' ' + OP_MON[d.getUTCMonth()][0] + OP_MON[d.getUTCMonth()].slice(1).toLowerCase() + ' (' + OP_DOW[d.getUTCDay()] + ')'; }
+  function opExpToken(iso) { const d = new Date(iso + 'T00:00:00Z'); return String(d.getUTCDate()).padStart(2, '0') + OP_MON[d.getUTCMonth()]; }
+  // iso for a label token like "03NOV" (year picked the same way as the card's expiry line)
+  function opTokenToIso(tok) {
+    const m = /^(\d{1,2})([A-Z]{3})$/i.exec(tok || ''); if (!m) return '';
+    const mo = OP_MON.indexOf(m[2].toUpperCase()); if (mo < 0) return '';
+    const today = opIstDay(Date.now()), tY = +today.slice(0, 4), tUtc = Date.UTC(tY, +today.slice(5, 7) - 1, +today.slice(8, 10));
+    let y = tY; if (Date.UTC(y, mo, +m[1]) < tUtc - 30 * 86400000) y++;
+    return opIso(new Date(Date.UTC(y, mo, +m[1])));
+  }
+  // refill the dropdown for the chosen index; keepIso = a date to keep selected (added as an extra option if it isn't in the list)
+  function opQFillExp(idx, keepIso) {
+    const list = idx ? opExpiryList(idx) : [];
+    let html = '<option value="">' + (idx ? '— no expiry —' : '— pick index first —') + '</option>';
+    const seen = {};
+    list.forEach((e, i) => {
+      const iso = opIso(e.d); seen[iso] = 1;
+      html += '<option value="' + iso + '">' + opExpText(iso) + (i === 0 ? ' · Current' : (i === 1 ? ' · Next' : '')) + (e.monthly ? ' · Monthly' : '') + '</option>';
+    });
+    if (keepIso && !seen[keepIso]) html += '<option value="' + keepIso + '">' + opExpText(keepIso) + '</option>';
+    if (idx) html += '<option value="__other">Other date…</option>';
+    opQExpEl.innerHTML = html;
+    opQExpEl.value = keepIso || '';
+    if (opQExpEl.value !== (keepIso || '')) opQExpEl.value = '';
+    opQExpDateEl.classList.add('hidden'); opQExpDateEl.value = '';
+  }
+  function opQExpIso() { return opQExpEl.value === '__other' ? (opQExpDateEl.value || '') : opQExpEl.value; }
   function opShowNameBox(show) { opQNameWrapEl.classList.toggle('hidden', !show); opQNameLinkEl.classList.toggle('hidden', show); }
   function opOpenQuick(open, pos) {
     opEditingId = open && pos ? pos.id : null;
@@ -4008,12 +4074,13 @@
       const m = pos ? opParseLabel(pos.label) : null;
       if (pos) {
         opSelSet(opQAcctEl, opAcctOf(pos));
-        if (m) { opSelSet(opQIdxEl, m.idx); opSelSet(opQTypeEl, m.ty); opQStrikeEl.value = m.strike; opQNameEl.value = ''; opShowNameBox(false); }
-        else { opSelSet(opQIdxEl, ''); opSelSet(opQTypeEl, ''); opQStrikeEl.value = ''; opQNameEl.value = pos.label || ''; opShowNameBox(true); }
+        if (m) { opSelSet(opQIdxEl, m.idx); opSelSet(opQTypeEl, m.ty); opQStrikeEl.value = m.strike; opQNameEl.value = ''; opShowNameBox(false); opQFillExp(opQIdxEl.value, m.exp ? opTokenToIso(m.exp) : ''); }
+        else { opSelSet(opQIdxEl, ''); opSelSet(opQTypeEl, ''); opQStrikeEl.value = ''; opQNameEl.value = pos.label || ''; opShowNameBox(true); opQFillExp('', ''); }
       } else {
         const last = opLastLoad();
         opSelSet(opQAcctEl, last.acct); opSelSet(opQIdxEl, last.idx); opSelSet(opQTypeEl, last.ty);
         opQStrikeEl.value = ''; opQNameEl.value = ''; opShowNameBox(false);
+        opQFillExp(opQIdxEl.value, '');
       }
       opQPreview();
       const first = [opQAcctEl, opQIdxEl, opQTypeEl].find(e => !e.value);
@@ -4029,7 +4096,10 @@
     if (!ty) { opQErrEl.textContent = 'Pick CE or PE.'; return null; }
     const sv = opNum(strike);
     if (sv == null || sv <= 0) { opQErrEl.textContent = 'Enter the strike.'; return null; }
-    return { acct, label: (acct + ' ' + idx + ' ' + ty + ' ' + strike).slice(0, 40) };
+    const eIso = opQExpIso();
+    if (opQExpEl.value === '__other' && !eIso) { opQErrEl.textContent = 'Pick the expiry date — or choose "no expiry".'; return null; }
+    const eTok = eIso ? opExpToken(eIso) : '';
+    return { acct, label: (acct + ' ' + idx + (eTok ? ' ' + eTok : '') + ' ' + ty + ' ' + strike).slice(0, 40) };
   }
   function opQuickAdd() {
     opQErrEl.textContent = '';
@@ -4070,6 +4140,8 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !opQuickEl.classList.contains('hidden')) opOpenQuick(false); });
   opQNameLinkEl.addEventListener('click', () => { opShowNameBox(true); opQNameEl.focus(); });
   [opQAcctEl, opQIdxEl, opQTypeEl].forEach(el => el.addEventListener('change', () => { opQErrEl.textContent = ''; }));
+  opQIdxEl.addEventListener('change', () => opQFillExp(opQIdxEl.value, ''));
+  opQExpEl.addEventListener('change', () => { opQErrEl.textContent = ''; const o = opQExpEl.value === '__other'; opQExpDateEl.classList.toggle('hidden', !o); if (o) { try { opQExpDateEl.focus(); } catch (e) {} } });
   [opQQtyEl, opQBuyEl].forEach(el => el.addEventListener('input', opQPreview));
   const opQOrder = [opQStrikeEl, opQQtyEl, opQBuyEl, opQCmpEl];
   [opQStrikeEl, opQQtyEl, opQBuyEl, opQCmpEl, opQNameEl].forEach(el => el.addEventListener('keydown', (e) => {
@@ -4142,7 +4214,7 @@
     opTouchAndSave();
   });
   // Same option (same index + CE/PE + strike) held in another account: typing the CMP once updates all of its ONGOING cards.
-  function opOptKey(p) { const m = opParseLabel(p && p.label); return m ? m.idx + '|' + m.ty + '|' + Number(m.strike) : null; }
+  function opOptKey(p) { const m = opParseLabel(p && p.label); return m ? m.idx + '|' + m.ty + '|' + Number(m.strike) + (m.exp ? '|' + m.exp : '') : null; }
   function opShareCmp(p) {
     const key = opOptKey(p);
     if (!key || p.status !== 'ONGOING') return;
