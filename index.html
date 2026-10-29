@@ -674,6 +674,7 @@
   .op-pos.st-done { border-left-color: var(--amber); }
   .op-pos .op-name { font-size: 1rem; font-weight: 800; color: var(--text); }
   .op-idx { font-weight: 800; }
+  .op-exd { font-weight: 800; }
   .op-idx.i-nifty { color: var(--nifty); }
   .op-idx.i-banknifty { color: var(--banknifty); }
   .op-idx.i-sensex { color: var(--sensex); }
@@ -731,7 +732,7 @@
   .op-tilehelp.hidden { display: none; }
   /* Stoploss box on the card (2026-10-19) */
   .op-slwrap { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; }
-  .op-slwrap .op-k { font-size: 0.64rem; white-space: nowrap; }
+  .op-slwrap .op-k { font-size: 0.72rem; white-space: nowrap; }
   .op-slwrap .op-sl { width: 76px; font-size: 0.82rem; font-weight: 700; padding: 4px 5px; border-radius: 8px; text-align: right; }
   .op-slwrap .op-sl.custom { border: 2px solid var(--amber); }
 
@@ -797,7 +798,7 @@
   .op-pct { font-size: 0.7rem; }
   .op-cmpwrap .op-cmp { width: 84px; font-size: 1rem; padding: 6px 8px; border-radius: 10px; }
   .op-cmpwrap .op-k { font-size: 0.64rem; }
-  .op-sub { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 0; font-size: 0.76rem; }
+  .op-sub { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 0; font-size: 0.92rem; }
   .op-subtxt { flex: 1 1 auto; min-width: 0; }
   .op-subbtns { flex: none; display: flex; align-items: center; gap: 8px; }
   .op-xbtn { padding: 4px 10px; border-radius: 8px; border: none; background: var(--red); color: #fff; font-size: 0.74rem; font-weight: 800; cursor: pointer; font-family: inherit; }
@@ -830,7 +831,7 @@
   .op-hint { font-size: 0.66rem; }
   .op-cmpwrap .op-cmp { width: 74px; font-size: 0.9rem; padding: 5px 7px; }
   .op-cmpwrap .op-k { font-size: 0.56rem; }
-  .op-sub { font-size: 0.68rem; }
+  .op-sub { font-size: 0.92rem; }
   .op-xbtn, .op-sbtn { font-size: 0.64rem; padding: 3px 8px; }
   .op-moretog { font-size: 0.66rem !important; }
   .op-more .op-k { font-size: 0.56rem; }
@@ -3726,6 +3727,8 @@
     const a = opAcctClean(acct) || (m && m.acct) || '';
     const chip = a ? '<span class="op-at a-' + a.toLowerCase() + '">' + a + '</span>' : '';
     if (!m) return chip + opEsc(label || 'Position');
+    if (m.exp) return chip + '<span class="op-idx i-' + m.idx.toLowerCase() + '">' + m.idx + '</span> <span class="op-exd">' + opEsc(m.exp.replace(/^(\d{1,2})/, '$1 ')) + '</span> ' + opEsc(m.strike) +
+      ' <span class="op-ty ' + m.ty.toLowerCase() + '">' + (m.ty === 'CE' ? '📈 CE' : '📉 PE') + '</span>';
     return chip + '<span class="op-idx i-' + m.idx.toLowerCase() + '">' + m.idx + '</span> ' +
       (a && /^\s*(ICI|STW|OTH)\s/i.test(label || '') ? '<span class="op-ty ' + m.ty.toLowerCase() + '">' + (m.ty === 'CE' ? '📈 CE' : '📉 PE') + '</span> ' + opEsc(m.strike)
         : opEsc(m.strike) + ' <span class="op-ty ' + m.ty.toLowerCase() + '">' + (m.ty === 'CE' ? '📈 CE' : '📉 PE') + '</span>');
@@ -3819,7 +3822,6 @@
     else if (exited) sub = '<strong>' + opFmt(p.qty, false, false) + '</strong> × <strong>₹' + opFmt(p.buy, false, false) + '</strong> → exit <strong>₹' + opFmt(p.exitPrice != null ? p.exitPrice : p.cmp, false, false) + '</strong>';
     else sub = '<strong>' + opFmt(p.qty, false, false) + '</strong> × <strong>₹' + opFmt(p.buy, false, false) + '</strong> ·';
     opSetCell(cardEl, 'sub', sub);
-    { const ex = opExpiryHtml(p.label, exited); opSetCell(cardEl, 'exp', ex); const exEl = cardEl.querySelector('[data-o="exp"]'); if (exEl) exEl.classList.toggle('hidden', !ex); }
     // Stoploss box on the card: shows the automatic (40% below buy) or your custom stoploss; typing a number saves a custom one
     const slIn = cardEl.querySelector('[data-f="sl"]');
     if (slIn) {
@@ -3934,7 +3936,6 @@
             '<span class="op-mini" data-o="mini"></span>' +
             '<span class="op-chipwrap" data-o="action"></span>' +
           '</div>' +
-          '<div class="op-exp hidden" data-o="exp"></div>' +
           '<div class="op-body">' +
             '<div class="op-l3">' +
               '<div class="op-plbox"><span class="op-v op-bigpl" data-o="pl"></span> <span class="op-pct" data-o="pct"></span></div>' +
