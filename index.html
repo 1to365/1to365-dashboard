@@ -554,6 +554,10 @@
   .op-minipl.neg { color: var(--red); }
   .op-pos.collapsed .op-mini { display: flex; }
   .op-pos.collapsed .op-acts, .op-pos.collapsed .op-body { display: none; }
+  .op-exp { margin: 1px 0 4px 2px; font-size: 0.72rem; color: var(--muted); line-height: 1.2; }
+  .op-exp.hidden { display: none; }
+  .op-exp-t.today { color: #b45309; font-weight: 800; }
+  .op-exp-t.gone { color: #b91c1c; font-weight: 800; }
   .op-sub { margin: 3px 0 6px; font-size: 0.8rem; color: var(--muted); }
   .op-auto { font-size: 0.68rem; font-weight: 700; color: var(--muted); font-style: italic; }
   .op-l3 { display: flex; align-items: center; gap: 10px; }
@@ -1469,13 +1473,6 @@
         <div class="wk-hint" id="wk-hint">Tap a day to see its trades</div>
       </div>
 
-      <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Weekly Totals</p>
-      <div id="weekly-list"></div>
-
-      <hr style="border:none; border-top:1px solid var(--border); margin:14px 0 8px;">
-      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Totals</p>
-      <div id="monthly-list"></div>
     </div>
 
     <span id="current-username" style="font-size:0.7rem; color:rgba(255,255,255,0.85); display:none;"></span>
@@ -1713,6 +1710,16 @@
     <input id="admin-user-search" type="text" placeholder="🔍 Search by username…" style="width:100%; box-sizing:border-box; margin-bottom:8px; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.8rem;">
     <div id="admin-user-list"></div>
   </div>
+</div>
+
+<!-- 2026-10-29: Weekly Totals + Monthly Totals moved here from the P&L panel (admin asked for less information in P&L). Same elements/ids, same render functions. -->
+<div class="card hidden" id="admin-totals-card" style="grid-column: 1 / -1;">
+  <div style="font-size:0.9rem; font-weight:800; margin-bottom:8px;">📊 Weekly &amp; Monthly Totals</div>
+      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Weekly Totals</p>
+      <div id="weekly-list"></div>
+
+      <div style="height:14px;"></div><p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Totals</p>
+      <div id="monthly-list"></div>
 </div>
 
 </div>
@@ -3679,6 +3686,34 @@
     if (m) return { acct: '', idx: m[1].toUpperCase(), ty: m[3].toUpperCase(), strike: m[2] };
     return null;
   }
+  // Expiry date shown on the card (2026-10-29): read from the name, e.g. "ICI NIFTY 03NOV 22600" -> "Expiry 03 Nov 2026 (Tue) · 5 days left". Display only.
+  function opExpiryHtml(label, exited) {
+    try {
+      const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+      const m = /(?:^|[^0-9A-Z])(\d{1,2})[\s\-\/]?(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(?:\s?(20[2-3]\d)(?!\d)|[\-\/]?(\d{2})(?!\d))?(?![A-Z])/i.exec(String(label || ''));
+      if (!m) return '';
+      const d = parseInt(m[1], 10), mo = MON.indexOf(m[2].toUpperCase());
+      if (d < 1 || d > 31 || mo < 0) return '';
+      const today = opIstDay(Date.now()); // YYYY-MM-DD in IST
+      const tY = parseInt(today.slice(0, 4), 10);
+      const tUtc = Date.UTC(tY, parseInt(today.slice(5, 7), 10) - 1, parseInt(today.slice(8, 10), 10));
+      let y;
+      if (m[3] || m[4]) y = m[3] ? parseInt(m[3], 10) : 2000 + parseInt(m[4], 10);
+      else { y = tY; if (Date.UTC(y, mo, d) < tUtc - 30 * 86400000) y += 1; }
+      const e = new Date(Date.UTC(y, mo, d));
+      if (e.getUTCMonth() !== mo || e.getUTCDate() !== d) return '';
+      const days = Math.round((e.getTime() - tUtc) / 86400000);
+      const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const txt = 'Expiry ' + String(d).padStart(2, '0') + ' ' + m[2][0].toUpperCase() + m[2].slice(1, 3).toLowerCase() + ' ' + y + ' (' + DOW[e.getUTCDay()] + ')';
+      if (exited) return '<span class="op-exp-t">📅 ' + txt + '</span>';
+      let tail, cls = '';
+      if (days > 1) tail = days + ' days left';
+      else if (days === 1) tail = 'tomorrow';
+      else if (days === 0) { tail = 'TODAY'; cls = ' today'; }
+      else { tail = 'EXPIRED'; cls = ' gone'; }
+      return '<span class="op-exp-t' + cls + '">📅 ' + txt + ' · ' + tail + '</span>';
+    } catch (e) { return ''; }
+  }
   function opAcctOf(p) { return opAcctClean(p && p.acct) || ((opParseLabel(p && p.label) || {}).acct || ''); }
   function opNameHtml(label, acct) {
     const m = opParseLabel(label);
@@ -3778,6 +3813,7 @@
     else if (exited) sub = '<strong>' + opFmt(p.qty, false, false) + '</strong> × <strong>₹' + opFmt(p.buy, false, false) + '</strong> → exit <strong>₹' + opFmt(p.exitPrice != null ? p.exitPrice : p.cmp, false, false) + '</strong>';
     else sub = '<strong>' + opFmt(p.qty, false, false) + '</strong> × <strong>₹' + opFmt(p.buy, false, false) + '</strong> ·';
     opSetCell(cardEl, 'sub', sub);
+    { const ex = opExpiryHtml(p.label, exited); opSetCell(cardEl, 'exp', ex); const exEl = cardEl.querySelector('[data-o="exp"]'); if (exEl) exEl.classList.toggle('hidden', !ex); }
     // Stoploss box on the card: shows the automatic (40% below buy) or your custom stoploss; typing a number saves a custom one
     const slIn = cardEl.querySelector('[data-f="sl"]');
     if (slIn) {
@@ -3892,6 +3928,7 @@
             '<span class="op-mini" data-o="mini"></span>' +
             '<span class="op-chipwrap" data-o="action"></span>' +
           '</div>' +
+          '<div class="op-exp hidden" data-o="exp"></div>' +
           '<div class="op-body">' +
             '<div class="op-l3">' +
               '<div class="op-plbox"><span class="op-v op-bigpl" data-o="pl"></span> <span class="op-pct" data-o="pct"></span></div>' +
@@ -4776,6 +4813,7 @@
     pageNavBtns.forEach((btn, i) => btn.classList.toggle('active', i === currentPageIdx));
     window.scrollTo({ top: 0 });
     if (typeof opSyncFab === 'function') opSyncFab();
+    if (currentPageIdx === 2) { try { renderMonthlySummary(); renderWeeklySummary(); } catch (e) {} }
   }
   pageNavBtns[0].addEventListener('click', () => goToPage(0));
   pageNavBtns[1].addEventListener('click', () => goToPage(1));
@@ -4865,6 +4903,7 @@
     // else based on role. Refresh its contents the moment admin status is established instead
     // of waiting for a toggle click that no longer exists.
     adminPanelEl.classList.toggle('hidden', !isAdmin);
+    { const tc = document.getElementById('admin-totals-card'); if (tc) tc.classList.toggle('hidden', !isAdmin); }
     if (isAdmin) { loadAdminUserList(); computeNextUsername(); startAdminExpiryPingLoop(); startPresenceRefreshLoop(); }
     else { stopAdminExpiryPingLoop(); stopPresenceRefreshLoop(); }
     // PAGE NAV: only admin has anything on page 2 — show the tab strip only for admin, and if a
