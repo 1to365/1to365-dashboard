@@ -554,12 +554,14 @@
   .op-minipl.neg { color: var(--red); }
   .op-pos.collapsed .op-mini { display: flex; }
   .op-pos.collapsed .op-acts, .op-pos.collapsed .op-body { display: none; }
-  .gt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
+  .gt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 10px 12px; border: 1px solid #93c5fd; border-radius: 12px; background: linear-gradient(90deg, #dbeafe 0%, #7dd3fc 100%); color: #0f172a; }
+  .tot-box { border: 2px solid var(--border); border-radius: 14px; padding: 10px 12px; margin-bottom: 12px; background: transparent; }
+  .tot-wk { border-color: #0d9488; } .tot-mo { border-color: #4f46e5; }
   .gt-row.hidden { display: none; }
-  .gt-lbl { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); }
+  .gt-lbl { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; color: #334155; }
   .gt-lbl small { display: block; font-size: 0.68rem; font-weight: 600; text-transform: none; letter-spacing: 0; margin-top: 2px; }
   .gt-val { font-size: 1.25rem; font-weight: 800; white-space: nowrap; }
-  .gt-val.pos { color: var(--green); } .gt-val.neg { color: var(--red); }
+  .gt-val.pos { color: #047857; } .gt-val.neg { color: #b91c1c; }
   /* ===== ENTRY CHECK (Build A, 2026-11-03) ===== */
   .ec-card { padding: 12px 14px; }
   .ec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
@@ -603,12 +605,27 @@
   .mc-nums .g { color: var(--green); font-weight: 700; } .mc-nums .r { color: var(--red); font-weight: 700; }
   .mc-l2 { margin-top: 5px; font-size: 0.78rem; font-weight: 700; color: #8a5a00; background: #fff3d6; border-radius: 8px; padding: 4px 8px; line-height: 1.35; }
   .mc-l2.hidden { display: none; }
+  .mc-l1 { cursor: pointer; }
+  .mc-tog { margin-left: auto; color: var(--muted); font-size: 0.9rem; padding: 0 2px; }
+  .mc-card.mc-collapsed .mc-nums, .mc-card.mc-collapsed .mc-l2 { display: none; }
+  .mc-evl { display: block; }
+  .mc-evl + .mc-evl { margin-top: 3px; }
+  .mc-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; flex: none; vertical-align: middle; background: #9ca3af; }
+  .mc-dot.ce { background: var(--green); } .mc-dot.pe { background: var(--red); }
+  .mc-dot.pulse.ce { animation: mcDotCe 1.2s ease-out infinite; } .mc-dot.pulse.pe { animation: mcDotPe 1.2s ease-out infinite; }
+  @keyframes mcDotCe { 0% { box-shadow: 0 0 0 0 rgba(22,163,74,0.65); } 100% { box-shadow: 0 0 0 9px rgba(22,163,74,0); } }
+  @keyframes mcDotPe { 0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.65); } 100% { box-shadow: 0 0 0 9px rgba(220,38,38,0); } }
   .rk-card { padding: 12px 14px; }
   .rk-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 8px; }
   .rk-lbl { font-size: 0.74rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin: 8px 0 4px; }
   .rk-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .rk-in { padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--panel); color: var(--text); font-size: 0.9rem; min-width: 0; }
   .rk-btn { padding: 8px 14px; border-radius: 10px; border: none; background: var(--green); color: #fff; font-weight: 800; font-size: 0.85rem; cursor: pointer; }
+  .rk-stat { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 0.85rem; }
+  .rk-stat b { font-size: 1.05rem; } .rk-stat b.pos { color: var(--green); } .rk-stat b.neg { color: var(--red); }
+  .rk-opt { margin-top: 10px; border-top: 1px solid var(--border); } .rk-opt summary { cursor: pointer; }
+  .rk-chk { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; margin-top: 8px; }
+  .rk-ev .rk-evb { border: none; background: transparent; color: var(--muted); font-size: 0.72rem; font-weight: 700; cursor: pointer; }
   .rk-msg { font-size: 0.74rem; color: var(--muted); font-weight: 600; margin-top: 4px; }
   .rk-ev { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border); font-size: 0.82rem; }
   .rk-ev span { flex: 1; }
@@ -1334,6 +1351,57 @@
     cursor: pointer;
   }
 
+
+  /* ===== BUILD F (2026-11-05): animated status icons, red negative Grand Total, max-qty line, Pick my lead, screenshot import ===== */
+  .gt-row.neg, .gt-row.neg .gt-lbl, .gt-row.neg .gt-lbl small, .gt-row.neg .gt-val { color: #b91c1c !important; }
+  .gt-row.neg .gt-lbl, .gt-row.neg .gt-val { font-weight: 800; }
+  .ec-ico { display: inline-block; margin-right: 5px; transform-origin: 50% 70%; animation: ecWait 12s ease-in-out infinite; }
+  .ec-ico.ic-ce { animation-name: ecRise; } .ec-ico.ic-pe { animation-name: ecDrift; } .ec-ico.ic-chop { animation-name: ecSpin; }
+  .ec-ico.ic-mix { animation-name: ecBlink; } .ec-ico.ic-fake { animation-name: ecShake; } .ec-ico.ic-stop { animation-name: ecPulse; } .ec-ico.ic-hot { animation-name: ecFlame; }
+  @keyframes ecWait  { 0%, 9%, 100% { transform: none; } 2% { transform: rotate(-12deg); } 4.5% { transform: rotate(12deg); } 7% { transform: rotate(-6deg); } }
+  @keyframes ecRise  { 0%, 9%, 100% { transform: none; } 3% { transform: translateY(-5px) scale(1.15); } 6% { transform: translateY(-2px); } }
+  @keyframes ecDrift { 0%, 9%, 100% { transform: none; } 3% { transform: translateY(4px) rotate(10deg); } 6% { transform: translateY(2px) rotate(-8deg); } }
+  @keyframes ecSpin  { 0%, 9%, 100% { transform: none; } 8% { transform: rotate(360deg); } }
+  @keyframes ecBlink { 0%, 9%, 100% { opacity: 1; } 2%, 6% { opacity: 0.2; } 4% { opacity: 1; } }
+  @keyframes ecShake { 0%, 9%, 100% { transform: none; } 1.5%, 4.5% { transform: translateX(-3px) rotate(-8deg); } 3%, 6% { transform: translateX(3px) rotate(8deg); } }
+  @keyframes ecPulse { 0%, 9%, 100% { transform: none; } 4% { transform: scale(1.3); } }
+  @keyframes ecFlame { 0%, 9%, 100% { transform: none; } 2% { transform: scale(1.2) rotate(-6deg); } 4% { transform: scale(0.95) rotate(5deg); } 6% { transform: scale(1.15); } }
+  @media (prefers-reduced-motion: reduce) { .ec-ico { animation: none !important; } }
+  .ec-tag { font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; background: #fff3d6; color: #8a5a00; }
+  .ec-st.exp { display: inline-flex; align-items: center; gap: 6px; }
+  .op-maxq { margin-top: 8px; padding: 7px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; background: var(--panel-alt); color: var(--accent); line-height: 1.35; }
+  .op-maxq.hidden { display: none; }
+  .pk-card summary { cursor: pointer; font-weight: 800; font-size: 0.92rem; list-style: none; display: flex; align-items: center; gap: 8px; }
+  .pk-card summary::-webkit-details-marker { display: none; }
+  .pk-btn { display: inline-block; padding: 9px 12px; border-radius: 11px; border: 1px solid var(--border); background: var(--panel); color: var(--accent); font-size: 0.82rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+  .pk-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pk-msg { font-size: 0.78rem; font-weight: 700; color: var(--muted); margin-top: 8px; line-height: 1.4; }
+  .pk-band { display: flex; align-items: center; gap: 6px; font-size: 0.76rem; font-weight: 700; color: var(--muted); margin-top: 8px; flex-wrap: wrap; }
+  .pk-band input { width: 62px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); font-size: 16px; font-family: inherit; }
+  .pk-tbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.74rem; table-layout: fixed; }
+  .pk-tbl th { text-align: right; color: var(--muted); font-weight: 700; padding: 2px 3px; }
+  .pk-tbl td { padding: 2px 2px; text-align: right; }
+  .pk-tbl input { width: 100%; min-width: 0; padding: 6px 2px; letter-spacing: -0.2px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); font-size: 16px; text-align: right; font-family: inherit; box-sizing: border-box; }
+  .pk-hd { display: flex; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap; font-size: 0.78rem; font-weight: 700; }
+  .pk-hd select, .pk-hd input { padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); font-size: 16px; font-family: inherit; }
+  .pk-hd input { width: 84px; }
+  .pk-verdict { margin-top: 10px; padding: 9px 11px; border-radius: 12px; font-size: 0.86rem; font-weight: 800; line-height: 1.4; background: var(--panel-alt); }
+  .pk-verdict.ok { background: var(--green-soft); color: var(--green); } .pk-verdict.no { background: var(--red-soft); color: var(--red); } .pk-verdict.care { background: #fff3d6; color: #8a5a00; }
+  .pk-pick { margin-top: 7px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 12px; font-size: 0.8rem; font-weight: 700; line-height: 1.45; }
+  .pk-pick b { font-size: 0.92rem; }
+  .pk-pick .up { color: var(--green); } .pk-pick .dn { color: var(--red); }
+  .pk-note { font-size: 0.74rem; font-weight: 700; color: #8a5a00; margin-top: 6px; }
+  .pi-row { border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; margin-top: 8px; font-size: 0.8rem; }
+  .pi-row .pi-nm { display: flex; gap: 8px; align-items: center; font-weight: 800; }
+  .pi-row .pi-nm input { width: 20px; height: 20px; }
+  .pi-row .pi-in { display: flex; gap: 6px; margin-top: 6px; }
+  .pi-row .pi-in label { flex: 1; font-size: 0.68rem; color: var(--muted); font-weight: 700; display: block; }
+  .pi-row .pi-in input { width: 100%; box-sizing: border-box; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); font-size: 16px; font-family: inherit; }
+  .pi-row .pi-st { margin-top: 5px; font-size: 0.72rem; font-weight: 700; color: var(--muted); }
+  .pi-row .pi-st.warn { color: #8a5a00; } .pi-row .pi-st.ok { color: var(--green); }
+  .pi-row.pi-off { opacity: 0.55; }
+  .pi-bar { margin: 6px 0 2px; }
+
   /* Phone typing fix (2026-10-22): easy-to-hit CMP / SL boxes, no iPhone auto-zoom (needs >=16px text), FAB out of the way while typing */
   #open-positions-card .op-in, .op-sheet .op-in, .op-sheet select, .op-modal .op-in { font-size: 16px !important; touch-action: manipulation; }
   .op-cmpwrap { padding: 4px 0; }
@@ -1360,6 +1428,7 @@
       <div class="op-f"><span class="op-k">Qty</span><input class="op-in" id="op-q-qty" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Qty"></div>
       <div class="op-f"><span class="op-k">Buy ₹</span><input class="op-in" id="op-q-buy" type="number" inputmode="decimal" enterkeyhint="next" placeholder="Buy ₹"></div>
     </div>
+    <div id="op-q-maxq" class="op-maxq hidden"></div>
     <div class="op-row2">
       <div class="op-f"><span class="op-k">CMP ₹ (optional)</span><input class="op-in" id="op-q-cmp" type="number" inputmode="decimal" enterkeyhint="done" placeholder="now or later"></div>
       <div class="op-autobox" id="op-q-auto">🛑 SL and 💰 capital show here</div>
@@ -1368,6 +1437,17 @@
     <div class="op-f hidden" id="op-q-name-wrap"><span class="op-k">Custom name</span><input class="op-in" id="op-q-name" type="text" maxlength="30" enterkeyhint="done" placeholder="Only if you want your own name"></div>
     <div id="op-q-err" class="op-qerr"></div>
     <div class="op-sheet-btns"><button class="op-btn" id="op-q-cancel" type="button">Cancel</button><button class="op-btn primary" id="op-q-add" type="button">✅ Save position</button></div>
+  </div>
+</div>
+<div id="pi-sheet" class="op-sheet-wrap hidden" role="dialog" aria-modal="true">
+  <div class="op-sheet" style="max-height:88vh;overflow:auto;">
+    <div class="op-sheet-title">📷 Import open positions</div>
+    <div class="op-f"><span class="op-k">Account</span><select class="op-in op-sel" id="pi-acct"><option value="ICI">ICI</option><option value="STW">STW</option><option value="OTH">OTH</option></select></div>
+    <input type="file" id="pi-file" accept="image/*" hidden>
+    <div style="margin-top:10px;"><button type="button" class="pk-btn primary" id="pi-pick">📷 Choose screenshot</button></div>
+    <div class="pk-msg" id="pi-msg"></div>
+    <div id="pi-rows"></div>
+    <div class="op-sheet-btns"><button class="op-btn" id="pi-cancel" type="button">Close</button><button class="op-btn primary hidden" id="pi-go" type="button">✅ Import ticked</button></div>
   </div>
 </div>
 <div id="op-pl-modal" class="op-modal hidden" role="dialog" aria-modal="true">
@@ -1680,6 +1760,21 @@
   <div class="mc-l2 hidden" id="mc-l2"></div>
 </div>
 
+<!-- PICK MY LEAD (Build F, 2026-11-05): OPTIONAL — option-chain screenshot → best strikes on the strong side. Admin only. -->
+<div class="card pk-card hidden" id="pk-card" style="grid-column: 1 / -1;">
+  <details id="pk-det">
+    <summary>🎯 Pick my lead <span style="font-weight:600;color:var(--muted);font-size:0.74rem;">optional · from a screenshot</span></summary>
+    <div style="margin-top:10px;">
+      <input type="file" id="pk-file" accept="image/*" hidden>
+      <button type="button" class="pk-btn primary" id="pk-up">📷 Option-chain screenshot</button>
+      <div class="pk-band">Premium band ₹ <input id="pk-lo" type="number" inputmode="decimal" aria-label="Band from"> to <input id="pk-hi" type="number" inputmode="decimal" aria-label="Band to"></div>
+      <div class="pk-msg" id="pk-msg">Upload a screenshot any time from 9:15 to 2:30 (up to 6 a day). Skip it and pick by hand if you like.</div>
+      <div id="pk-conf"></div>
+      <div id="pk-out"></div>
+    </div>
+  </details>
+</div>
+
 </div>
 </div>
 
@@ -1691,6 +1786,7 @@
 <div class="card theme-teal" id="open-positions-card" style="grid-column: 1 / -1;">
   <h2>💼 Open Positions <button class="info-icon-btn" data-info="info-openpos">i</button></h2>
   <div id="info-openpos" class="info-popover hidden">Tap “＋ Add position” and enter the index, strike, Qty and Buy price. After that you only type the CMP (the current price) — press Next on the keypad to jump to the next position. Everything else is calculated: profit/loss, 🟢 HOLD / 🔴 EXIT, and the stoploss (automatically 40% below your buy price; to use your own, just type it in the SL box on the card — clear the box to go back to automatic). The alarm rings when the CMP is at or below the stoploss. Tap Exit when you sell: the profit/loss is kept under Exited today for the day (record it in P&amp;L yourself). Close clears an exited card and frees the slot. Tap a name to minimise or expand it. Cards in danger move to the top. If you hold the same option (same index, strike and CE/PE) in two accounts, typing the CMP on one card fills it on the other too.</div>
+  <div class="pi-bar"><button type="button" class="pk-btn" id="pi-btn">📷 From screenshot <span style="font-weight:600;color:var(--muted);">(optional)</span></button></div>
   <div class="op-totals hidden" id="op-totals">
     <div class="op-sumbox">
       <div class="op-sumtitle">📅 Today summary — open positions</div>
@@ -1809,28 +1905,38 @@
 <!-- 2026-10-29: Weekly Totals + Monthly Totals moved here from the P&L panel (admin asked for less information in P&L). Same elements/ids, same render functions. -->
 <div class="card hidden" id="admin-totals-card" style="grid-column: 1 / -1;">
   <div style="font-size:0.9rem; font-weight:800; margin-bottom:8px;">📊 Weekly &amp; Monthly Totals</div>
-      <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Weekly Totals</p>
+      <div class="tot-box tot-wk"><p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Weekly Totals</p>
       <div id="weekly-list"></div>
-
-      <div style="height:14px;"></div><p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Totals</p>
+      </div>
+      <div class="tot-box tot-mo"><p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Totals</p>
       <div id="monthly-list"></div>
+      </div>
       <div id="grand-total" class="gt-row hidden"></div>
 </div>
 
 <!-- 2026-11-04 (Build B): trading discipline settings — admin only -->
 <div class="card rk-card hidden" id="admin-risk-card" style="grid-column: 1 / -1;">
-  <div class="rk-title">🛡️ Trading discipline</div>
-  <div class="rk-lbl">Daily loss limit (₹)</div>
-  <div class="rk-row"><input class="rk-in" id="rk-limit" type="text" inputmode="numeric" placeholder="e.g. 20000" style="width:140px;"><button class="rk-btn" id="rk-save" type="button">Save</button></div>
-  <div class="rk-msg" id="rk-msg"></div>
-  <div class="rk-lbl">Market events (shown in the Market context line)</div>
-  <div class="rk-row">
-    <input class="rk-in" id="rk-ev-date" type="date" style="width:140px;">
-    <input class="rk-in" id="rk-ev-time" type="text" inputmode="numeric" placeholder="HH:MM" maxlength="5" style="width:74px;">
-    <input class="rk-in" id="rk-ev-text" type="text" placeholder="e.g. RBI policy" maxlength="30" style="flex:1; min-width:120px;">
-    <button class="rk-btn" id="rk-ev-add" type="button">Add</button>
-  </div>
-  <div id="rk-events"></div>
+  <div class="rk-title">🛡️ Trading discipline <small class="sc-count">· automatic — nothing to set</small></div>
+  <div class="rk-stat"><span>Today's loss limit</span><b id="rk-st-limit">—</b></div>
+  <div class="rk-msg" id="rk-st-why"></div>
+  <div class="rk-stat"><span>Recorded today (P&amp;L log)</span><b id="rk-st-pl">—</b></div>
+  <details class="rk-opt" id="rk-opt">
+    <summary class="rk-lbl">⚙️ Optional settings</summary>
+    <div class="rk-lbl">Coming up (market events)</div>
+    <div id="rk-events"></div>
+    <div class="rk-msg" id="rk-cal-note"></div>
+    <div class="rk-lbl">Cap (₹) — the automatic limit never goes above this</div>
+    <div class="rk-row"><input class="rk-in" id="rk-limit" type="text" inputmode="numeric" placeholder="no cap" style="width:140px;"><button class="rk-btn" id="rk-save" type="button">Save</button></div>
+    <label class="rk-chk"><input type="checkbox" id="rk-off"> Turn the loss limit off</label>
+    <div class="rk-lbl">➕ Add my own event (optional)</div>
+    <div class="rk-row">
+      <input class="rk-in" id="rk-ev-date" type="date" style="width:140px;">
+      <input class="rk-in" id="rk-ev-time" type="text" inputmode="numeric" placeholder="HH:MM" maxlength="5" style="width:74px;">
+      <input class="rk-in" id="rk-ev-text" type="text" placeholder="e.g. Reliance results" maxlength="30" style="flex:1; min-width:120px;">
+      <button class="rk-btn" id="rk-ev-add" type="button">Add</button>
+    </div>
+    <div class="rk-msg" id="rk-msg"></div>
+  </details>
 </div>
 
 <!-- 2026-11-04 (Build C): rules scorecard — admin only -->
@@ -2393,8 +2499,14 @@
     let flips = 0;
     for (let i = 1; i < cs.length; i++) { if (ts[i] != null && ts[i - 1] != null && ts[i] !== ts[i - 1] && cs[i].time >= now - EC_CHOP_WINDOW_MS) flips++; }
     const rangeTxt = nR >= 2 && isFinite(hi) ? ecN(lo) + '–' + ecN(hi) : '';
-    const out = { signal, flips, hi: nR >= 2 ? hi : null, lo: nR >= 2 ? lo : null, rangeTxt, forming, dir: null, since: '', key: '', cls: 'wait', text: '', long: '' };
-    if (forming || nR < 2) { out.key = 'forming'; out.text = '⏳ Wait · range forming till 10:30'; out.long = 'Opening range 9:15–10:30 is still forming. Ignore every flip until it ends.'; return out; }
+    const out = { signal, flips, hi: nR >= 2 ? hi : null, lo: nR >= 2 ? lo : null, rangeTxt, forming, dir: null, since: '', key: '', cls: 'wait', ico: '', text: '', long: '', sub: '', tag: '', exp: null };
+    const dn = cs.filter((c, i) => done[i]);
+    try { out.exp = ecExpiry(elId, dn); } catch (e) { out.exp = null; }
+    if (forming || nR < 2) {
+      let er = null; try { er = ecEarly(cs, done, nowMin, signal, flips); } catch (e) { er = null; }
+      if (er) { out.key = 'early'; out.cls = 'go'; out.dir = er.dir; out.since = er.since; out.ico = '🔥'; out.text = 'Strong ' + er.dir + ' (early). Smaller size.'; out.long = 'Early move: two closes beyond the first 15 minutes, up to ' + Math.abs(er.pct).toFixed(2) + '% from the open, signal agrees, no flips. Use a smaller size.'; return out; }
+      out.key = 'forming'; out.ico = '⏳'; out.text = 'Wait. Market is settling.'; out.long = 'Opening range 9:15–10:30 is still forming. Ignore every flip until it ends.'; return out;
+    }
     const sideAt = (c) => c.close > hi ? 1 : (c.close < lo ? -1 : 0);
     let lastI = -1, everBroke = false;
     cs.forEach((c, i) => { const m = ecIstMins(c.time); if (m >= EC_RANGE_END && done[i]) { lastI = i; if (sideAt(c) !== 0) everBroke = true; } });
@@ -2402,19 +2514,41 @@
     if (lastSide !== 0) { let j = lastI; while (j - 1 >= 0 && ecIstMins(cs[j - 1].time) >= EC_RANGE_END && sideAt(cs[j - 1]) === lastSide) j--; out.since = ecHm(ecIstMins(cs[j].time) + 5); }
     out.dir = lastSide === 1 ? 'CE' : (lastSide === -1 ? 'PE' : null);
     const w = ecWeek[elId], counter = !!(out.dir && w && w.dir && w.dir !== out.dir);
-    if (nowMin >= EC_LAST_ENTRY) { out.key = 'late'; out.cls = 'wait'; out.text = '🕒 Past entry time (after 3:00)'; out.long = 'No new entries after 3:00 pm.'; return out; }
-    if (flips >= EC_CHOP_FLIPS) { out.key = 'chop'; out.cls = 'warn'; out.text = '⚠️ Choppy · ' + flips + ' flips in 1h · skip'; out.long = flips + ' flips in the last hour — treat as a choppy day, do not trade flips.'; return out; }
+    if (nowMin >= EC_LAST_ENTRY) { out.key = 'late'; out.cls = 'wait'; out.ico = '🌙'; out.text = 'Too late for new entries.'; out.long = 'No new entries after 3:00 pm.'; return out; }
+    if (flips >= EC_CHOP_FLIPS) { out.key = 'chop'; out.cls = 'warn'; out.ico = '🌀'; out.text = 'Choppy. Skip it.'; out.long = flips + ' flips in the last hour — treat as a choppy day, do not trade flips.'; return out; }
     if (out.dir && out.dir === signal) {
-      out.key = 'go'; out.cls = counter ? 'warn' : 'go';
-      out.text = (counter ? '⚠️ ' : '✅ ') + out.dir + ' entry open · since ' + out.since + (counter ? ' · counter-trend' : '');
+      out.key = 'go'; out.cls = counter ? 'warn' : 'go'; out.ico = out.dir === 'CE' ? '🚀' : '🪂';
+      out.text = 'Go ' + out.dir + '. Moving ' + (out.dir === 'CE' ? 'up' : 'down') + (out.since ? ' · since ' + out.since : '') + '.';
+      if (counter) out.sub = 'Careful: against the week.';
+      try { if (dn.length >= 3) { const a = dn[dn.length - 1].close, b = dn[dn.length - 3].close, mv = (a / b - 1) * 100; if ((out.dir === 'CE' && mv >= 0.25) || (out.dir === 'PE' && mv <= -0.25)) { out.fast = true; out.tag = '⚡ Fast move'; } } } catch (e) { /* tag is optional */ }
       out.long = 'Closed outside the opening range (' + out.dir + ') and the signal agrees.' + (counter ? ' But the week is ' + w.dir + ' — extra care.' : '');
       return out;
     }
-    if (out.dir && signal) { out.key = 'mismatch'; out.cls = 'warn'; out.text = '⚠️ Range broke ' + out.dir + ' · signal ' + signal + ' · wait'; out.long = 'Price and signal disagree — wait.'; return out; }
-    if (everBroke) { out.key = 'fake'; out.cls = 'warn'; out.text = '↩️ Fake break · back inside range · wait'; out.long = 'Price broke the range but closed back inside — treat the break as fake.'; return out; }
-    if (nowMin >= EC_NO_TRADE_FROM) { out.key = 'notrade'; out.cls = 'bad'; out.text = '🚫 No trade today · no clean breakout'; out.long = 'No candle has closed outside the opening range by 1:00 pm.'; return out; }
-    out.key = 'inside'; out.cls = 'wait'; out.text = '⏳ Wait · inside range'; out.long = 'Price is still inside the opening range — wait for a close outside it.';
+    if (out.dir && signal) { out.key = 'mismatch'; out.cls = 'warn'; out.ico = '🚦'; out.text = 'Mixed signals. Wait.'; out.long = 'Price and signal disagree — wait.'; return out; }
+    if (everBroke) { out.key = 'fake'; out.cls = 'warn'; out.ico = '🎭'; out.text = 'Fake move. Wait.'; out.long = 'Price broke the range but closed back inside — treat the break as fake.'; return out; }
+    if (nowMin >= EC_NO_TRADE_FROM) { out.key = 'notrade'; out.cls = 'bad'; out.ico = '⛔'; out.text = 'No trade today.'; out.long = 'No candle has closed outside the opening range by 1:00 pm.'; return out; }
+    out.key = 'inside'; out.cls = 'wait'; out.ico = '🧘'; out.text = 'Wait. No clear move yet.'; out.long = 'Price is still inside the opening range — wait for a close outside it.';
     return out;
+  }
+  // Early Strong (9:40–10:30): 2 closed 5-min candles beyond the first-15-min range, >=0.35% from the open, signal agrees, no flips
+  function ecEarly(cs, done, nowMin, signal, flips) {
+    if (nowMin < 9 * 60 + 40 || nowMin >= EC_RANGE_END || !signal || flips > 0) return null;
+    let hi = -Infinity, lo = Infinity, n = 0; const after = [];
+    cs.forEach((c, i) => { if (!done[i]) return; const m = ecIstMins(c.time); if (m >= EC_RANGE_START && m < EC_RANGE_START + 15) { hi = Math.max(hi, c.close); lo = Math.min(lo, c.close); n++; } else if (m >= EC_RANGE_START + 15) after.push(c); });
+    if (n < 3 || after.length < 2) return null;
+    const a = after[after.length - 1], b = after[after.length - 2], open = cs[0].close, mv = (a.close / open - 1) * 100;
+    let dir = null;
+    if (a.close > hi && b.close > hi && mv >= 0.35) dir = 'CE'; else if (a.close < lo && b.close < lo && mv <= -0.35) dir = 'PE';
+    if (!dir || dir !== signal) return null;
+    return { dir, pct: mv, since: ecHm(ecIstMins(b.time) + 5) };
+  }
+  // Expiry-day mode: move over the last 15 min (3 closed candles) — quiet until it passes 0.12%
+  function ecExpiry(elId, dn) {
+    if (!isExpiryDay(EC_PFX[elId])) return null;
+    if (dn.length < 2) return { quiet: true };
+    const a = dn[dn.length - 1].close, b = dn[Math.max(0, dn.length - 4)].close, pts = a - b, pct = pts / b * 100;
+    if (Math.abs(pct) < 0.12) return { quiet: true };
+    return { quiet: false, dir: pts > 0 ? 'CE' : 'PE', pts: Math.round(pts), pct };
   }
 
   // ---- trend of the week: daily candles for ~1 month (same Yahoo feed + proxies the prev-close check already uses) ----
@@ -2469,8 +2603,15 @@
     const ttl = document.getElementById('ec-title'); if (ttl) ttl.textContent = selZ ? '🧭 Entry check — ' + EC_NAME[selZ] : '🧭 Entry check';
     body.innerHTML = !selZ ? '<div class="ec-sub">Tap a tile to see its entry check</div>' : [selZ].map(elId => {
       const nm = EC_NAME[elId], st = ecStatus[elId], w = ecWeek[elId], pfx = EC_PFX[elId];
-      const top = st ? `<span class="ec-st ${st.cls}" title="${st.long.replace(/"/g, '')}">${st.text}</span>` : `<span class="ec-st wait">${ecMarketHours() ? 'Loading…' : 'Market closed'}</span>`;
+      if (st && st.exp) {
+        const x = st.exp, up = x.dir === 'CE';
+        const line = x.quiet ? 'EXPIRY · Quiet. Waiting for a move.' : 'EXPIRY · Moving ' + x.dir + ': ' + (x.pts > 0 ? '+' : '−') + Math.abs(x.pts) + ' pts in 15 min';
+        return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span><span class="ec-st exp ${x.quiet ? 'wait' : (up ? 'go' : 'bad')}"><i class="mc-dot ${x.quiet ? 'none' : (up ? 'ce' : 'pe') + ' pulse'}"></i>${line}</span></div></div>`;
+      }
+      const icoCls = !st ? 'ic-wait' : ({ go: st.dir === 'PE' ? 'ic-pe' : 'ic-ce', early: 'ic-hot', chop: 'ic-chop', mismatch: 'ic-mix', fake: 'ic-fake', notrade: 'ic-stop' }[st.key] || 'ic-wait');
+      const top = st ? `<span class="ec-st ${st.cls}" title="${st.long.replace(/"/g, '')}"><span class="ec-ico ${icoCls}">${st.ico}</span>${st.text}</span>${st.tag ? ' <span class="ec-tag">' + st.tag + '</span>' : ''}` : `<span class="ec-st wait"><span class="ec-ico ic-wait">${ecMarketHours() ? '⏳' : '😴'}</span>${ecMarketHours() ? 'Loading…' : 'Market closed.'}</span>`;
       const bits = [];
+      if (st && st.sub) bits.push('<b style="color:#8a5a00">' + st.sub + '</b>');
       if (st && st.rangeTxt) bits.push('Range ' + st.rangeTxt);
       if (w) bits.push('5d ' + f(w.d5) + (w.m1 != null ? ' · 1m ' + f(w.m1) : '') + (w.dir ? ' · ' + w.dir + ' week' : ''));
       const fl = (fake[elId] || []), last = fl[fl.length - 1];
@@ -2499,14 +2640,19 @@
   function ecContext(elId, dir) {
     try {
       const parts = [], w = ecWeek[elId], st = ecStatus[elId];
-      if (w && w.dir) parts.push(w.dir === dir ? '✅ With trend (' + w.dir + ' week)' : '⚠️ Counter-trend (' + w.dir + ' week)');
+      if (w && w.dir) parts.push(w.dir === dir ? '✅ With the week (' + w.dir + ')' : '⚠️ Against the week (' + w.dir + ')');
       if (st) {
-        if (st.key === 'forming' || st.key === 'inside' || st.key === 'fake') parts.push('inside opening range');
-        else if (st.key === 'chop') parts.push('choppy · ' + st.flips + ' flips in 1h');
-        else if (st.key === 'notrade') parts.push('no range breakout today');
-        else if ((st.key === 'go' || st.key === 'mismatch') && st.dir) parts.push(st.dir === dir ? 'range break ' + st.dir + (st.since ? ' since ' + st.since : '') : 'range broke ' + st.dir);
+        if (st.exp && !st.exp.quiet) parts.push('🪂 Expiry: moving ' + st.exp.dir);
+        else if (st.key === 'forming') parts.push('⏳ market is settling');
+        else if (st.key === 'inside') parts.push('🧘 no clear move yet');
+        else if (st.key === 'fake') parts.push('🎭 fake move');
+        else if (st.key === 'chop') parts.push('🌀 choppy');
+        else if (st.key === 'notrade') parts.push('⛔ no clear move today');
+        else if (st.key === 'early' && st.dir) parts.push('🔥 early strong ' + st.dir);
+        else if (st.key === 'go' && st.dir) parts.push(st.dir === dir ? '🚀 moving ' + st.dir + (st.since ? ' since ' + st.since : '') : '🚦 moving ' + st.dir + ' (other way)');
+        else if (st.key === 'mismatch') parts.push('🚦 mixed signals');
       }
-      if (mcState && mcState.lean) parts.push(mcState.lean === dir ? '🌍 global supports ' + dir : '⚠️ global leans ' + mcState.lean);
+      if (mcState && mcState.lean) parts.push(mcState.lean === dir ? '🌍 world says ' + dir : '⚠️ world says ' + mcState.lean);
       return parts.join(' · ');
     } catch (e) { return ''; }
   }
@@ -2515,17 +2661,26 @@
   function ecWarnHtml(idx, ty) {
     const zone = EC_IDX_ZONE[idx]; if (!zone || !ty) return { html: '', good: false };
     const st = ecStatus[zone], w = ecWeek[zone], L = [];
-    if (st) {
-      if (st.key === 'chop') L.push('⚠️ ' + idx + ' is choppy — ' + st.flips + ' flips in the last hour. Entry not recommended.');
-      else if (st.key === 'forming' || st.key === 'inside' || st.key === 'fake') L.push('⏳ ' + idx + ' is inside the opening range — wait for a breakout.');
-      else if (st.key === 'notrade') L.push('🚫 No clean breakout in ' + idx + ' today — no trade.');
-      else if (st.key === 'late') L.push('🕒 After 3:00 pm — no new entries.');
-      if (st.signal && st.signal !== ty) L.push('⚠️ ' + idx + ' signal is ' + st.signal + ' now — you are logging ' + ty + '.');
-      if (st.dir && st.dir !== ty && (st.key === 'go' || st.key === 'mismatch')) L.push('⚠️ Range broke ' + st.dir + ' — you are logging ' + ty + '.');
+    if (st && st.exp) {
+      if (!st.exp.quiet && st.exp.dir !== ty) L.push('🚦 Expiry: ' + idx + ' is moving ' + st.exp.dir + '. You picked ' + ty + '.');
+      else if (!st.exp.quiet) return { html: (ty === 'CE' ? '🚀' : '🪂') + ' Expiry: ' + idx + ' is moving ' + ty + '.', good: true };
+      else L.push('🧘 Expiry is quiet. Wait for a move.');
+      return { html: L.join('<br>'), good: false };
     }
-    if (w && w.dir && w.dir !== ty) L.push('⚠️ Counter-trend: the week is ' + w.dir + ' — you are logging ' + ty + '.');
-    try { if (mcState && mcState.lean && mcState.lean !== ty) L.push('⚠️ Global markets lean ' + mcState.lean + ' — you are logging ' + ty + '.'); } catch (e) { /* context is optional */ }
-    if (!L.length && st && st.key === 'go' && st.dir === ty) return { html: '✅ ' + idx + ' ' + ty + ' entry open since ' + st.since + '.', good: true };
+    if (st) {
+      if (st.key === 'chop') L.push('🌀 ' + idx + ' is choppy. Skip it.');
+      else if (st.key === 'forming') L.push('⏳ ' + idx + ': market is settling. Wait.');
+      else if (st.key === 'inside') L.push('🧘 ' + idx + ': no clear move yet. Wait.');
+      else if (st.key === 'fake') L.push('🎭 ' + idx + ': fake move. Wait.');
+      else if (st.key === 'notrade') L.push('⛔ No trade in ' + idx + ' today.');
+      else if (st.key === 'late') L.push('🌙 Too late for new entries.');
+      if (st.signal && st.signal !== ty && st.key !== 'forming') L.push('🚦 Signal says ' + st.signal + ' now. You picked ' + ty + '.');
+      if (st.dir && st.dir !== ty && st.dir !== st.signal && (st.key === 'go' || st.key === 'mismatch' || st.key === 'early')) L.push('🚦 ' + idx + ' is moving ' + st.dir + '. You picked ' + ty + '.');
+    }
+    if (w && w.dir && w.dir !== ty) L.push('⚠️ Against the week (' + w.dir + '). You picked ' + ty + '.');
+    try { if (mcState && mcState.lean && mcState.lean !== ty) L.push('🌍 World says ' + mcState.lean + '. You picked ' + ty + '.'); } catch (e) { /* context is optional */ }
+    if (!L.length && st && st.key === 'early' && st.dir === ty) return { html: '🔥 Strong ' + ty + ' (early). Smaller size.', good: true };
+    if (!L.length && st && st.key === 'go' && st.dir === ty) return { html: (ty === 'CE' ? '🚀' : '🪂') + ' ' + idx + ' ' + ty + ': go, since ' + st.since + '.', good: true };
     return { html: L.slice(0, 3).join('<br>'), good: false };
   }
   function opQWarn() {
@@ -2598,6 +2753,331 @@
   setInterval(ecRefreshWeek, 30 * 60 * 1000);
 
   // =====================================================================================
+  // BUILD F (2026-11-05): SCREENSHOT READER (optional) — "Pick my lead" from an option-chain screenshot, and open-positions import.
+  // Everything here is OPTIONAL: manual entry works exactly as before. Reading happens in this browser (Tesseract.js); nothing is uploaded anywhere.
+  // Nothing is suggested or saved until the admin has checked the numbers in the confirm table.
+  // =====================================================================================
+  var pkLibP = null, pkWorkerP = null, pkProg = null, pkSt = null, piRows = [];
+  const PK_BAND_KEY = 'signa365_pk_band', PK_MIN_OI = 0.5, PI_ACCT_KEY = 'signa365_pi_acct';
+  function pkKey() { return 'signa365_pk_' + (currentUid || 'x'); }
+  function pkLoad() { try { const o = JSON.parse(localStorage.getItem(pkKey())); if (o && o.day === todayIstKey() && Array.isArray(o.snaps) && Array.isArray(o.picks)) return o; } catch (e) { /* fresh */ } return { day: todayIstKey(), snaps: [], picks: [] }; }
+  function pkSave(o) { try { localStorage.setItem(pkKey(), JSON.stringify(o)); } catch (e) { /* best effort */ } }
+  function pkBand() { try { const b = JSON.parse(localStorage.getItem(PK_BAND_KEY)); if (b && b.lo > 0 && b.hi >= b.lo) return b; } catch (e) { /* default */ } return { lo: 5, hi: 25 }; }
+  // scorecard: did the lead taken match one of today's picks? (null = no pick was made for that index today)
+  function pkFollowed(m) {
+    const o = pkLoad(); if (!o.picks.some(x => x.idx === m.idx)) return null;
+    return o.picks.some(x => x.idx === m.idx && x.side === m.ty && x.strikes.indexOf(Number(m.strike)) >= 0 && (!x.exp || !m.exp || x.exp === m.exp)) ? 'yes' : 'no';
+  }
+
+  // ---- OCR engine (loaded only when a screenshot is used) ----
+  function pkLoadLib() {
+    if (window.Tesseract) return Promise.resolve(window.Tesseract);
+    if (pkLibP) return pkLibP;
+    pkLibP = new Promise((res, rej) => {
+      const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+      sc.onload = () => window.Tesseract ? res(window.Tesseract) : rej(new Error('lib')); sc.onerror = () => { pkLibP = null; rej(new Error('offline')); };
+      document.head.appendChild(sc);
+    });
+    return pkLibP;
+  }
+  function pkGetWorker() {
+    if (pkWorkerP) return pkWorkerP;
+    pkWorkerP = pkLoadLib().then(T => T.createWorker('eng', 1, { logger: m => { try { if (pkProg && m && m.status === 'recognizing text') pkProg(Math.round((m.progress || 0) * 100)); } catch (e) { /* cosmetic */ } } }))
+      .then(async w => { await w.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' }); return w; });
+    pkWorkerP.catch(() => { pkWorkerP = null; });
+    return pkWorkerP;
+  }
+  // bigger, grey, stretched contrast, dark screens turned light — the same steps that read the real ICICI screenshots correctly
+  function pkPrep(file, o) {
+    o = o || {};
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); };
+      img.onload = () => {
+        try {
+          const W0 = img.naturalWidth, H0 = img.naturalHeight;
+          let sc = Math.min(3, Math.max(1, (o.t || 2400) / W0)); if (W0 * H0 * sc * sc > 14e6) sc = Math.max(1, Math.sqrt(14e6 / (W0 * H0)));
+          const w = Math.round(W0 * sc), h = Math.round(H0 * sc), cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+          const cx = cv.getContext('2d'); cx.imageSmoothingQuality = 'high'; cx.drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url);
+          const id = cx.getImageData(0, 0, w, h), d = id.data, n = w * h, g = new Uint8Array(n), hist = new Uint32Array(256); let sum = 0;
+          for (let i = 0, j = 0; i < n; i++, j += 4) { const v = (0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2]) | 0; g[i] = v; hist[v]++; sum += v; }
+          const inv = (sum / n) < 110, cut = n * (o.clip != null ? o.clip : 0.002); let lo = 0, hi = 255, acc = 0;
+          for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc > cut) { lo = v; break; } }
+          acc = 0; for (let v = 255; v >= 0; v--) { acc += hist[v]; if (acc > cut) { hi = v; break; } }
+          const span = Math.max(1, hi - lo);
+          for (let i = 0, j = 0; i < n; i++, j += 4) { let v = Math.round((g[i] - lo) / span * 255); v = v < 0 ? 0 : (v > 255 ? 255 : v); if (inv) v = 255 - v; d[j] = d[j + 1] = d[j + 2] = v; d[j + 3] = 255; }
+          if (o.bin) { for (let j = 0; j < d.length; j += 4) { const v = d[j] > o.bin ? 255 : 0; d[j] = d[j + 1] = d[j + 2] = v; } }
+          cx.putImageData(id, 0, 0); res(cv);
+        } catch (e) { rej(e); }
+      };
+      img.src = url;
+    });
+  }
+  async function pkRead(file, onProg, o) {
+    pkProg = onProg || null;
+    const cv = await pkPrep(file, o), w = await pkGetWorker(), r = await w.recognize(cv);
+    pkProg = null; return String(r && r.data && r.data.text || '');
+  }
+
+  // ---- parsers (plain text in → rows out) ----
+  const pkNumRe = /^[\d,]*\.?\d+$/;
+  function pkNum(s) { return parseFloat(String(s).replace(/,/g, '')); }
+  // small screenshot text often confuses digits (29 read as 20): if the date is not the index's expiry weekday, try one look-alike digit swap
+  function pkFixExpiry(idx, day, mo, yr) {
+    const dow = (dd) => new Date(Date.UTC(yr, mo, dd)).getUTCDay(), want = idx === 'SENSEX' ? 4 : 2, valid = (dd) => dd >= 1 && dd <= 31 && new Date(Date.UTC(yr, mo, dd)).getUTCMonth() === mo;
+    let d = day;
+    if (!(valid(d) && dow(d) === want)) {
+      const sw = { '0': '89', '9': '08', '8': '03', '3': '8', '1': '7', '7': '1', '5': '6', '6': '5', '2': '7' }, ds = String(day).padStart(2, '0'), alt = [];
+      for (let i = 0; i < 2; i++) (sw[ds[i]] || '').split('').forEach(c => { const n = +(ds.slice(0, i) + c + ds.slice(i + 1)); if (valid(n) && dow(n) === want) alt.push(n); });
+      if (alt.length === 1) d = alt[0];
+    }
+    return String(d).padStart(2, '0') + OP_MON[mo];
+  }
+  function pkParseChain(text) {
+    const L = String(text || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    let idx = null, exp = '';
+    for (const l of L) {
+      const m = /(BANKNIFTY|NIFTY|SENSEX)\s+(\d{1,2})\s*-\s*([A-Za-z0]{3})[A-Za-z]*\s*-\s*(20\d{2})/i.exec(l); if (!m) continue;
+      idx = m[1].toUpperCase(); const mon = m[3].toUpperCase().replace(/0/g, 'O'), mo = OP_MON.indexOf(mon);
+      if (mo >= 0) exp = pkFixExpiry(idx, +m[2], mo, +m[4]);
+      break;
+    }
+    const rows = []; let bad = 0;
+    for (let i = 0; i < L.length; i++) {
+      const t = L[i].split(/\s+/);
+      if (t.length === 5 && t.every(x => pkNumRe.test(x)) && /^\d{4,6}$/.test(t[2])) {
+        const r = { strike: +t[2], ceOi: pkNum(t[0]), ceLtp: pkNum(t[1]), peLtp: pkNum(t[3]), peOi: pkNum(t[4]), ceChg: null, peChg: null };
+        const nx = L[i + 1] || '', pc = nx.match(/\(?-?[\d.,]+%\)?/g);
+        if (pc && pc.length >= 2 && nx.replace(/\(?-?[\d.,]+%\)?/g, '').trim() === '') {
+          const par = pc.filter(x => x.charAt(0) === '(');
+          if (par.length === 2) { r.ceChg = pkNum(par[0].replace(/[()%]/g, '')); r.peChg = pkNum(par[1].replace(/[()%]/g, '')); }
+        }
+        rows.push(r);
+      } else if (t.length >= 4 && /^\d{4,6}$/.test(t.find(x => /^\d{4,6}$/.test(x)) || '') && t.filter(x => pkNumRe.test(x)).length >= 4) bad++;
+    }
+    return { idx, exp, rows, bad };
+  }
+  function pkParsePositions(text) {
+    const L = String(text || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean), out = []; let bad = 0;
+    const hre = /(BANKNIFTY|NIFTY|SENSEX)\s+(\d{1,2})\s+([A-Za-z]{3})\s+(\d{2})\s+(\d{4,6})\s+(CE|PE)\s+(.*)$/i;
+    for (let i = 0; i < L.length; i++) {
+      const m = hre.exec(L[i]); if (!m) continue;
+      // price at the end of the line; the decimal point is sometimes read as a space ("299 90")
+      const pm = /^\s*([\d,]+)(?:[.\s]\s*(\d{1,2}))?\s*$/.exec(m[7]);
+      const win = []; for (let j = i + 1; j < L.length && win.length < 3 && !hre.test(L[j]); j++) win.push(L[j]);
+      const w = win.join(' '), q = /([\d,]+)\)?\s*P\s*&\s*L/i.exec(w) || /QTY\s+([\d,]+)/i.exec(w), av = /Avg\.?\s*Price\s+([\d,]*\.?\d+)/i.exec(w), pl = /P\s*&\s*L\s*([-−]?\s*[\d,]+\.\d{2})/i.exec(w), sd = /\b(BUY|SELL)\b/i.exec(w);
+      if (!pm || !q || !av) { bad++; continue; }
+      const r = { idx: m[1].toUpperCase(), exp: String(+m[2]).padStart(2, '0') + m[3].toUpperCase(), strike: +m[5], ty: m[6].toUpperCase(), ltp: pkNum(pm[1] + (pm[2] ? '.' + pm[2] : '')), qty: pkNum(q[1]), avg: pkNum(av[1]), pnl: pl ? pkNum(pl[1].replace(/\s/g, '').replace('−', '-')) : null, side: sd ? sd[1].toUpperCase() : 'BUY' };
+      r.pnlOk = r.pnl == null ? null : Math.abs((r.ltp - r.avg) * r.qty - r.pnl) <= Math.max(5, Math.abs(r.pnl) * 0.02);
+      out.push(r);
+    }
+    return { rows: out, bad };
+  }
+  // Dark app screens are read less reliably than light ones, so read up to 3 times with different clean-ups and keep the
+  // reading that agrees with the P&L printed on the screen (or that most readings agree on). Positions are matched by qty + buy price.
+  async function pkReadPositions(file, onProg) {
+    const passes = [{ clip: 0.01 }, { bin: 128 }, { clip: 0.002 }], groups = {}; let bad = 0, n = 0;
+    for (const o of passes) {
+      n++; const txt = await pkRead(file, onProg ? (p) => onProg(p, n, passes.length) : null, o), r = pkParsePositions(txt);
+      bad = Math.max(bad, r.bad);
+      r.rows.forEach(x => { const k = x.qty + '|' + x.avg; (groups[k] = groups[k] || []).push(x); });
+      const keys = Object.keys(groups);
+      if (keys.length && keys.every(k => groups[k].some(x => x.pnlOk === true))) break;
+    }
+    const rows = Object.keys(groups).map(k => {
+      const c = groups[k]; let best = null, bs = -1;
+      c.forEach(x => { const sc = (x.pnlOk === true ? 3 : 0) + c.filter(y => y.strike === x.strike && y.ty === x.ty && y.ltp === x.ltp).length; if (sc > bs) { bs = sc; best = x; } });
+      return best;
+    });
+    return { rows, bad: rows.length ? 0 : bad };
+  }
+
+  // ---- Pick my lead: gate → side → strikes in the band ----
+  function pkDecide(idx, exp, rows) {
+    const res = { cls: 'no', head: '', notes: [], picks: [], close: [], side: null, band: pkBand() };
+    const zone = EC_IDX_ZONE[idx];
+    if (!zone) { res.head = 'Pick NIFTY, BANKNIFTY or SENSEX first.'; return res; }
+    const d = getIstDate(), nowMin = d.getHours() * 60 + d.getMinutes(), st = ecStatus[zone];
+    if (!ecMarketHours()) { res.head = '😴 Market closed. No pick now.'; return res; }
+    if (!st) { res.head = '⏳ Entry check is not ready yet. Try again in a minute.'; return res; }
+    if (nowMin >= EC_LAST_ENTRY) { res.head = '🌙 Too late for new entries.'; return res; }
+    try { const ln = rlLimitNote(); if (ln && ln.bad) { res.head = '🛑 Loss limit reached. Stop for today.'; return res; } } catch (e) { /* optional */ }
+    try {
+      const rv = rlRevenge();
+      if (rv && rv.level === 'stop') { res.head = '🛑 2 losses in a row. Stop for today.'; return res; }
+      if (rv) res.notes.push('🧘 You just exited a loss. Take a short break first.');
+    } catch (e) { /* optional */ }
+    let side = null;
+    if (st.exp) {
+      if (st.exp.quiet) { res.head = '🧘 Expiry is quiet. Wait for a move.'; return res; }
+      side = st.exp.dir; res.head = (side === 'CE' ? '🚀 ' : '🪂 ') + 'Expiry: moving ' + side + '.';
+      if (nowMin >= 14 * 60 + 30) res.notes.push('⏳ Expiry after 2:30: fast decay. Small size.');
+    } else if (st.key === 'go' || st.key === 'early') {
+      side = st.dir; res.head = st.ico + ' ' + st.text;
+      if (st.key === 'early') res.notes.push('🔥 Early move. Smaller size.');
+      if (st.sub) res.notes.push('⚠️ ' + st.sub);
+      if (st.tag) res.notes.push(st.tag);
+      const sm = /^(\d{2}):(\d{2})$/.exec(st.since || '');
+      if (sm && nowMin >= 13 * 60 && nowMin - (+sm[1] * 60 + +sm[2]) >= 90) res.notes.push('⚠️ This move is old. Be careful.');
+    } else { res.head = st.ico + ' ' + st.text + ' No pick now.'; return res; }
+    res.side = side; res.cls = res.notes.some(n => /Careful|old|break|decay/.test(n)) ? 'care' : 'ok';
+    try {
+      if (mcState && mcState.lean) res.notes.push(mcState.lean === side ? '🌍 World says ' + side + '.' : '⚠️ World says ' + mcState.lean + ' (other way).');
+      const ev = mcState && (mcState.evl || []).find(e => e.bias && e.bias.side);
+      if (ev) res.notes.push('📅 ' + ev.label + ': ' + (ev.bias.strong ? 'Strong ' : 'Bias ') + ev.bias.side + '.');
+    } catch (e) { /* optional */ }
+    const k = side === 'CE' ? 'ce' : 'pe', prior = pkLoad().snaps.filter(x => x.idx === idx && x.exp === exp);
+    const au = rlAuto(); let rem = null; try { if (!au.off && au.limit > 0) rem = au.limit + Math.min(0, rlDayPl()); } catch (e) { rem = null; }
+    const mk = (r) => {
+      const ltp = r[k + 'Ltp'], oi = r[k + 'Oi'], chg = r[k + 'Chg'];
+      let first = null; for (const s of prior) { const o = s.rows.find(x => x.strike === r.strike); if (o && o[k + 'Ltp'] > 0) { first = o[k + 'Ltp']; break; } }
+      return { strike: r.strike, ltp, oi, chg, first, qty: rem == null ? null : (rem <= 0 ? 0 : Math.floor(rem / (ltp * 0.4))), sl: opAutoSL(ltp) };
+    };
+    const ok = rows.filter(r => r[k + 'Oi'] >= PK_MIN_OI);
+    const inBand = ok.filter(r => r[k + 'Ltp'] >= res.band.lo && r[k + 'Ltp'] <= res.band.hi).sort((a, b) => b[k + 'Oi'] - a[k + 'Oi'] || (b[k + 'Chg'] || 0) - (a[k + 'Chg'] || 0)).slice(0, 3);
+    res.picks = inBand.map(mk);
+    if (!res.picks.length) res.close = ok.filter(r => r[k + 'Ltp'] > res.band.hi).sort((a, b) => a[k + 'Ltp'] - b[k + 'Ltp']).slice(0, 2).map(mk);
+    return res;
+  }
+  function pkPickHtml(p, side) {
+    const trend = p.first != null && Math.abs(p.first - p.ltp) > 0.001 ? '<br>Trend ₹' + p.first + ' → ₹' + p.ltp + (p.ltp > p.first ? ' <span class="up">▲</span>' : ' <span class="dn">▼</span>') : '';
+    const chg = p.chg != null ? ' <span class="' + (p.chg >= 0 ? 'up' : 'dn') + '">' + (p.chg >= 0 ? '▲' : '▼') + Math.abs(p.chg) + '%</span>' : '';
+    return '<div class="pk-pick"><b>' + p.strike + ' ' + side + '</b> · ₹' + p.ltp + chg + ' · OI ' + p.oi + 'L' + trend + '<br>' + (p.qty != null ? 'Max qty ' + p.qty.toLocaleString('en-IN') + ' · ' : '') + 'SL ₹' + p.sl + '</div>';
+  }
+  function pkRenderResult(res, nSnap) {
+    const out = document.getElementById('pk-out'); if (!out) return;
+    let h = '<div class="pk-verdict ' + res.cls + '">' + mcEsc(res.head) + '</div>';
+    res.notes.forEach(n => { h += '<div class="pk-note">' + mcEsc(n) + '</div>'; });
+    if (res.side) {
+      if (res.picks.length) { h += '<div class="pk-msg">Best ' + res.side + ' leads · ₹' + res.band.lo + '–' + res.band.hi + ' · most OI first</div>' + res.picks.map(p => pkPickHtml(p, res.side)).join(''); }
+      else {
+        h += '<div class="pk-verdict care">No strike in your band (₹' + res.band.lo + '–' + res.band.hi + '). Scroll further out and upload again.</div>';
+        if (res.close.length) h += '<div class="pk-msg">Closest above the band:</div>' + res.close.map(p => pkPickHtml(p, res.side)).join('');
+      }
+    }
+    h += '<div class="pk-msg">Screenshot ' + nSnap + ' today · max 6. Not advice — your call.</div>';
+    out.innerHTML = h;
+  }
+  function pkRenderConfirm() {
+    const c = document.getElementById('pk-conf'); if (!c) return;
+    if (!pkSt) { c.innerHTML = ''; return; }
+    const f = (i, k) => '<td><input type="text" inputmode="decimal" data-pk-r="' + i + '" data-pk-f="' + k + '" value="' + pkSt.rows[i][k] + '"></td>';
+    c.innerHTML = '<div class="pk-hd">Index <select id="pk-idx">' + ['NIFTY', 'BANKNIFTY', 'SENSEX'].map(x => '<option' + (x === pkSt.idx ? ' selected' : '') + '>' + x + '</option>').join('') + '</select> Expiry <input id="pk-exp" type="text" maxlength="5" value="' + mcEsc(pkSt.exp) + '" placeholder="29OCT"></div>' +
+      '<div class="pk-msg">Check the numbers against your screenshot. Fix any that are wrong.' + (pkSt.bad ? ' ' + pkSt.bad + ' row(s) could not be read.' : '') + '</div>' +
+      '<table class="pk-tbl"><tr><th>Strike</th><th>CE ₹</th><th>CE OI</th><th>PE ₹</th><th>PE OI</th></tr>' + pkSt.rows.map((r, i) => '<tr>' + f(i, 'strike') + f(i, 'ceLtp') + f(i, 'ceOi') + f(i, 'peLtp') + f(i, 'peOi') + '</tr>').join('') + '</table>' +
+      '<div style="margin-top:10px"><button type="button" class="pk-btn primary" id="pk-go">✅ Looks right — pick my lead</button></div>';
+  }
+  function pkRun() {
+    if (!pkSt) return;
+    const idx = (document.getElementById('pk-idx') || {}).value || pkSt.idx, exp = String((document.getElementById('pk-exp') || {}).value || '').toUpperCase().replace(/\s+/g, '');
+    const rows = pkSt.rows.map(r => Object.assign({}, r)).filter(r => r.strike > 0);
+    const res = pkDecide(idx, exp, rows);
+    const o = pkLoad();
+    o.snaps.push({ ts: Date.now(), tk: ecHm(ecIstMins(Date.now())), idx, exp, rows: rows.map(r => ({ strike: r.strike, ceLtp: r.ceLtp, peLtp: r.peLtp, ceOi: r.ceOi, peOi: r.peOi })) });
+    o.snaps = o.snaps.slice(-6);
+    if (res.side && res.picks.length) { o.picks.push({ ts: Date.now(), idx, exp, side: res.side, strikes: res.picks.map(p => p.strike) }); o.picks = o.picks.slice(-30); }
+    pkSave(o);
+    pkRenderResult(res, o.snaps.length);
+  }
+  async function pkFileChosen(file) {
+    const msg = document.getElementById('pk-msg'), conf = document.getElementById('pk-conf'), out = document.getElementById('pk-out');
+    pkSt = null; conf.innerHTML = ''; out.innerHTML = '';
+    msg.textContent = '⏳ Reading the screenshot… (the first time takes a little longer)';
+    try {
+      const text = await pkRead(file, (p) => { msg.textContent = '⏳ Reading the screenshot… ' + p + '%'; });
+      const c = pkParseChain(text);
+      if (c.rows.length < 3) { msg.textContent = 'Could not read this screenshot. Use the option-chain page (portrait) or just enter leads by hand — that works the same.'; return; }
+      pkSt = { idx: c.idx || ((ecSelZone() && EC_NAME[ecSelZone()]) || 'NIFTY'), exp: c.exp, rows: c.rows, bad: c.bad };
+      msg.textContent = '';
+      pkRenderConfirm();
+    } catch (e) { msg.textContent = 'Could not read it' + (e && e.message === 'offline' ? ' (needs internet the first time)' : '') + '. You can still enter leads by hand.'; }
+  }
+  (function pkWire() {
+    const g = (id) => document.getElementById(id); if (!g('pk-card')) return;
+    const b = pkBand(); g('pk-lo').value = b.lo; g('pk-hi').value = b.hi;
+    const sv = () => { const lo = parseFloat(g('pk-lo').value), hi = parseFloat(g('pk-hi').value); if (lo > 0 && hi >= lo) { try { localStorage.setItem(PK_BAND_KEY, JSON.stringify({ lo, hi })); } catch (e) { /* ok */ } } };
+    g('pk-lo').addEventListener('change', sv); g('pk-hi').addEventListener('change', sv);
+    g('pk-up').addEventListener('click', () => g('pk-file').click());
+    g('pk-file').addEventListener('change', () => { const f = g('pk-file').files && g('pk-file').files[0]; g('pk-file').value = ''; if (f) pkFileChosen(f); });
+    g('pk-conf').addEventListener('input', (ev) => {
+      const i = ev.target.getAttribute && ev.target.getAttribute('data-pk-r'); if (i == null || !pkSt) return;
+      const v = parseFloat(ev.target.value); if (isFinite(v)) pkSt.rows[+i][ev.target.getAttribute('data-pk-f')] = v;
+    });
+    g('pk-conf').addEventListener('click', (ev) => { if (ev.target.id === 'pk-go') pkRun(); });
+  })();
+
+  // ---- open positions from a screenshot (ICICI layout; other apps can be added later) ----
+  function piFind(acct, r) {
+    return (opState.positions || []).find(p => {
+      if (!/^ONGOING$/i.test(p.status)) return false;
+      const m = opParseLabel(p.label); if (!m || !m.idx || opAcctOf(p) !== acct) return false;
+      return m.idx === r.idx && m.ty === r.ty && Number(m.strike) === Number(r.strike) && (!m.exp || !r.exp || m.exp === r.exp);
+    });
+  }
+  function piState(acct, r) {
+    if (r.side === 'SELL') return { k: 'sell', t: 'Sold (short) — not supported, skipped.', on: false, lock: true };
+    if (!(r.qty > 0)) return { k: 'zero', t: 'Quantity is 0 — skipped.', on: false, lock: true };
+    const d = piFind(acct, r);
+    if (!d) return { k: 'new', t: r.pnlOk === false ? '⚠️ P&L on screen does not match these numbers — check them.' : 'New — will be added.', on: true, warn: r.pnlOk === false };
+    if (Number(d.qty) === Number(r.qty) && Math.abs(Number(d.buy) - r.avg) < 0.005) return { k: 'same', t: 'Already in app — skipped.', on: false, lock: true };
+    return { k: 'diff', t: 'Already in app but qty/buy differ (' + d.qty + ' @ ' + d.buy + '). Tick to update it.', on: false, warn: true };
+  }
+  function piRender() {
+    const box = document.getElementById('pi-rows'), go = document.getElementById('pi-go'), acct = document.getElementById('pi-acct').value; if (!box) return;
+    box.innerHTML = piRows.map((r, i) => {
+      const s = piState(acct, r); if (r.on == null || r.stK !== s.k) { r.on = s.on; r.stK = s.k; }
+      return '<div class="pi-row' + (s.lock ? ' pi-off' : '') + '"><div class="pi-nm"><input type="checkbox" data-pi-on="' + i + '"' + (r.on && !s.lock ? ' checked' : '') + (s.lock ? ' disabled' : '') + '> ' + mcEsc(acct + ' ' + r.idx + ' ' + r.exp + ' ' + r.ty + ' ' + r.strike) + '</div>' +
+        '<div class="pi-in"><label>Qty<input type="number" inputmode="decimal" data-pi-i="' + i + '" data-pi-f="qty" value="' + r.qty + '"></label><label>Buy ₹<input type="number" inputmode="decimal" step="any" data-pi-i="' + i + '" data-pi-f="avg" value="' + r.avg + '"></label><label>CMP ₹<input type="number" inputmode="decimal" step="any" data-pi-i="' + i + '" data-pi-f="ltp" value="' + r.ltp + '"></label></div>' +
+        '<div class="pi-st ' + (s.warn ? 'warn' : (s.k === 'new' ? 'ok' : '')) + '">' + mcEsc(s.t) + '</div></div>';
+    }).join('');
+    go.classList.toggle('hidden', !piRows.length);
+  }
+  async function piFileChosen(file) {
+    const msg = document.getElementById('pi-msg'); piRows = []; piRender();
+    msg.textContent = '⏳ Reading the screenshot… (the first time takes a little longer)';
+    try {
+      const r = await pkReadPositions(file, (p, k, tot) => { msg.textContent = '⏳ Reading the screenshot… ' + p + '% (' + k + ' of ' + tot + ')'; });
+      if (!r.rows.length) { msg.textContent = 'No open positions found. Use the Open Positions screen of the app, or add them by hand — that works the same.'; return; }
+      piRows = r.rows; msg.textContent = 'Check the numbers, untick any you do not want, then tap Import.' + (r.bad ? ' ' + r.bad + ' position(s) could not be read.' : '');
+      piRender();
+    } catch (e) { msg.textContent = 'Could not read it' + (e && e.message === 'offline' ? ' (needs internet the first time)' : '') + '. You can still add positions by hand.'; }
+  }
+  function piImport() {
+    const acct = document.getElementById('pi-acct').value; let added = 0, upd = 0, skip = 0, full = 0;
+    piRows.forEach(r => {
+      if (!r.on) { skip++; return; }
+      const s = piState(acct, r); if (s.lock) { skip++; return; }
+      const d = piFind(acct, r);
+      if (d) { d.qty = r.qty; d.buy = r.avg; d.cmp = r.ltp; upd++; return; }
+      if (opState.positions.length >= OP_MAX) { full++; return; }
+      const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      opState.positions.push({ id, label: acct + ' ' + r.idx + ' ' + r.exp + ' ' + r.ty + ' ' + r.strike, acct, status: 'ONGOING', qty: r.qty, buy: r.avg, cmp: r.ltp });
+      try { scSnapshot(id); } catch (e) { /* scorecard is best-effort */ }
+      added++;
+    });
+    if (added || upd) { opTouchAndSave(); opRender(); }
+    piRows = []; piRender();
+    document.getElementById('pi-msg').textContent = 'Done. Added ' + added + (upd ? ', updated ' + upd : '') + ', skipped ' + skip + (full ? ', no room for ' + full + ' (max ' + OP_MAX + ')' : '') + '.';
+    document.getElementById('pi-go').classList.add('hidden');
+  }
+  (function piWire() {
+    const g = (id) => document.getElementById(id); if (!g('pi-btn')) return;
+    try { const a = localStorage.getItem(PI_ACCT_KEY); if (a) g('pi-acct').value = a; } catch (e) { /* default */ }
+    g('pi-btn').addEventListener('click', () => { piRows = []; piRender(); g('pi-msg').textContent = 'Pick your account, then choose the screenshot of your open positions.'; g('pi-sheet').classList.remove('hidden'); });
+    g('pi-cancel').addEventListener('click', () => g('pi-sheet').classList.add('hidden'));
+    g('pi-sheet').addEventListener('click', (e) => { if (e.target === g('pi-sheet')) g('pi-sheet').classList.add('hidden'); });
+    g('pi-acct').addEventListener('change', () => { try { localStorage.setItem(PI_ACCT_KEY, g('pi-acct').value); } catch (e) { /* ok */ } piRows.forEach(r => { r.on = null; }); piRender(); });
+    g('pi-pick').addEventListener('click', () => g('pi-file').click());
+    g('pi-file').addEventListener('change', () => { const f = g('pi-file').files && g('pi-file').files[0]; g('pi-file').value = ''; if (f) piFileChosen(f); });
+    g('pi-rows').addEventListener('change', (ev) => {
+      const t = ev.target;
+      if (t.hasAttribute('data-pi-on')) { piRows[+t.getAttribute('data-pi-on')].on = t.checked; return; }
+      if (t.hasAttribute('data-pi-i')) { const v = parseFloat(t.value); if (isFinite(v)) { piRows[+t.getAttribute('data-pi-i')][t.getAttribute('data-pi-f')] = v; piRender(); } }
+    });
+    g('pi-go').addEventListener('click', piImport);
+  })();
+
+  // =====================================================================================
   // BUILD B (2026-11-04): MARKET CONTEXT strip + TRADING DISCIPLINE (daily loss limit, revenge check)
   // Display / warning only. Nothing here delays, blocks or changes an indication, and every part fails silent.
   // =====================================================================================
@@ -2647,16 +3127,63 @@
     } catch (e) { return []; }
   }
   function mcEvSave(a) { try { localStorage.setItem(mcEvKey(), JSON.stringify(a.slice(0, 30))); } catch (e) { /* best effort */ } }
+  // built-in calendar (checked 4 Nov 2026). US events are shown the next Indian trading morning (they come out after Indian hours).
+  const MC_CAL = [['2026-12-04', '10:00', 'RBI policy'], ['2027-02-05', '10:00', 'RBI policy'], ['2027-02-01', '11:00', 'Union Budget (date expected)']];
+  const MC_FOMC_US = ['2026-12-09', '2027-01-27', '2027-03-17', '2027-04-28', '2027-06-09', '2027-07-28', '2027-09-15', '2027-10-27', '2027-12-08'];
+  const MC_CPI_US = ['2026-11-10', '2026-12-10', '2027-01-13', '2027-02-11', '2027-03-10', '2027-04-13', '2027-05-12', '2027-06-10', '2027-07-14', '2027-08-11', '2027-09-14', '2027-10-14', '2027-11-10', '2027-12-10'];
+  function mcIsoKey(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? (+m[1]) + '-' + (+m[2] - 1) + '-' + (+m[3]) : null; }
+  function mcNextWd(iso) { const d = new Date(iso + 'T12:00:00Z'); do { d.setUTCDate(d.getUTCDate() + 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6); return d.toISOString().slice(0, 10); }
+  var mcBuiltinCache = null;
+  function mcBuiltin() {
+    if (mcBuiltinCache) return mcBuiltinCache;
+    const a = [];
+    MC_CAL.forEach(c => a.push(c[2] === 'RBI policy' ? { iso: c[0], t: c[1], x: c[2], b: 1, k: 'rbi', lb: 'RBI policy', ref: 600 } : { iso: c[0], t: c[1], x: c[2], b: 1, k: 'bud', lb: 'Union Budget', ref: 660 }));
+    MC_FOMC_US.forEach(d => a.push({ iso: mcNextWd(d), t: '', x: 'US Fed decision (overnight)', b: 1, st: 1, k: 'fed', lb: 'US Fed decision' }));
+    MC_CPI_US.forEach(d => a.push({ iso: mcNextWd(d), t: '', x: 'US inflation data (overnight)', b: 1, k: 'cpi', lb: 'US inflation data' }));
+    a.forEach(e => { e.d = mcIsoKey(e.iso); });
+    return (mcBuiltinCache = a);
+  }
+  function mcHidKey() { return 'signa365_mc_hidden_' + (currentUid || 'x'); }
+  function mcHidLoad() { try { const a = JSON.parse(localStorage.getItem(mcHidKey())); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function mcHidSave(a) { try { localStorage.setItem(mcHidKey(), JSON.stringify(a.slice(-60))); } catch (e) { /* best effort */ } }
+  function mcAllEvents() { const h = mcHidLoad(); return mcBuiltin().filter(e => h.indexOf(e.iso + '|' + e.x) < 0).concat(mcEvLoad()); }
   function mcEventsToday() {
     const day = todayIstKey(), d = getIstDate(), nowM = d.getHours() * 60 + d.getMinutes(), out = [];
-    mcEvLoad().forEach(e => {
+    mcAllEvents().forEach(e => {
       if (e.d !== day) return;
       const m = /^(\d{1,2}):(\d{2})$/.exec(e.t || '');
       const em = m ? (+m[1]) * 60 + (+m[2]) : null;
       if (em != null && em - nowM < -60) return; // over more than an hour ago
-      out.push({ x: e.x, t: e.t || '', in: em == null ? null : em - nowM });
+      out.push({ x: e.x, t: e.t || '', in: em == null ? null : em - nowM, st: !!e.st, k: e.k || '', lb: e.lb || '', ref: e.ref || 0 });
     });
     return out;
+  }
+  // direction hint for an event day — from what the market has ALREADY done (never a forecast)
+  function mcBias(e, rows, lean) {
+    if (e.k === 'fed' || e.k === 'cpi') {
+      const sp = rows.find(r => r.it.k === 'S&P'), nq = rows.find(r => r.it.k === 'Nasdaq');
+      if (!sp || !nq) return { side: null };
+      const a = sp.chg, b = nq.chg;
+      if ((a > 0 && b > 0) || (a < 0 && b < 0)) {
+        const side = a > 0 ? 'CE' : 'PE', mn = Math.min(Math.abs(a), Math.abs(b)), avg = (Math.abs(a) + Math.abs(b)) / 2;
+        if (mn >= 1.0 && lean === side) return { side, strong: true };
+        if (avg >= 0.3) return { side, strong: false };
+      }
+      return { side: null };
+    }
+    if (e.k === 'rbi' || e.k === 'bud') {
+      const d0 = getIstDate(), nowM = d0.getHours() * 60 + d0.getMinutes();
+      if (nowM < e.ref + 15) return { wait: true, side: null };
+      const dd = ecData['nifty-zone']; if (!dd || !dd.candles) return { side: null };
+      const cs = dd.candles.filter(c => c && c.close != null); if (!cs.length) return { side: null };
+      const refC = cs.find(c => ecIstMins(c.time) === e.ref - 5), last = cs[cs.length - 1];
+      if (!refC || !last) return { side: null };
+      const pc = (last.close / refC.close - 1) * 100, ap = Math.abs(pc);
+      if (ap >= 0.8) return { side: pc > 0 ? 'CE' : 'PE', strong: true };
+      if (ap >= 0.4) return { side: pc > 0 ? 'CE' : 'PE', strong: false };
+      return { side: null };
+    }
+    return { side: null };
   }
   function mcCompute() {
     const now = Date.now(), rows = [];
@@ -2675,12 +3202,19 @@
         reasons.push({ key: 'f_' + r.it.k, msg: nm + ' ' + sg + ' — big move' });
       }
     });
-    const evs = mcEventsToday();
+    const evs = mcEventsToday(), evl = [];
     evs.forEach(e => {
+      if (e.k) {
+        const bi = mcBias(e, rows, lean), label = e.lb + ' (impact today)';
+        evl.push({ label, bias: bi });
+        if (bi.side && bi.strong) reasons.push({ key: 'b_' + e.k + '_' + todayIstKey() + '_' + bi.side, msg: e.lb + ' — Strong ' + bi.side });
+        if (e.in != null && e.in >= 0 && e.in <= 30) reasons.push({ key: 'e_' + e.x + e.t, msg: 'event soon — ' + e.x + (e.t ? ' ' + e.t : '') });
+        return;
+      }
       bits.push('Event: ' + e.x + (e.t ? ' ' + e.t : '') + (e.in != null && e.in >= 0 && e.in <= 30 ? ' (in ' + e.in + ' min)' : ''));
       if (e.in != null && e.in >= 0 && e.in <= 30) reasons.push({ key: 'e_' + e.x + e.t, msg: 'event soon — ' + e.x + (e.t ? ' ' + e.t : '') });
     });
-    return { rows, M, pos, neg, lean, n, bits, reasons, strong: reasons.length > 0 };
+    return { rows, M, pos, neg, lean, n, bits, evl, reasons, strong: reasons.length > 0 };
   }
   function mcRender() {
     const card = document.getElementById('mc-card'); if (!card) return;
@@ -2691,16 +3225,35 @@
     const l1 = document.getElementById('mc-l1');
     const txt = s.lean === 'CE' ? 'Global: ' + s.n + ' of ' + s.M + ' positive → supports CE'
       : (s.lean === 'PE' ? 'Global: ' + s.n + ' of ' + s.M + ' negative → supports PE' : 'Global: mixed (' + s.pos + ' positive, ' + s.neg + ' negative) → no clear help');
+    const sig = s.reasons.map(r => r.key).join(',') + '|' + s.evl.map(e => e.label + (e.bias.side || '') + (e.bias.strong ? 'S' : '')).join(',');
+    mcSig = sig;
+    const co = mcColLoad(), collapsed = !!(co.c && co.day === todayIstKey() && co.sig === sig);
+    card.classList.toggle('mc-collapsed', collapsed);
+    const e0 = s.evl.find(e => e.bias.side) || s.evl[0];
+    const miniDot = e0 ? '<i class="mc-dot ' + (e0.bias.side ? (e0.bias.side === 'CE' ? 'ce' : 'pe') + ' pulse' : 'none') + '"></i>' : '';
     l1.className = 'mc-l1 ' + (s.lean === 'CE' ? 'ce' : (s.lean === 'PE' ? 'pe' : 'mix'));
-    l1.innerHTML = '<span class="mc-ico' + (s.strong ? ' pulse' : '') + '" title="Market context">🌍</span><span>' + mcEsc(txt) + '</span>';
+    l1.innerHTML = '<span class="mc-ico' + (s.strong ? ' pulse' : '') + '" title="Market context">🌍</span>' + miniDot + '<span>' + mcEsc(txt) + '</span><span class="mc-tog" aria-hidden="true">' + (collapsed ? '▸' : '▾') + '</span>';
     document.getElementById('mc-nums').innerHTML = s.rows.map(r => {
       const nm = r.it.k === 'Dollar' ? 'USD' : (r.it.k === 'HangSeng' ? 'HSI' : r.it.k);
       return '<span class="' + (r.v > 0 ? 'g' : (r.v < 0 ? 'r' : '')) + '">' + mcEsc(nm) + ' ' + (r.chg >= 0 ? '+' : '−') + Math.abs(r.chg).toFixed(1) + '</span>';
     }).join(' · ');
-    const l2 = document.getElementById('mc-l2'), b = s.bits.slice(0, 2);
-    l2.classList.toggle('hidden', !b.length);
-    l2.innerHTML = b.length ? '⚠️ ' + b.map(mcEsc).join(' · ') : '';
+    const l2 = document.getElementById('mc-l2');
+    const items = s.evl.map(e => '<span class="mc-evl"><i class="mc-dot ' + (e.bias.side ? (e.bias.side === 'CE' ? 'ce' : 'pe') + ' pulse' : 'none') + '"></i>' + mcEsc(e.label) + ' — ' + (e.bias.wait ? 'Wait' : (e.bias.side ? (e.bias.strong ? 'Strong ' : 'Bias ') + e.bias.side : 'No bias')) + '</span>')
+      .concat(s.bits.map(x => '<span class="mc-evl">⚠️ ' + mcEsc(x) + '</span>')).slice(0, 2);
+    l2.classList.toggle('hidden', !items.length);
+    l2.innerHTML = items.join('');
   }
+  var mcSig = '';
+  const MC_COL_KEY = 'signa365_mc_col';
+  function mcColLoad() { try { return JSON.parse(localStorage.getItem(MC_COL_KEY)) || {}; } catch (e) { return {}; } }
+  (function mcColWire() {
+    const l1 = document.getElementById('mc-l1'); if (!l1) return;
+    l1.addEventListener('click', () => {
+      const co = mcColLoad(), cur = !!(co.c && co.day === todayIstKey() && co.sig === mcSig);
+      try { localStorage.setItem(MC_COL_KEY, JSON.stringify({ day: todayIstKey(), sig: mcSig, c: !cur })); } catch (e) { /* per-device convenience only */ }
+      mcRender();
+    });
+  })();
   async function mcNudge(s) {
     try {
       if (currentRole !== 'admin' || !ecMarketHours() || !s || !s.reasons.length) return;
@@ -2730,19 +3283,17 @@
   function rlLoad() { try { const o = JSON.parse(localStorage.getItem(rlKey())); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
   function rlSave(o) { try { localStorage.setItem(rlKey(), JSON.stringify(o)); } catch (e) { /* best effort */ } }
   function rlFmt(n) { return '₹' + Math.round(Math.abs(n)).toLocaleString('en-IN'); }
-  // today's result = exited today (realised) + positions still open (at their CMP)
+  // today's result = ONLY what is recorded in the P&L log today (open / unrecorded positions are not counted)
   function rlDayPl() {
-    let tot = 0;
-    const day = opIstDay(Date.now());
-    (opState.exited || []).forEach(x => { if (x.day === day && typeof x.pl === 'number') tot += x.pl; });
-    opOngoing().forEach(p => { if (opCmpSuspect[p.id]) return; const c = opCalc(p, opState.slTable); if (c.pl != null) tot += c.pl; });
+    let tot = 0; const day = opIstDay(Date.now());
+    tjLoad().forEach(t => { const v = Number(t.pnl); if (isFinite(v) && t.ts && opIstDay(t.ts) === day) tot += v; });
     return tot;
   }
   let rlShown = false;
   function rlCheck() {
     if (!opAllowed()) return;
-    const o = rlLoad(), lim = Number(o.limit) || 0, today = todayIstKey();
-    if (lim <= 0) return;
+    const o = rlLoad(), au = rlAuto(), lim = au.limit, today = todayIstKey();
+    if (au.off || lim <= 0) return;
     const pl = rlDayPl();
     let fresh = false;
     if (o.stopDay !== today && pl <= -lim) { o.stopDay = today; o.stopAt = Date.now(); o.stopPl = Math.round(pl); rlSave(o); fresh = true; }
@@ -2762,9 +3313,28 @@
       }
     }
   }
+
+  // ---- automatic loss limit: median winning day of the last 20 finished days in the P&L log, cut after losing days ----
+  const RL_STARTER = 5000, RL_FLOOR = 2000;
+  function rlDays() {
+    const today = opIstDay(Date.now()), m = {};
+    tjLoad().forEach(t => { const v = Number(t.pnl); if (!isFinite(v) || !t.ts) return; const d = opIstDay(t.ts); if (d >= today) return; m[d] = (m[d] || 0) + v; });
+    return Object.keys(m).sort().map(d => ({ d, v: m[d] }));
+  }
+  function rlAuto() {
+    const o = rlLoad(), cap = Number(o.limit) || 0, days = rlDays().slice(-20), win = days.filter(x => x.v > 0).map(x => x.v).sort((a, b) => a - b);
+    let base = RL_STARTER, src = 'starter';
+    if (win.length >= 5) { const k = win.length; base = k % 2 ? win[(k - 1) / 2] : (win[k / 2 - 1] + win[k / 2]) / 2; src = 'auto'; }
+    let mult = 1;
+    const last = days[days.length - 1], prev = days[days.length - 2];
+    if (last && (Date.now() - Date.parse(last.d + 'T00:00:00+05:30')) < 8 * 86400000 && last.v < 0) mult = (prev && prev.v < 0) ? 0.25 : 0.5;
+    let lim = Math.max(RL_FLOOR, Math.round(base * mult / 500) * 500), capped = false;
+    if (cap > 0 && lim > cap) { lim = cap; capped = true; }
+    return { limit: lim, base, src, mult, nDays: days.length, nWin: win.length, capped, off: o.off === true };
+  }
   // note shown in the Add form: limit already hit, or 70%+ used
   function rlLimitNote() {
-    const o = rlLoad(), lim = Number(o.limit) || 0; if (lim <= 0) return null;
+    const o = rlLoad(), au = rlAuto(), lim = au.limit; if (au.off || lim <= 0) return null;
     if (o.stopDay === todayIstKey()) return { html: '🛑 Daily loss limit ' + rlFmt(lim) + ' reached — stop trading today.', bad: true };
     const pl = rlDayPl();
     if (pl < 0 && -pl >= lim * 0.7) return { html: '⚠️ ' + Math.round(-pl / lim * 100) + '% of today\'s loss limit used (' + rlFmt(pl) + ' of ' + rlFmt(lim) + ').', bad: false };
@@ -2807,7 +3377,7 @@
     const z = EC_IDX_ZONE[m.idx], st = z ? ecStatus[z] : null, w = z ? ecWeek[z] : null, d = getIstDate();
     const rec = {
       id, day: opIstDay(Date.now()), ts: Date.now(), tk: ecHm(ecIstMins(Date.now())), idx: m.idx, ty: m.ty,
-      ec: st ? st.key : null, go: !!(st && st.key === 'go' && st.dir === m.ty),
+      ec: st ? st.key : null, go: !!(st && (st.key === 'go' || st.key === 'early') && st.dir === m.ty), pk: (function () { try { return pkFollowed(m); } catch (e) { return null; } })(),
       wk: w && w.dir ? (w.dir === m.ty ? 'with' : 'counter') : null,
       gl: mcState && mcState.lean ? (mcState.lean === m.ty ? 'with' : 'against') : null,
       rev: !!rlRevenge(), early: (d.getHours() * 60 + d.getMinutes()) < 10 * 60 + 30, pl: null
@@ -2870,7 +3440,8 @@
       ['Week trend', [['With the week', x => x.wk === 'with'], ['Against the week', x => x.wk === 'counter']]],
       ['Global markets', [['Global supported it', x => x.gl === 'with'], ['Global was against', x => x.gl === 'against']]],
       ['Discipline', [['Normal entry', x => !x.rev], ['Entered soon after a loss', x => x.rev]]],
-      ['Time of entry', [['Before 10:30', x => x.early === true], ['After 10:30', x => x.early === false]]]
+      ['Time of entry', [['Before 10:30', x => x.early === true], ['After 10:30', x => x.early === false]]],
+      ['Pick my lead', [['Followed the pick', x => x.pk === 'yes'], ['Did not follow it', x => x.pk === 'no']]]
     ];
     const sg = (n) => n > 0 ? 'pos' : (n < 0 ? 'neg' : '');
     let h = '<div class="sc-hd"><span>Rule</span><span>Trades</span><span>Win</span><span>Net</span></div>';
@@ -2884,22 +3455,42 @@
     body.innerHTML = h;
   }
 
-  // ---- admin card: loss limit + events ----
+  // ---- admin card: status (automatic) + optional settings ----
   function rkEvDateIso() { const d = getIstDate(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  function rkEvKeyOf(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? (+m[1]) + '-' + (+m[2] - 1) + '-' + (+m[3]) : null; }
+  function rkEvKeyOf(iso) { return mcIsoKey(iso); }
+  function rkStatus() {
+    const a = rlAuto(), lim = document.getElementById('rk-st-limit'), why = document.getElementById('rk-st-why'), pl = document.getElementById('rk-st-pl'); if (!lim) return;
+    lim.textContent = a.off ? 'OFF' : rlFmt(a.limit) + (a.capped ? ' (your cap)' : (a.src === 'auto' ? ' (auto)' : ' (starter)'));
+    const bits = [];
+    if (a.off) bits.push('The loss limit is turned off (Optional settings).');
+    else {
+      if (a.src === 'auto') bits.push('Typical winning day ' + rlFmt(a.base) + ' (from your last ' + a.nDays + ' recorded days).');
+      else bits.push('Starter limit — it becomes automatic once your P&L log has 5 winning days (' + a.nWin + ' so far).');
+      if (a.mult < 1) bits.push('Cut to ' + Math.round(a.mult * 100) + '% because of your last losing day' + (a.mult < 0.5 ? 's' : '') + '.');
+    }
+    why.textContent = bits.join(' ');
+    let v = 0; try { v = rlDayPl(); } catch (e) { v = 0; }
+    pl.textContent = (v < 0 ? '−' : (v > 0 ? '+' : '')) + rlFmt(v); pl.className = v > 0 ? 'pos' : (v < 0 ? 'neg' : '');
+  }
   function rkRender() {
     try { scRender(); } catch (e) { /* scorecard is optional */ }
     const inp = document.getElementById('rk-limit'); if (!inp) return;
-    if (document.activeElement !== inp) { const o = rlLoad(); inp.value = o.limit ? String(o.limit) : ''; }
+    try { rkStatus(); } catch (e) { /* status is best-effort */ }
+    if (document.activeElement !== inp) { const o = rlLoad(); inp.value = o.limit ? String(o.limit) : ''; const off = document.getElementById('rk-off'); if (off) off.checked = o.off === true; }
     const dt = document.getElementById('rk-ev-date'); if (dt && !dt.value) dt.value = rkEvDateIso();
     const today = getIstDate(), todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-    const list = mcEvLoad().filter(e => { const m = /^(\d+)-(\d+)-(\d+)$/.exec(e.d); return m && new Date(+m[1], +m[2], +m[3]).getTime() >= todayStart; });
-    if (list.length !== mcEvLoad().length) mcEvSave(list); // past events are dropped
-    list.sort((a, b) => { const pa = a.d.split('-').map(Number), pb = b.d.split('-').map(Number); return (new Date(pa[0], pa[1], pa[2]) - new Date(pb[0], pb[1], pb[2])) || String(a.t).localeCompare(String(b.t)); });
-    document.getElementById('rk-events').innerHTML = list.length ? list.map((e, i) => {
+    const own = mcEvLoad(), ownKeep = own.filter(e => { const m = /^(\d+)-(\d+)-(\d+)$/.exec(e.d); return m && new Date(+m[1], +m[2], +m[3]).getTime() >= todayStart; });
+    if (ownKeep.length !== own.length) mcEvSave(ownKeep); // past own events are dropped
+    const hid = mcHidLoad();
+    const all = mcBuiltin().filter(e => hid.indexOf(e.iso + '|' + e.x) < 0).concat(ownKeep).filter(e => { const m = /^(\d+)-(\d+)-(\d+)$/.exec(e.d); return m && new Date(+m[1], +m[2], +m[3]).getTime() >= todayStart; });
+    const ts = (e) => { const m = /^(\d+)-(\d+)-(\d+)$/.exec(e.d); return new Date(+m[1], +m[2], +m[3]).getTime() + (/^(\d{1,2}):(\d{2})$/.test(e.t || '') ? (+e.t.split(':')[0]) * 60 + (+e.t.split(':')[1]) : 0) * 60000; };
+    all.sort((a, b) => ts(a) - ts(b));
+    document.getElementById('rk-events').innerHTML = all.length ? all.slice(0, 6).map(e => {
       const p = e.d.split('-').map(Number);
-      return '<div class="rk-ev"><span>' + mcEsc(String(p[2]).padStart(2, '0') + '/' + String(p[1] + 1).padStart(2, '0') + ' ' + (e.t || '') + ' · ' + e.x) + '</span><button type="button" data-rk-del="' + mcEsc(e.d + '|' + e.t + '|' + e.x) + '" aria-label="Remove">×</button></div>';
-    }).join('') : '<div class="rk-msg">No events added. Add RBI policy, US Fed, big results etc. — they show as a line under Entry check on that day.</div>';
+      const btn = e.b ? '<button type="button" class="rk-evb" data-rk-hide="' + mcEsc(e.iso + '|' + e.x) + '" aria-label="Hide">hide</button>' : '<button type="button" data-rk-del="' + mcEsc(e.d + '|' + e.t + '|' + e.x) + '" aria-label="Remove">×</button>';
+      return '<div class="rk-ev"><span>' + mcEsc(String(p[2]).padStart(2, '0') + '/' + String(p[1] + 1).padStart(2, '0') + ' ' + (e.t || '') + ' · ' + e.x) + '</span>' + btn + '</div>';
+    }).join('') : '<div class="rk-msg">No events coming up.</div>';
+    document.getElementById('rk-cal-note').textContent = 'Built-in calendar checked 4 Nov 2026 · RBI dates known till Feb 2027 · US dates till Dec 2027. Dates can shift — treat as a heads-up.';
   }
   (function rkWire() {
     const g = (id) => document.getElementById(id);
@@ -2908,9 +3499,10 @@
       const v = String(g('rk-limit').value || '').replace(/[^0-9.]/g, ''), n = v === '' ? 0 : Number(v), o = rlLoad();
       if (v !== '' && (!isFinite(n) || n < 0)) { g('rk-msg').textContent = 'Enter a number, e.g. 20000.'; return; }
       o.limit = Math.round(n); rlSave(o);
-      g('rk-msg').textContent = n > 0 ? 'Saved. "STOP TRADING TODAY" shows when the day\'s loss reaches ' + rlFmt(n) + '. Stored on this device.' : 'Loss limit is off.';
-      try { rlCheck(); } catch (e) { /* ok */ }
+      g('rk-msg').textContent = n > 0 ? 'Saved. The automatic limit will never go above ' + rlFmt(n) + '. Stored on this device.' : 'Cap removed — fully automatic.';
+      try { rkStatus(); rlCheck(); } catch (e) { /* ok */ }
     });
+    g('rk-off').addEventListener('change', () => { const o = rlLoad(); o.off = g('rk-off').checked; rlSave(o); g('rk-msg').textContent = o.off ? 'Loss limit is OFF.' : 'Loss limit is ON (automatic).'; try { rkStatus(); } catch (e) { /* ok */ } });
     g('rk-ev-add').addEventListener('click', () => {
       const x = String(g('rk-ev-text').value || '').trim().slice(0, 30), t = String(g('rk-ev-time').value || '').trim(), d = rkEvKeyOf(g('rk-ev-date').value);
       if (!x || !d) { g('rk-msg').textContent = 'Enter the date and the event name.'; return; }
@@ -2920,12 +3512,15 @@
       rkRender(); mcRender();
     });
     g('rk-events').addEventListener('click', (ev) => {
+      const h = ev.target.closest('[data-rk-hide]');
+      if (h) { const a = mcHidLoad(); a.push(h.getAttribute('data-rk-hide')); mcHidSave(a); rkRender(); mcRender(); return; }
       const b = ev.target.closest('[data-rk-del]'); if (!b) return;
       const key = b.getAttribute('data-rk-del'); mcEvSave(mcEvLoad().filter(e => (e.d + '|' + e.t + '|' + e.x) !== key));
       rkRender(); mcRender();
     });
   })();
 
+  setInterval(() => { try { rlCheck(); } catch (e) { /* ok */ } }, 10 * 1000);
   setTimeout(mcTick, 3500);
   setInterval(mcTick, 5 * 60 * 1000);
   setInterval(() => { try { mcRender(); } catch (e) { /* ok */ } }, 60 * 1000);
@@ -4122,6 +4717,7 @@
 
   // GRAND TOTAL (2026-11-03): one line under the Monthly chart = sum of ALL logged trades (every month, also the ones older than the 6 on the chart).
   function renderGrandTotal() {
+    try { rlCheck(); } catch (e) { /* loss-limit check is best-effort */ }
     const el = document.getElementById('grand-total');
     if (!el) return;
     const trades = tjLoad();
@@ -4138,6 +4734,7 @@
     const txt = (sum > 0 ? '+' : (sum < 0 ? '-' : '')) + '₹' + Math.abs(Math.round(sum)).toLocaleString('en-IN');
     el.innerHTML = '<div class="gt-lbl">Grand total<small>' + range + ' · ' + nM + ' month' + (nM === 1 ? '' : 's') + ' · ' + trades.length + ' trades</small></div>' +
       '<div class="gt-val ' + (sum > 0 ? 'pos' : (sum < 0 ? 'neg' : '')) + '">' + txt + '</div>';
+    el.classList.toggle('neg', sum < 0);
     el.classList.remove('hidden');
   }
   // ---- FEATURE 6: WEEKLY TOTALS (new — same pattern as renderMonthlySummary, grouped Mon–Sun) ----
@@ -4740,7 +5337,24 @@
   function opLastLoad() { try { return JSON.parse(localStorage.getItem(opLastKey())) || {}; } catch (e) { return {}; } }
   function opLastSave(o) { try { localStorage.setItem(opLastKey(), JSON.stringify(o)); } catch (e) { /* best effort */ } }
   function opSelSet(el, v) { el.value = ''; if (v) { el.value = v; if (el.value !== v) el.value = ''; } }
+  // Max quantity that keeps one stopped-out trade inside what is left of today's loss limit (loss per unit = buy − SL)
+  function opQMaxQ() {
+    const el = document.getElementById('op-q-maxq'); if (!el) return;
+    let html = '';
+    try {
+      const buy = opNum(opQBuyEl.value);
+      if (!opEditingId && buy != null && buy > 0) {
+        const au = rlAuto();
+        if (!au.off && au.limit > 0) {
+          const rem = au.limit + Math.min(0, rlDayPl()), sl = opLookupSL(buy, opState.slTable), slv = sl == null ? opAutoSL(buy) : sl, per = sl == null ? buy * 0.4 : Math.max(0.05, buy - sl);
+          html = rem <= 0 ? 'Loss limit is used up for today.' : 'Max qty for your ' + rlFmt(rem) + ' loss limit at ₹' + buy + ': <strong>' + Math.floor(rem / per).toLocaleString('en-IN') + '</strong> · SL ₹' + slv;
+        }
+      }
+    } catch (e) { html = ''; }
+    el.innerHTML = html; el.classList.toggle('hidden', !html);
+  }
   function opQPreview() {
+    try { opQMaxQ(); } catch (e) { /* helper line is optional */ }
     const qty = opNum(opQQtyEl.value), buy = opNum(opQBuyEl.value);
     if (buy == null || buy <= 0) { opQAutoEl.textContent = '🛑 SL and 💰 capital show here'; return; }
     const sl = opLookupSL(buy, opState.slTable), auto = sl == null;
@@ -5771,7 +6385,7 @@
     // of waiting for a toggle click that no longer exists.
     adminPanelEl.classList.toggle('hidden', !isAdmin);
     { const tc = document.getElementById('admin-totals-card'); if (tc) tc.classList.toggle('hidden', !isAdmin); }
-    { const rc = document.getElementById('admin-risk-card'); if (rc) rc.classList.toggle('hidden', !isAdmin); const sc2 = document.getElementById('admin-score-card'); if (sc2) sc2.classList.toggle('hidden', !isAdmin); }
+    { const rc = document.getElementById('admin-risk-card'); if (rc) rc.classList.toggle('hidden', !isAdmin); const sc2 = document.getElementById('admin-score-card'); if (sc2) sc2.classList.toggle('hidden', !isAdmin); const pkc = document.getElementById('pk-card'); if (pkc) pkc.classList.toggle('hidden', !isAdmin); }
     if (isAdmin) { try { rkRender(); } catch (e) { /* settings card is optional */ } }
     if (isAdmin) { loadAdminUserList(); computeNextUsername(); startAdminExpiryPingLoop(); startPresenceRefreshLoop(); }
     else { stopAdminExpiryPingLoop(); stopPresenceRefreshLoop(); }
