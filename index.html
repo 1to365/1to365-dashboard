@@ -554,6 +554,82 @@
   .op-minipl.neg { color: var(--red); }
   .op-pos.collapsed .op-mini { display: flex; }
   .op-pos.collapsed .op-acts, .op-pos.collapsed .op-body { display: none; }
+  .gt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
+  .gt-row.hidden { display: none; }
+  .gt-lbl { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); }
+  .gt-lbl small { display: block; font-size: 0.68rem; font-weight: 600; text-transform: none; letter-spacing: 0; margin-top: 2px; }
+  .gt-val { font-size: 1.25rem; font-weight: 800; white-space: nowrap; }
+  .gt-val.pos { color: var(--green); } .gt-val.neg { color: var(--red); }
+  /* ===== ENTRY CHECK (Build A, 2026-11-03) ===== */
+  .ec-card { padding: 12px 14px; }
+  .ec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .ec-title { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); }
+  .ec-week { font-size: 0.78rem; font-weight: 800; }
+  .ec-week.ce { color: var(--green); } .ec-week.pe { color: var(--red); } .ec-week.mix { color: var(--muted); }
+  .ec-row { padding: 7px 0; border-top: 1px solid var(--border); }
+  .ec-row:first-child { border-top: none; }
+  .ec-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ec-idx { font-size: 0.78rem; font-weight: 800; min-width: 74px; }
+  .ec-i-nifty { color: var(--nifty); } .ec-i-banknifty { color: var(--banknifty); } .ec-i-sensex { color: var(--sensex); }
+  .ec-st { font-size: 0.8rem; font-weight: 800; padding: 3px 9px; border-radius: 14px; background: var(--panel-alt); color: var(--text); }
+  .ec-st.go { background: var(--green-soft); color: var(--green); }
+  .ec-st.bad { background: var(--red-soft); color: var(--red); }
+  .ec-st.warn { background: #fff3d6; color: #8a5a00; }
+  .ec-st.wait { background: var(--panel-alt); color: var(--muted); }
+  .ec-sub { font-size: 0.74rem; color: var(--muted); margin-top: 3px; }
+  .ec-sub .up { color: var(--green); font-weight: 700; } .ec-sub .dn { color: var(--red); font-weight: 700; }
+  .ec-fake { font-size: 0.72rem; font-weight: 700; color: #8a5a00; margin-top: 2px; }
+  .ec-flipwarn { position: fixed; top: 0; left: 0; right: 0; z-index: 8900; background: #b45309; color: #fff; padding: 10px 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+  .ec-flipwarn.hidden { display: none; }
+  .ec-fw-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+  .ec-fw-row + .ec-fw-row { border-top: 1px solid rgba(255,255,255,0.35); }
+  .ec-fw-txt { flex: 1; font-size: 0.9rem; font-weight: 700; line-height: 1.3; }
+  .ec-fw-txt small { display: block; font-weight: 500; opacity: 0.95; font-size: 0.78rem; }
+  .ec-fw-btn { flex: none; padding: 7px 12px; border-radius: 8px; border: 2px solid #fff; background: #fff; color: #b45309; font-weight: 800; font-size: 0.82rem; cursor: pointer; }
+  .op-qwarn { margin-top: 8px; padding: 8px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; line-height: 1.35; background: #fff3d6; color: #8a5a00; }
+  .op-qwarn.good { background: var(--green-soft); color: var(--green); }
+  .op-qwarn.hidden { display: none; }
+  .op-qwarn.bad { background: var(--red-soft); color: var(--red); }
+  /* ===== MARKET CONTEXT + DISCIPLINE (Build B, 2026-11-04) ===== */
+  .mc-card { padding: 9px 14px; }
+  .mc-card.hidden, .rk-card.hidden { display: none; }
+  .mc-card.strong { border-color: #f59e0b; }
+  .mc-l1 { display: flex; align-items: center; gap: 8px; font-size: 0.86rem; font-weight: 800; line-height: 1.3; }
+  .mc-l1.ce { color: var(--green); } .mc-l1.pe { color: var(--red); } .mc-l1.mix { color: var(--muted); }
+  .mc-ico { font-size: 1.05rem; display: inline-block; flex: none; }
+  .mc-ico.pulse { animation: mcPulse 1.1s ease-in-out infinite; }
+  @keyframes mcPulse { 0%, 100% { transform: scale(1); filter: none; } 50% { transform: scale(1.35); filter: drop-shadow(0 0 6px #f59e0b); } }
+  .mc-nums { margin-top: 3px; font-size: 0.7rem; color: var(--muted); line-height: 1.55; }
+  .mc-nums .g { color: var(--green); font-weight: 700; } .mc-nums .r { color: var(--red); font-weight: 700; }
+  .mc-l2 { margin-top: 5px; font-size: 0.78rem; font-weight: 700; color: #8a5a00; background: #fff3d6; border-radius: 8px; padding: 4px 8px; line-height: 1.35; }
+  .mc-l2.hidden { display: none; }
+  .rk-card { padding: 12px 14px; }
+  .rk-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 8px; }
+  .rk-lbl { font-size: 0.74rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin: 8px 0 4px; }
+  .rk-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .rk-in { padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--panel); color: var(--text); font-size: 0.9rem; min-width: 0; }
+  .rk-btn { padding: 8px 14px; border-radius: 10px; border: none; background: var(--green); color: #fff; font-weight: 800; font-size: 0.85rem; cursor: pointer; }
+  .rk-msg { font-size: 0.74rem; color: var(--muted); font-weight: 600; margin-top: 4px; }
+  .rk-ev { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border); font-size: 0.82rem; }
+  .rk-ev span { flex: 1; }
+  .sc-hd, .sc-row { display: grid; grid-template-columns: 1fr 44px 52px 78px; gap: 6px; align-items: center; padding: 6px 0; font-size: 0.8rem; }
+  .sc-hd { font-size: 0.68rem; font-weight: 800; color: var(--muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  .sc-row { border-top: 1px solid var(--border); }
+  .sc-hd span:nth-child(n+2), .sc-row span:nth-child(n+2) { text-align: right; }
+  .sc-grp { font-size: 0.72rem; font-weight: 800; color: var(--muted); margin-top: 10px; }
+  .sc-row .pos { color: var(--green); font-weight: 800; } .sc-row .neg { color: var(--red); font-weight: 800; }
+  .sc-low { opacity: 0.55; }
+  .sc-sum { cursor: pointer; list-style: none; margin-bottom: 0; }
+  .sc-sum::-webkit-details-marker { display: none; }
+  #sc-details[open] .sc-sum { margin-bottom: 8px; }
+  .sc-arrow { display: inline-block; transition: transform 0.15s; }
+  #sc-details[open] .sc-arrow { transform: rotate(90deg); }
+  .sc-count { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: none; }
+  .op-tk { margin: 6px 0 2px; font-size: 0.78rem; }
+  .op-tk .op-tkin { width: 74px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--panel); color: var(--text); font-size: 0.85rem; }
+  .op-tk-msg { font-size: 0.72rem; color: var(--red); font-weight: 700; margin-left: 6px; }
+  .rk-ev button { border: none; background: transparent; color: var(--red); font-size: 1.1rem; font-weight: 800; cursor: pointer; }
+  .op-mutednote { margin: 2px 0 4px 2px; font-size: 0.7rem; font-weight: 700; color: var(--muted); }
   .op-exp { margin: 1px 0 4px 2px; font-size: 0.72rem; color: var(--muted); line-height: 1.2; }
   .op-exp.hidden { display: none; }
   .op-exp-t.today { color: #b45309; font-weight: 800; }
@@ -1277,6 +1353,7 @@
       <div class="op-f"><span class="op-k">Index</span><select class="op-in op-sel" id="op-q-idx"><option value="" disabled selected hidden>Index</option><option value="NIFTY">NIFTY</option><option value="BANKNIFTY">BANKNIFTY</option><option value="SENSEX">SENSEX</option></select></div>
       <div class="op-f"><span class="op-k">Type</span><select class="op-in op-sel" id="op-q-type"><option value="" disabled selected hidden>CE / PE</option><option value="CE">📈 CE</option><option value="PE">📉 PE</option></select></div>
     </div>
+    <div id="op-q-warn" class="op-qwarn hidden"></div>
     <div class="op-f op-expf"><span class="op-k">Expiry</span><select class="op-in op-sel" id="op-q-exp"><option value="">— pick index first —</option></select><input class="op-in hidden" id="op-q-expdate" type="date" aria-label="Expiry date"></div>
     <div class="op-row3 op-row3b">
       <div class="op-f"><span class="op-k">Strike</span><input class="op-in" id="op-q-strike" type="number" inputmode="numeric" enterkeyhint="next" placeholder="72700"></div>
@@ -1590,6 +1667,19 @@
   </div>
 </div>
 
+<!-- ENTRY CHECK (Build A, 2026-11-03): per index — opening-range status, trend of the week, fake-flip notes. Display only. -->
+<div class="card ec-card" id="ec-card" style="grid-column: 1 / -1;">
+  <div class="ec-head"><span class="ec-title" id="ec-title">🧭 Entry check</span><span class="ec-week" id="ec-week"></span></div>
+  <div id="ec-body"><div class="ec-sub">Loading…</div></div>
+</div>
+
+<!-- MARKET CONTEXT (Build B, 2026-11-04): 2 short lines — global tally + event/big-move flag. Display only. -->
+<div class="card mc-card hidden" id="mc-card" style="grid-column: 1 / -1;">
+  <div class="mc-l1" id="mc-l1"></div>
+  <div class="mc-nums" id="mc-nums"></div>
+  <div class="mc-l2 hidden" id="mc-l2"></div>
+</div>
+
 </div>
 </div>
 
@@ -1724,6 +1814,32 @@
 
       <div style="height:14px;"></div><p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Totals</p>
       <div id="monthly-list"></div>
+      <div id="grand-total" class="gt-row hidden"></div>
+</div>
+
+<!-- 2026-11-04 (Build B): trading discipline settings — admin only -->
+<div class="card rk-card hidden" id="admin-risk-card" style="grid-column: 1 / -1;">
+  <div class="rk-title">🛡️ Trading discipline</div>
+  <div class="rk-lbl">Daily loss limit (₹)</div>
+  <div class="rk-row"><input class="rk-in" id="rk-limit" type="text" inputmode="numeric" placeholder="e.g. 20000" style="width:140px;"><button class="rk-btn" id="rk-save" type="button">Save</button></div>
+  <div class="rk-msg" id="rk-msg"></div>
+  <div class="rk-lbl">Market events (shown in the Market context line)</div>
+  <div class="rk-row">
+    <input class="rk-in" id="rk-ev-date" type="date" style="width:140px;">
+    <input class="rk-in" id="rk-ev-time" type="text" inputmode="numeric" placeholder="HH:MM" maxlength="5" style="width:74px;">
+    <input class="rk-in" id="rk-ev-text" type="text" placeholder="e.g. RBI policy" maxlength="30" style="flex:1; min-width:120px;">
+    <button class="rk-btn" id="rk-ev-add" type="button">Add</button>
+  </div>
+  <div id="rk-events"></div>
+</div>
+
+<!-- 2026-11-04 (Build C): rules scorecard — admin only -->
+<div class="card rk-card hidden" id="admin-score-card" style="grid-column: 1 / -1;">
+  <details id="sc-details">
+    <summary class="rk-title sc-sum"><span class="sc-arrow">▸</span> 📋 Rules scorecard <small id="sc-count" class="sc-count"></small></summary>
+    <div class="rk-msg" id="sc-sub"></div>
+    <div id="sc-body"></div>
+  </details>
 </div>
 
 </div>
@@ -2216,6 +2332,606 @@
   updateZones();
   setInterval(updateZones, 30000);
 
+  // =====================================================================================
+  // ENTRY CHECK (Build A, 2026-11-03) — reads today's 5-min candles + the week's trend BEFORE any indication is acted on.
+  // Display / warning only: it never delays, blocks or changes an alert, and every part fails silent (no data = nothing shown).
+  //  - opening range 9:15–10:30 (highest/lowest 5-min CLOSE), breakout = a completed 5-min candle closing outside it
+  //  - flips in the last hour (choppy), fake-flip notes, trend of the week (5-day + 1-month + 20-day average)
+  //  - instant "flip against your position" warning (no waiting rules — it is an exit warning)
+  // =====================================================================================
+  const EC_ZONES = ['nifty-zone', 'banknifty-zone', 'sensex-zone'];
+  const EC_NAME = { 'nifty-zone': 'NIFTY', 'banknifty-zone': 'BANKNIFTY', 'sensex-zone': 'SENSEX' };
+  const EC_PFX = { 'nifty-zone': 'nifty', 'banknifty-zone': 'banknifty', 'sensex-zone': 'sensex' };
+  const EC_IDX_ZONE = { NIFTY: 'nifty-zone', BANKNIFTY: 'banknifty-zone', SENSEX: 'sensex-zone' };
+  const EC_RANGE_START = 9 * 60 + 15, EC_RANGE_END = 10 * 60 + 30, EC_NO_TRADE_FROM = 13 * 60, EC_LAST_ENTRY = 15 * 60;
+  const EC_CHOP_FLIPS = 2, EC_CHOP_WINDOW_MS = 60 * 60 * 1000;
+  const EC_BAND_5D = 2, EC_BAND_1M = 3.5; // % — inside this band the trend counts as "flat"
+  const ecData = {};   // elId -> { candles, trend, prevClose, at }
+  const ecStatus = {}; // elId -> computed entry status (or null)
+  const ecWeek = {};   // elId -> { d5, m1, avgOk, dir }
+  const ecWarns = {};  // key -> { html, tg }
+  const EC_FAKE_KEY = 'signa365_ec_fake';
+  const EC_WEEK_KEY = 'signa365_ec_week';
+  function ecIstMins(ms) { const d = toIstDate(ms); return d.getHours() * 60 + d.getMinutes(); }
+  function ecHm(mins) { return String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0'); }
+  function ecN(v) { return Math.round(v).toLocaleString('en-IN'); }
+  function ecMarketHours() {
+    if (isTodayHoliday() || isWeekend()) return false;
+    const d = getIstDate(), m = d.getHours() * 60 + d.getMinutes();
+    return m >= EC_RANGE_START && m <= 15 * 60 + 35;
+  }
+
+  async function ecFetchCandles(elId) {
+    try {
+      const res = await fetchWithTimeout(`${SIGNALS_WORKER_URL}?mode=chart&symbol=${encodeURIComponent(elId)}`, { cache: 'no-store' }, 8000);
+      if (!res.ok) return;
+      const d = await res.json();
+      if (!d || !Array.isArray(d.candles) || !Array.isArray(d.trend)) return;
+      ecData[elId] = { candles: d.candles, trend: d.trend, prevClose: d.prevClose, at: Date.now() };
+    } catch (e) { /* keep last values */ }
+  }
+
+  function ecCompute(elId) {
+    const d = ecData[elId];
+    if (!d || !d.candles.length || !ecMarketHours()) return null;
+    const now = Date.now(), today = getIstDate();
+    if (now - d.at > 6 * 60000) return null; // data too old to trust
+    const cs = [], ts = [];
+    d.candles.forEach((c, i) => {
+      if (!c || c.close == null) return;
+      const x = toIstDate(c.time);
+      if (x.getFullYear() === today.getFullYear() && x.getMonth() === today.getMonth() && x.getDate() === today.getDate()) { cs.push(c); ts.push(d.trend[i]); }
+    });
+    if (!cs.length) return null;
+    const nowMin = today.getHours() * 60 + today.getMinutes();
+    const done = cs.map(c => c.time + 5 * 60000 <= now); // completed 5-min candles only
+    let hi = -Infinity, lo = Infinity, nR = 0;
+    cs.forEach((c, i) => { const m = ecIstMins(c.time); if (m >= EC_RANGE_START && m < EC_RANGE_END && done[i]) { hi = Math.max(hi, c.close); lo = Math.min(lo, c.close); nR++; } });
+    const forming = nowMin < EC_RANGE_END;
+    let lastTrend = null; for (let i = ts.length - 1; i >= 0; i--) { if (ts[i] != null) { lastTrend = ts[i]; break; } }
+    const signal = lastTrend === 1 ? 'CE' : (lastTrend === -1 ? 'PE' : null);
+    let flips = 0;
+    for (let i = 1; i < cs.length; i++) { if (ts[i] != null && ts[i - 1] != null && ts[i] !== ts[i - 1] && cs[i].time >= now - EC_CHOP_WINDOW_MS) flips++; }
+    const rangeTxt = nR >= 2 && isFinite(hi) ? ecN(lo) + '–' + ecN(hi) : '';
+    const out = { signal, flips, hi: nR >= 2 ? hi : null, lo: nR >= 2 ? lo : null, rangeTxt, forming, dir: null, since: '', key: '', cls: 'wait', text: '', long: '' };
+    if (forming || nR < 2) { out.key = 'forming'; out.text = '⏳ Wait · range forming till 10:30'; out.long = 'Opening range 9:15–10:30 is still forming. Ignore every flip until it ends.'; return out; }
+    const sideAt = (c) => c.close > hi ? 1 : (c.close < lo ? -1 : 0);
+    let lastI = -1, everBroke = false;
+    cs.forEach((c, i) => { const m = ecIstMins(c.time); if (m >= EC_RANGE_END && done[i]) { lastI = i; if (sideAt(c) !== 0) everBroke = true; } });
+    const lastSide = lastI >= 0 ? sideAt(cs[lastI]) : 0;
+    if (lastSide !== 0) { let j = lastI; while (j - 1 >= 0 && ecIstMins(cs[j - 1].time) >= EC_RANGE_END && sideAt(cs[j - 1]) === lastSide) j--; out.since = ecHm(ecIstMins(cs[j].time) + 5); }
+    out.dir = lastSide === 1 ? 'CE' : (lastSide === -1 ? 'PE' : null);
+    const w = ecWeek[elId], counter = !!(out.dir && w && w.dir && w.dir !== out.dir);
+    if (nowMin >= EC_LAST_ENTRY) { out.key = 'late'; out.cls = 'wait'; out.text = '🕒 Past entry time (after 3:00)'; out.long = 'No new entries after 3:00 pm.'; return out; }
+    if (flips >= EC_CHOP_FLIPS) { out.key = 'chop'; out.cls = 'warn'; out.text = '⚠️ Choppy · ' + flips + ' flips in 1h · skip'; out.long = flips + ' flips in the last hour — treat as a choppy day, do not trade flips.'; return out; }
+    if (out.dir && out.dir === signal) {
+      out.key = 'go'; out.cls = counter ? 'warn' : 'go';
+      out.text = (counter ? '⚠️ ' : '✅ ') + out.dir + ' entry open · since ' + out.since + (counter ? ' · counter-trend' : '');
+      out.long = 'Closed outside the opening range (' + out.dir + ') and the signal agrees.' + (counter ? ' But the week is ' + w.dir + ' — extra care.' : '');
+      return out;
+    }
+    if (out.dir && signal) { out.key = 'mismatch'; out.cls = 'warn'; out.text = '⚠️ Range broke ' + out.dir + ' · signal ' + signal + ' · wait'; out.long = 'Price and signal disagree — wait.'; return out; }
+    if (everBroke) { out.key = 'fake'; out.cls = 'warn'; out.text = '↩️ Fake break · back inside range · wait'; out.long = 'Price broke the range but closed back inside — treat the break as fake.'; return out; }
+    if (nowMin >= EC_NO_TRADE_FROM) { out.key = 'notrade'; out.cls = 'bad'; out.text = '🚫 No trade today · no clean breakout'; out.long = 'No candle has closed outside the opening range by 1:00 pm.'; return out; }
+    out.key = 'inside'; out.cls = 'wait'; out.text = '⏳ Wait · inside range'; out.long = 'Price is still inside the opening range — wait for a close outside it.';
+    return out;
+  }
+
+  // ---- trend of the week: daily candles for ~1 month (same Yahoo feed + proxies the prev-close check already uses) ----
+  async function ecFetchWeek(elId) {
+    const sym = zoneIds[elId];
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1mo&_cb=${Date.now()}`;
+    for (const proxy of proxies) {
+      try {
+        const res = await fetchWithTimeout(proxy.build(yahooUrl), { cache: 'no-store', headers: proxy.headers }, 6000);
+        if (!res.ok) continue;
+        const data = await res.json();
+        const closes = data.chart.result[0].indicators.quote[0].close.filter(c => c != null);
+        if (closes.length < 6) continue;
+        const last = closes[closes.length - 1];
+        const d5 = (last / closes[closes.length - 6] - 1) * 100;
+        const m1 = closes.length >= 15 ? (last / closes[0] - 1) * 100 : null;
+        const tail = closes.slice(-20), avg = tail.reduce((a, b) => a + b, 0) / tail.length;
+        let dir = null;
+        if (m1 != null) { if (d5 > EC_BAND_5D && m1 > EC_BAND_1M && last > avg) dir = 'CE'; else if (d5 < -EC_BAND_5D && m1 < -EC_BAND_1M && last < avg) dir = 'PE'; }
+        ecWeek[elId] = { d5, m1, dir, at: Date.now() };
+        return true;
+      } catch (e) { /* next proxy */ }
+    }
+    return false;
+  }
+  function ecWeekSave() { try { localStorage.setItem(EC_WEEK_KEY, JSON.stringify({ day: todayIstKey(), w: ecWeek })); } catch (e) { /* best effort */ } }
+  function ecWeekLoad() { try { const o = JSON.parse(localStorage.getItem(EC_WEEK_KEY)); if (o && o.day === todayIstKey() && o.w) Object.assign(ecWeek, o.w); } catch (e) { /* none */ } }
+  async function ecRefreshWeek() { const r = await Promise.all(EC_ZONES.map(ecFetchWeek)); if (r.some(Boolean)) ecWeekSave(); ecRender(); }
+
+  // ---- fake flips: a different code appeared but went back before it was held long enough ----
+  function ecFakeLoad() { try { const o = JSON.parse(localStorage.getItem(EC_FAKE_KEY)); if (o && o.day === todayIstKey()) return o; } catch (e) { /* fresh */ } return { day: todayIstKey(), items: {} }; }
+  function ecNoteFakeFlip(elId, pend) {
+    if (!pend || typeof pend !== 'object') return;
+    let dir = null; const map = stCodeMap[elId] || {};
+    Object.keys(map).forEach(k => { if (map[k] === pend.code) dir = k; });
+    const mins = Math.max(0, Math.round(((pend.last || pend.since) - pend.since) / 60000));
+    const o = ecFakeLoad(); (o.items[elId] = o.items[elId] || []).push({ dir, at: pend.since, mins });
+    if (o.items[elId].length > 6) o.items[elId].shift();
+    try { localStorage.setItem(EC_FAKE_KEY, JSON.stringify(o)); } catch (e) { /* best effort */ }
+    if (pend.warned) ecFlipReverted(elId, pend);
+    ecRender();
+  }
+
+  // ---- render the Entry check card ----
+  // which index is on the live chart right now (null = none selected)
+  function ecSelZone() { try { return lastSpotKey ? spotIndexMeta[lastSpotKey].zoneEl : null; } catch (e) { return null; } }
+  function ecRender() {
+    const body = document.getElementById('ec-body'); if (!body) return;
+    const fake = ecFakeLoad().items;
+    const f = (v) => v == null ? '' : (v >= 0 ? '<span class="up">▲' : '<span class="dn">▼') + Math.abs(v).toFixed(1) + '%</span>';
+    const selZ = ecSelZone();
+    const ttl = document.getElementById('ec-title'); if (ttl) ttl.textContent = selZ ? '🧭 Entry check — ' + EC_NAME[selZ] : '🧭 Entry check';
+    body.innerHTML = !selZ ? '<div class="ec-sub">Tap a tile to see its entry check</div>' : [selZ].map(elId => {
+      const nm = EC_NAME[elId], st = ecStatus[elId], w = ecWeek[elId], pfx = EC_PFX[elId];
+      const top = st ? `<span class="ec-st ${st.cls}" title="${st.long.replace(/"/g, '')}">${st.text}</span>` : `<span class="ec-st wait">${ecMarketHours() ? 'Loading…' : 'Market closed'}</span>`;
+      const bits = [];
+      if (st && st.rangeTxt) bits.push('Range ' + st.rangeTxt);
+      if (w) bits.push('5d ' + f(w.d5) + (w.m1 != null ? ' · 1m ' + f(w.m1) : '') + (w.dir ? ' · ' + w.dir + ' week' : ''));
+      const fl = (fake[elId] || []), last = fl[fl.length - 1];
+      const fk = last ? `<div class="ec-fake">↩️ Fake flip${last.dir ? ' ' + last.dir : ''} at ${new Date(last.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} — went back in ${last.mins || 0} min · ${fl.length} today</div>` : '';
+      return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span>${top}</div>${bits.length ? '<div class="ec-sub">' + bits.join(' · ') + '</div>' : ''}${fk}</div>`;
+    }).join('');
+    const wk = document.getElementById('ec-week');
+    if (wk) {
+      const dirs = EC_ZONES.map(z => ecWeek[z] && ecWeek[z].dir).filter(Boolean), have = EC_ZONES.filter(z => ecWeek[z]).length;
+      const ce = dirs.filter(d => d === 'CE').length, pe = dirs.filter(d => d === 'PE').length;
+      if (!have) { wk.textContent = ''; wk.className = 'ec-week'; }
+      else if (ce >= 2) { wk.textContent = 'Trend week: CE bias (' + ce + ' of ' + have + ')'; wk.className = 'ec-week ce'; }
+      else if (pe >= 2) { wk.textContent = 'Trend week: PE bias (' + pe + ' of ' + have + ')'; wk.className = 'ec-week pe'; }
+      else { wk.textContent = 'No clear weekly trend'; wk.className = 'ec-week mix'; }
+    }
+  }
+  async function ecTick() {
+    if (ecMarketHours()) await Promise.all(EC_ZONES.map(ecFetchCandles));
+    EC_ZONES.forEach(z => { try { ecStatus[z] = ecCompute(z); } catch (e) { ecStatus[z] = null; } });
+    ecRender();
+    try { if (typeof opQWarn === 'function') opQWarn(); } catch (e) { /* form not open */ }
+    try { if (liveChart) liveChart.draw(); } catch (e) { /* chart redraw is cosmetic */ }
+  }
+
+  // ---- one context line for indications (flip / strong alerts, app + Telegram) — empty when nothing is known ----
+  function ecContext(elId, dir) {
+    try {
+      const parts = [], w = ecWeek[elId], st = ecStatus[elId];
+      if (w && w.dir) parts.push(w.dir === dir ? '✅ With trend (' + w.dir + ' week)' : '⚠️ Counter-trend (' + w.dir + ' week)');
+      if (st) {
+        if (st.key === 'forming' || st.key === 'inside' || st.key === 'fake') parts.push('inside opening range');
+        else if (st.key === 'chop') parts.push('choppy · ' + st.flips + ' flips in 1h');
+        else if (st.key === 'notrade') parts.push('no range breakout today');
+        else if ((st.key === 'go' || st.key === 'mismatch') && st.dir) parts.push(st.dir === dir ? 'range break ' + st.dir + (st.since ? ' since ' + st.since : '') : 'range broke ' + st.dir);
+      }
+      if (mcState && mcState.lean) parts.push(mcState.lean === dir ? '🌍 global supports ' + dir : '⚠️ global leans ' + mcState.lean);
+      return parts.join(' · ');
+    } catch (e) { return ''; }
+  }
+
+  // ---- Add-position form: warn (never block) when the chosen index is choppy / counter-trend / against the signal ----
+  function ecWarnHtml(idx, ty) {
+    const zone = EC_IDX_ZONE[idx]; if (!zone || !ty) return { html: '', good: false };
+    const st = ecStatus[zone], w = ecWeek[zone], L = [];
+    if (st) {
+      if (st.key === 'chop') L.push('⚠️ ' + idx + ' is choppy — ' + st.flips + ' flips in the last hour. Entry not recommended.');
+      else if (st.key === 'forming' || st.key === 'inside' || st.key === 'fake') L.push('⏳ ' + idx + ' is inside the opening range — wait for a breakout.');
+      else if (st.key === 'notrade') L.push('🚫 No clean breakout in ' + idx + ' today — no trade.');
+      else if (st.key === 'late') L.push('🕒 After 3:00 pm — no new entries.');
+      if (st.signal && st.signal !== ty) L.push('⚠️ ' + idx + ' signal is ' + st.signal + ' now — you are logging ' + ty + '.');
+      if (st.dir && st.dir !== ty && (st.key === 'go' || st.key === 'mismatch')) L.push('⚠️ Range broke ' + st.dir + ' — you are logging ' + ty + '.');
+    }
+    if (w && w.dir && w.dir !== ty) L.push('⚠️ Counter-trend: the week is ' + w.dir + ' — you are logging ' + ty + '.');
+    try { if (mcState && mcState.lean && mcState.lean !== ty) L.push('⚠️ Global markets lean ' + mcState.lean + ' — you are logging ' + ty + '.'); } catch (e) { /* context is optional */ }
+    if (!L.length && st && st.key === 'go' && st.dir === ty) return { html: '✅ ' + idx + ' ' + ty + ' entry open since ' + st.since + '.', good: true };
+    return { html: L.slice(0, 3).join('<br>'), good: false };
+  }
+  function opQWarn() {
+    const el = document.getElementById('op-q-warn'); if (!el) return;
+    const idx = document.getElementById('op-q-idx').value, ty = document.getElementById('op-q-type').value;
+    const r = ecWarnHtml(idx, ty);
+    let extra = [], bad = false;
+    try {
+      if (!opEditingId) {
+        const lm = rlLimitNote(); if (lm) { extra.push(lm.html); if (lm.bad) bad = true; }
+        const rv = rlRevenge(); if (rv) { extra.push(rv.html); if (rv.level === 'stop') bad = true; }
+      }
+    } catch (e) { /* discipline notes are optional */ }
+    const html = extra.concat(r.html ? [r.html] : []).join('<br>');
+    el.innerHTML = html; el.classList.toggle('hidden', !html); el.classList.toggle('good', r.good && !extra.length); el.classList.toggle('bad', bad);
+  }
+
+  // ---- instant "flip against your position" warning (exit warning: no waiting rules) ----
+  function ecWarnRender() {
+    let el = document.getElementById('ec-flipwarn');
+    if (!el) {
+      el = document.createElement('div'); el.id = 'ec-flipwarn'; el.className = 'ec-flipwarn hidden'; document.body.appendChild(el);
+      el.addEventListener('click', (ev) => { const b = ev.target.closest('[data-ec-dismiss]'); if (!b) return; delete ecWarns[b.getAttribute('data-ec-dismiss')]; ecWarnRender(); });
+    }
+    const keys = Object.keys(ecWarns);
+    el.innerHTML = keys.map(k => '<div class="ec-fw-row"><div class="ec-fw-txt">' + ecWarns[k].html + '</div><button type="button" class="ec-fw-btn" data-ec-dismiss="' + k + '">OK</button></div>').join('');
+    el.classList.toggle('hidden', !keys.length);
+  }
+  function ecFlipAgainst(elId, newDir, pend) {
+    try {
+      if (typeof opAllowed === 'function' && !opAllowed()) return;
+      const name = EC_NAME[elId], against = [];
+      (opState.positions || []).forEach(p => {
+        if (!/^ONGOING$/i.test(p.status)) return;
+        const m = opParseLabel(p.label);
+        if (m && m.idx === name && m.ty && m.ty !== newDir) against.push(p);
+      });
+      if (!against.length) return;
+      const key = elId + '|' + (pend && pend.since || Date.now());
+      if (ecWarns[key]) return;
+      const names = against.map(p => opEsc(p.label)).join(', ');
+      const t = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+      ecWarns[key] = { html: '⚠️ ' + name + ' flipped to ' + newDir + (newDir === 'CE' ? ' (green)' : ' (red)') + ' — against your ' + (newDir === 'CE' ? 'PE' : 'CE') + '<small>' + names + ' · Exit fast, do not wait · ' + t + '</small>' };
+      if (pend) pend.warnKey = key;
+      ecWarnRender();
+      playBeep(newDir === 'CE' ? 900 : 300); setTimeout(() => playBeep(newDir === 'CE' ? 1100 : 250), 180);
+      if (currentRole === 'admin') {
+        claimStrongAlertInCloud('flipwarn_' + elId, newDir + ':' + (pend && pend.since || '')).then(res => {
+          if (res.alreadyAnnounced) return;
+          const pl = against.map(p => { const c = opCalc(p, opState.slTable); return p.label + (c.pl != null ? ' (' + opFmt(c.pl, true, true) + ')' : ''); }).join('\n');
+          sendTelegramText('⚠️ FLIP AGAINST YOUR POSITION — ' + name + ' is now ' + newDir + (newDir === 'CE' ? ' (green)' : ' (red)') + '\nYour ' + (newDir === 'CE' ? 'PE' : 'CE') + ':\n' + pl + '\nExit fast — do not wait for confirmation. ' + t + ' IST');
+        });
+      }
+    } catch (e) { /* warning is best-effort */ }
+  }
+  function ecFlipReverted(elId, pend) {
+    try {
+      const key = pend && pend.warnKey;
+      if (key && ecWarns[key]) {
+        ecWarns[key] = { html: '✅ ' + EC_NAME[elId] + ' flip reverted — false alarm<small>Your position is back with the signal.</small>' };
+        ecWarnRender();
+        setTimeout(() => { delete ecWarns[key]; ecWarnRender(); }, 20000);
+        if (currentRole === 'admin') sendTelegramText('✅ ' + EC_NAME[elId] + ' flip reverted — false alarm. Signal is back with your position.');
+      }
+    } catch (e) { /* best effort */ }
+  }
+
+  try { ecWeekLoad(); ecRender(); } catch (e) { /* the Entry check must never stop the page from loading */ }
+  setTimeout(ecRefreshWeek, 2500);
+  setInterval(ecRefreshWeek, 30 * 60 * 1000);
+
+  // =====================================================================================
+  // BUILD B (2026-11-04): MARKET CONTEXT strip + TRADING DISCIPLINE (daily loss limit, revenge check)
+  // Display / warning only. Nothing here delays, blocks or changes an indication, and every part fails silent.
+  // =====================================================================================
+  var mcState = null; // latest computed market context (var: read by earlier functions before this line runs)
+  const MC_ITEMS = [
+    { k: 'S&P', sym: '^GSPC', inv: false, t: 0.2 },
+    { k: 'Nasdaq', sym: '^IXIC', inv: false, t: 0.2 },
+    { k: 'Nikkei', sym: '^N225', inv: false, t: 0.2 },
+    { k: 'HangSeng', sym: '^HSI', inv: false, t: 0.2 },
+    { k: 'Crude', sym: 'CL=F', inv: true, t: 0.5, big: 3 },
+    { k: 'Dollar', sym: 'DX-Y.NYB', inv: true, t: 0.2 },
+    { k: 'VIX', sym: '^INDIAVIX', inv: true, t: 2, big: 8 }
+  ];
+  const MC_EQ_BIG = 1.5, MC_STALE_MS = 30 * 60 * 1000;
+  const MC_TG_KEY = 'signa365_mc_tg';
+  const mcData = {}; // k -> { chg, at }
+  function mcEsc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function mcWindow() {
+    if (isTodayHoliday() || isWeekend()) return false;
+    const d = getIstDate(), m = d.getHours() * 60 + d.getMinutes();
+    return m >= 9 * 60 && m <= 15 * 60 + 35;
+  }
+  async function mcFetchOne(it) {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(it.sym)}?interval=1d&range=5d&_cb=${Date.now()}`;
+    for (const proxy of proxies) {
+      try {
+        const res = await fetchWithTimeout(proxy.build(url), { cache: 'no-store', headers: proxy.headers }, 6000);
+        if (!res.ok) continue;
+        const data = await res.json();
+        const cl = data.chart.result[0].indicators.quote[0].close.filter(c => c != null);
+        if (cl.length < 2) continue;
+        const chg = (cl[cl.length - 1] / cl[cl.length - 2] - 1) * 100;
+        if (!isFinite(chg) || Math.abs(chg) > 25) continue; // obvious bad data
+        mcData[it.k] = { chg, at: Date.now() };
+        return true;
+      } catch (e) { /* next proxy */ }
+    }
+    return false;
+  }
+  function mcVote(it, chg) { const v = chg > it.t ? 1 : (chg < -it.t ? -1 : 0); return it.inv ? -v : v; }
+  // typed events (admin Settings): [{d:'Y-M-D' (todayIstKey format), t:'HH:MM'|'', x:'text'}]
+  function mcEvKey() { return 'signa365_mc_events_' + (currentUid || 'x'); }
+  function mcEvLoad() {
+    try {
+      const a = JSON.parse(localStorage.getItem(mcEvKey()));
+      return Array.isArray(a) ? a.filter(e => e && typeof e.x === 'string' && typeof e.d === 'string').slice(0, 30) : [];
+    } catch (e) { return []; }
+  }
+  function mcEvSave(a) { try { localStorage.setItem(mcEvKey(), JSON.stringify(a.slice(0, 30))); } catch (e) { /* best effort */ } }
+  function mcEventsToday() {
+    const day = todayIstKey(), d = getIstDate(), nowM = d.getHours() * 60 + d.getMinutes(), out = [];
+    mcEvLoad().forEach(e => {
+      if (e.d !== day) return;
+      const m = /^(\d{1,2}):(\d{2})$/.exec(e.t || '');
+      const em = m ? (+m[1]) * 60 + (+m[2]) : null;
+      if (em != null && em - nowM < -60) return; // over more than an hour ago
+      out.push({ x: e.x, t: e.t || '', in: em == null ? null : em - nowM });
+    });
+    return out;
+  }
+  function mcCompute() {
+    const now = Date.now(), rows = [];
+    MC_ITEMS.forEach(it => { const d = mcData[it.k]; if (d && now - d.at < MC_STALE_MS) rows.push({ it, chg: d.chg, v: mcVote(it, d.chg) }); });
+    const M = rows.length; if (M < 4) return null;
+    const pos = rows.filter(r => r.v > 0).length, neg = rows.filter(r => r.v < 0).length, need = Math.round(M * 0.7);
+    let lean = null, n = 0;
+    if (pos >= need && pos > neg) { lean = 'CE'; n = pos; } else if (neg >= need && neg > pos) { lean = 'PE'; n = neg; }
+    const reasons = [], bits = [];
+    if (lean && M >= 6 && n >= M - 1) reasons.push({ key: 'g_' + lean, msg: 'global strongly supports ' + lean + ' (' + n + ' of ' + M + ')' });
+    rows.forEach(r => {
+      const a = Math.abs(r.chg), sg = (r.chg >= 0 ? '+' : '−') + a.toFixed(1) + '%';
+      const nm = r.it.k === 'VIX' ? 'India VIX' : r.it.k;
+      if ((r.it.big && a >= r.it.big) || (!r.it.inv && r.it.k !== 'Dollar' && a >= MC_EQ_BIG)) {
+        bits.push(nm + ' ' + sg);
+        reasons.push({ key: 'f_' + r.it.k, msg: nm + ' ' + sg + ' — big move' });
+      }
+    });
+    const evs = mcEventsToday();
+    evs.forEach(e => {
+      bits.push('Event: ' + e.x + (e.t ? ' ' + e.t : '') + (e.in != null && e.in >= 0 && e.in <= 30 ? ' (in ' + e.in + ' min)' : ''));
+      if (e.in != null && e.in >= 0 && e.in <= 30) reasons.push({ key: 'e_' + e.x + e.t, msg: 'event soon — ' + e.x + (e.t ? ' ' + e.t : '') });
+    });
+    return { rows, M, pos, neg, lean, n, bits, reasons, strong: reasons.length > 0 };
+  }
+  function mcRender() {
+    const card = document.getElementById('mc-card'); if (!card) return;
+    const s = mcWindow() ? mcCompute() : null;
+    mcState = s;
+    if (!s) { card.classList.add('hidden'); return; }
+    card.classList.remove('hidden'); card.classList.toggle('strong', s.strong);
+    const l1 = document.getElementById('mc-l1');
+    const txt = s.lean === 'CE' ? 'Global: ' + s.n + ' of ' + s.M + ' positive → supports CE'
+      : (s.lean === 'PE' ? 'Global: ' + s.n + ' of ' + s.M + ' negative → supports PE' : 'Global: mixed (' + s.pos + ' positive, ' + s.neg + ' negative) → no clear help');
+    l1.className = 'mc-l1 ' + (s.lean === 'CE' ? 'ce' : (s.lean === 'PE' ? 'pe' : 'mix'));
+    l1.innerHTML = '<span class="mc-ico' + (s.strong ? ' pulse' : '') + '" title="Market context">🌍</span><span>' + mcEsc(txt) + '</span>';
+    document.getElementById('mc-nums').innerHTML = s.rows.map(r => {
+      const nm = r.it.k === 'Dollar' ? 'USD' : (r.it.k === 'HangSeng' ? 'HSI' : r.it.k);
+      return '<span class="' + (r.v > 0 ? 'g' : (r.v < 0 ? 'r' : '')) + '">' + mcEsc(nm) + ' ' + (r.chg >= 0 ? '+' : '−') + Math.abs(r.chg).toFixed(1) + '</span>';
+    }).join(' · ');
+    const l2 = document.getElementById('mc-l2'), b = s.bits.slice(0, 2);
+    l2.classList.toggle('hidden', !b.length);
+    l2.innerHTML = b.length ? '⚠️ ' + b.map(mcEsc).join(' · ') : '';
+  }
+  async function mcNudge(s) {
+    try {
+      if (currentRole !== 'admin' || !ecMarketHours() || !s || !s.reasons.length) return;
+      const day = todayIstKey(); let o = null;
+      try { o = JSON.parse(localStorage.getItem(MC_TG_KEY)); } catch (e) { o = null; }
+      if (!o || o.day !== day) o = { day, n: 0, keys: [] };
+      if (o.n >= 2) return;
+      const r = s.reasons.find(x => o.keys.indexOf(x.key) < 0); if (!r) return;
+      o.n++; o.keys.push(r.key);
+      try { localStorage.setItem(MC_TG_KEY, JSON.stringify(o)); } catch (e) { /* best effort */ }
+      const res = await claimStrongAlertInCloud('mcctx_' + r.key.replace(/[^A-Za-z0-9_]/g, '_'), 'sent');
+      if (res.alreadyAnnounced) return;
+      sendTelegramText('🧭 Market context: ' + r.msg + ' — check the lines in the app');
+    } catch (e) { /* nudge is best-effort */ }
+  }
+  async function mcTick() {
+    try {
+      if (!mcWindow()) { mcRender(); return; }
+      await Promise.all(MC_ITEMS.map(mcFetchOne));
+      mcRender();
+      mcNudge(mcState);
+    } catch (e) { /* the strip must never break the page */ }
+  }
+
+  // ---- trading discipline: daily loss limit + revenge check ----
+  function rlKey() { return 'signa365_rl_' + (currentUid || 'x'); }
+  function rlLoad() { try { const o = JSON.parse(localStorage.getItem(rlKey())); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+  function rlSave(o) { try { localStorage.setItem(rlKey(), JSON.stringify(o)); } catch (e) { /* best effort */ } }
+  function rlFmt(n) { return '₹' + Math.round(Math.abs(n)).toLocaleString('en-IN'); }
+  // today's result = exited today (realised) + positions still open (at their CMP)
+  function rlDayPl() {
+    let tot = 0;
+    const day = opIstDay(Date.now());
+    (opState.exited || []).forEach(x => { if (x.day === day && typeof x.pl === 'number') tot += x.pl; });
+    opOngoing().forEach(p => { if (opCmpSuspect[p.id]) return; const c = opCalc(p, opState.slTable); if (c.pl != null) tot += c.pl; });
+    return tot;
+  }
+  let rlShown = false;
+  function rlCheck() {
+    if (!opAllowed()) return;
+    const o = rlLoad(), lim = Number(o.limit) || 0, today = todayIstKey();
+    if (lim <= 0) return;
+    const pl = rlDayPl();
+    let fresh = false;
+    if (o.stopDay !== today && pl <= -lim) { o.stopDay = today; o.stopAt = Date.now(); o.stopPl = Math.round(pl); rlSave(o); fresh = true; }
+    if (o.stopDay === today && !rlShown) {
+      rlShown = true;
+      ecWarns['rl_stop'] = { html: '🛑 STOP TRADING TODAY — day loss ' + rlFmt(o.stopPl != null ? o.stopPl : pl) + ' has reached your limit ' + rlFmt(lim) + '<small>No more entries today. Step away — tomorrow is a new day.</small>' };
+      ecWarnRender();
+      if (fresh) {
+        playBeep(300); setTimeout(() => playBeep(250), 200); setTimeout(() => playBeep(200), 400);
+        if (currentRole === 'admin') {
+          claimStrongAlertInCloud('rl_stop', today).then(res => {
+            if (res.alreadyAnnounced) return;
+            const t = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+            sendTelegramText('🛑 STOP TRADING TODAY — day loss ' + rlFmt(o.stopPl != null ? o.stopPl : pl) + ' has reached your limit ' + rlFmt(lim) + '. Step away. ' + t + ' IST');
+          });
+        }
+      }
+    }
+  }
+  // note shown in the Add form: limit already hit, or 70%+ used
+  function rlLimitNote() {
+    const o = rlLoad(), lim = Number(o.limit) || 0; if (lim <= 0) return null;
+    if (o.stopDay === todayIstKey()) return { html: '🛑 Daily loss limit ' + rlFmt(lim) + ' reached — stop trading today.', bad: true };
+    const pl = rlDayPl();
+    if (pl < 0 && -pl >= lim * 0.7) return { html: '⚠️ ' + Math.round(-pl / lim * 100) + '% of today\'s loss limit used (' + rlFmt(pl) + ' of ' + rlFmt(lim) + ').', bad: false };
+    return null;
+  }
+  // exits grouped into "trades": same option (account ignored) exited within 15 min = one trade
+  function rlTrades() {
+    const day = opIstDay(Date.now()), ex = (opState.exited || []).filter(x => x.day === day && x.ts).sort((a, b) => a.ts - b.ts), g = [];
+    ex.forEach(x => {
+      const k = String(x.label || '').toUpperCase().replace(/^(ICI|STW|OTH)\s+/, '').trim();
+      const l = g[g.length - 1];
+      if (l && l.k === k && x.ts - l.ts <= 15 * 60 * 1000) { l.pl += x.pl; l.ts = x.ts; } else g.push({ k, pl: x.pl, ts: x.ts });
+    });
+    return g;
+  }
+  function rlRevenge(asOf) {
+    const at = asOf || Date.now();
+    const g = rlTrades().filter(x => x.ts <= at); if (!g.length) return null;
+    const last = g[g.length - 1], prev = g[g.length - 2];
+    if (prev && last.pl < 0 && prev.pl < 0) return { level: 'stop', html: '🛑 2 losing trades in a row today — stop for the day. Another entry now is revenge trading.' };
+    const mins = (at - last.ts) / 60000;
+    if (last.pl < 0 && mins < 10) return { level: 'break', html: '🧘 You exited a loss ' + Math.max(1, Math.round(mins)) + ' min ago — take a 15-min break before the next entry.' };
+    return null;
+  }
+  function rlAfterAdd(id) {
+    try { scSnapshot(id); } catch (e) { /* scorecard is best-effort */ }
+    const rv = rlRevenge();
+    if (rv) { ecWarns['rev_' + Date.now()] = { html: rv.html }; ecWarnRender(); }
+    rlCheck();
+  }
+
+
+  // ---- rules scorecard (Build C): each new position is stamped with what the app said at entry; the exit adds the result ----
+  function scKey() { return 'signa365_sc_' + (currentUid || 'x'); }
+  function scLoad() { try { const a = JSON.parse(localStorage.getItem(scKey())); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function scSave(a) { try { localStorage.setItem(scKey(), JSON.stringify(a.slice(-400))); } catch (e) { /* best effort */ } }
+  function scSnapshot(id) {
+    const p = (opState.positions || []).find(x => x.id === id); if (!p) return;
+    const m = opParseLabel(p.label); if (!m || !m.idx || !m.ty) return;
+    const z = EC_IDX_ZONE[m.idx], st = z ? ecStatus[z] : null, w = z ? ecWeek[z] : null, d = getIstDate();
+    const rec = {
+      id, day: opIstDay(Date.now()), ts: Date.now(), tk: ecHm(ecIstMins(Date.now())), idx: m.idx, ty: m.ty,
+      ec: st ? st.key : null, go: !!(st && st.key === 'go' && st.dir === m.ty),
+      wk: w && w.dir ? (w.dir === m.ty ? 'with' : 'counter') : null,
+      gl: mcState && mcState.lean ? (mcState.lean === m.ty ? 'with' : 'against') : null,
+      rev: !!rlRevenge(), early: (d.getHours() * 60 + d.getMinutes()) < 10 * 60 + 30, pl: null
+    };
+    const a = scLoad().filter(x => x.id !== id); a.push(rec); scSave(a);
+  }
+
+  // entry check re-worked as of a past time (for a lead taken earlier than it was typed in)
+  function scAsOf(zone, asOfMs, ty) {
+    const d = ecData[zone]; if (!d || !d.candles || !d.candles.length) return null;
+    const cs = [], tr = [];
+    d.candles.forEach((c, i) => { if (c && c.close != null && c.time + 5 * 60000 <= asOfMs) { cs.push(c); tr.push(d.trend[i]); } });
+    if (!cs.length) return null;
+    let hi = -Infinity, lo = Infinity, n = 0;
+    cs.forEach(c => { const m = ecIstMins(c.time); if (m >= EC_RANGE_START && m < EC_RANGE_END) { hi = Math.max(hi, c.close); lo = Math.min(lo, c.close); n++; } });
+    const asMin = ecIstMins(asOfMs);
+    if (asMin < EC_RANGE_END || n < 2) return { key: 'forming', go: false };
+    if (asMin >= EC_LAST_ENTRY) return { key: 'late', go: false };
+    let flips = 0;
+    for (let i = 1; i < cs.length; i++) { if (tr[i] != null && tr[i - 1] != null && tr[i] !== tr[i - 1] && cs[i].time >= asOfMs - EC_CHOP_WINDOW_MS) flips++; }
+    if (flips >= EC_CHOP_FLIPS) return { key: 'chop', go: false };
+    const last = cs[cs.length - 1], side = last.close > hi ? 'CE' : (last.close < lo ? 'PE' : null);
+    let sig = null; for (let i = tr.length - 1; i >= 0; i--) { if (tr[i] != null) { sig = tr[i] === 1 ? 'CE' : 'PE'; break; } }
+    if (side && side === sig) return { key: 'go', go: side === ty };
+    return { key: side ? 'mismatch' : 'inside', go: false };
+  }
+  // the admin corrects the time a lead was really taken (optional, from the position card); returns '' or an error text
+  async function scSetTaken(id, hhmm) {
+    const m = /^([01]?\d|2[0-3]):?([0-5]\d)$/.exec(String(hhmm || '').trim());
+    if (!m) return 'Time must look like 10:42.';
+    const a = scLoad(), r = a.find(x => x.id === id); if (!r) return 'No record for this position.';
+    const tkMin = (+m[1]) * 60 + (+m[2]), logMin = ecIstMins(r.ts);
+    if (tkMin > logMin) return 'Cannot be later than when it was saved (' + ecHm(logMin) + ').';
+    const takenMs = r.ts - (logMin - tkMin) * 60000;
+    r.tk = ecHm(tkMin); r.early = tkMin < 10 * 60 + 30;
+    if (logMin - tkMin > 10) r.gl = null; // the global picture is only known "now", not then
+    if (r.day === opIstDay(Date.now())) {
+      const zone = EC_IDX_ZONE[r.idx];
+      if (zone) {
+        if (!ecData[zone]) { try { await ecFetchCandles(zone); } catch (e) { /* none */ } }
+        const e = scAsOf(zone, takenMs, r.ty);
+        if (e) { r.ec = e.key; r.go = e.go; } else { r.ec = null; r.go = false; }
+      }
+      r.rev = !!rlRevenge(takenMs);
+    }
+    scSave(a); return '';
+  }
+  function scExit(id, pl) {
+    const a = scLoad(), r = a.find(x => x.id === id);
+    if (r) { r.pl = pl; scSave(a); }
+  }
+  function scRender() {
+    const body = document.getElementById('sc-body'); if (!body) return;
+    const all = scLoad(), done = all.filter(x => typeof x.pl === 'number');
+    const cn = document.getElementById('sc-count'); if (cn) cn.textContent = '· ' + done.length + ' trade' + (done.length === 1 ? '' : 's') + ' tracked';
+    document.getElementById('sc-sub').textContent = done.length ? 'Rows with fewer than 5 trades are faded — too few to trust. Entry time = the ⏰ time on the position card (More → tap to correct it if you logged late).' : 'Collecting data — every new position you add and exit is tracked here. Nothing to show yet.';
+    if (!done.length) { body.innerHTML = ''; return; }
+    const grp = [
+      ['Entry check', [['Said GO (range breakout)', x => x.ec && x.go], ['Not GO (inside range / choppy / mismatch)', x => x.ec && !x.go]]],
+      ['Week trend', [['With the week', x => x.wk === 'with'], ['Against the week', x => x.wk === 'counter']]],
+      ['Global markets', [['Global supported it', x => x.gl === 'with'], ['Global was against', x => x.gl === 'against']]],
+      ['Discipline', [['Normal entry', x => !x.rev], ['Entered soon after a loss', x => x.rev]]],
+      ['Time of entry', [['Before 10:30', x => x.early === true], ['After 10:30', x => x.early === false]]]
+    ];
+    const sg = (n) => n > 0 ? 'pos' : (n < 0 ? 'neg' : '');
+    let h = '<div class="sc-hd"><span>Rule</span><span>Trades</span><span>Win</span><span>Net</span></div>';
+    grp.forEach(g => {
+      h += '<div class="sc-grp">' + mcEsc(g[0]) + '</div>';
+      g[1].forEach(r => {
+        const rows = done.filter(r[1]), n = rows.length, wins = rows.filter(x => x.pl > 0).length, net = Math.round(rows.reduce((t, x) => t + x.pl, 0));
+        h += '<div class="sc-row' + (n < 5 ? ' sc-low' : '') + '"><span>' + mcEsc(r[0]) + '</span><span>' + n + '</span><span>' + (n ? Math.round(wins / n * 100) + '%' : '—') + '</span><span class="' + sg(net) + '">' + (n ? (net < 0 ? '−' : (net > 0 ? '+' : '')) + '₹' + Math.abs(net).toLocaleString('en-IN') : '—') + '</span></div>';
+      });
+    });
+    body.innerHTML = h;
+  }
+
+  // ---- admin card: loss limit + events ----
+  function rkEvDateIso() { const d = getIstDate(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function rkEvKeyOf(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? (+m[1]) + '-' + (+m[2] - 1) + '-' + (+m[3]) : null; }
+  function rkRender() {
+    try { scRender(); } catch (e) { /* scorecard is optional */ }
+    const inp = document.getElementById('rk-limit'); if (!inp) return;
+    if (document.activeElement !== inp) { const o = rlLoad(); inp.value = o.limit ? String(o.limit) : ''; }
+    const dt = document.getElementById('rk-ev-date'); if (dt && !dt.value) dt.value = rkEvDateIso();
+    const today = getIstDate(), todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const list = mcEvLoad().filter(e => { const m = /^(\d+)-(\d+)-(\d+)$/.exec(e.d); return m && new Date(+m[1], +m[2], +m[3]).getTime() >= todayStart; });
+    if (list.length !== mcEvLoad().length) mcEvSave(list); // past events are dropped
+    list.sort((a, b) => { const pa = a.d.split('-').map(Number), pb = b.d.split('-').map(Number); return (new Date(pa[0], pa[1], pa[2]) - new Date(pb[0], pb[1], pb[2])) || String(a.t).localeCompare(String(b.t)); });
+    document.getElementById('rk-events').innerHTML = list.length ? list.map((e, i) => {
+      const p = e.d.split('-').map(Number);
+      return '<div class="rk-ev"><span>' + mcEsc(String(p[2]).padStart(2, '0') + '/' + String(p[1] + 1).padStart(2, '0') + ' ' + (e.t || '') + ' · ' + e.x) + '</span><button type="button" data-rk-del="' + mcEsc(e.d + '|' + e.t + '|' + e.x) + '" aria-label="Remove">×</button></div>';
+    }).join('') : '<div class="rk-msg">No events added. Add RBI policy, US Fed, big results etc. — they show as a line under Entry check on that day.</div>';
+  }
+  (function rkWire() {
+    const g = (id) => document.getElementById(id);
+    if (!g('rk-save')) return;
+    g('rk-save').addEventListener('click', () => {
+      const v = String(g('rk-limit').value || '').replace(/[^0-9.]/g, ''), n = v === '' ? 0 : Number(v), o = rlLoad();
+      if (v !== '' && (!isFinite(n) || n < 0)) { g('rk-msg').textContent = 'Enter a number, e.g. 20000.'; return; }
+      o.limit = Math.round(n); rlSave(o);
+      g('rk-msg').textContent = n > 0 ? 'Saved. "STOP TRADING TODAY" shows when the day\'s loss reaches ' + rlFmt(n) + '. Stored on this device.' : 'Loss limit is off.';
+      try { rlCheck(); } catch (e) { /* ok */ }
+    });
+    g('rk-ev-add').addEventListener('click', () => {
+      const x = String(g('rk-ev-text').value || '').trim().slice(0, 30), t = String(g('rk-ev-time').value || '').trim(), d = rkEvKeyOf(g('rk-ev-date').value);
+      if (!x || !d) { g('rk-msg').textContent = 'Enter the date and the event name.'; return; }
+      if (t && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(t)) { g('rk-msg').textContent = 'Time must look like 10:00.'; return; }
+      const a = mcEvLoad(); a.push({ d, t, x }); mcEvSave(a);
+      g('rk-ev-text').value = ''; g('rk-ev-time').value = ''; g('rk-msg').textContent = 'Event added.';
+      rkRender(); mcRender();
+    });
+    g('rk-events').addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-rk-del]'); if (!b) return;
+      const key = b.getAttribute('data-rk-del'); mcEvSave(mcEvLoad().filter(e => (e.d + '|' + e.t + '|' + e.x) !== key));
+      rkRender(); mcRender();
+    });
+  })();
+
+  setTimeout(mcTick, 3500);
+  setInterval(mcTick, 5 * 60 * 1000);
+  setInterval(() => { try { mcRender(); } catch (e) { /* ok */ } }, 60 * 1000);
+  setTimeout(ecTick, 3500);
+  setInterval(ecTick, 60000);
+
   // ---- TRADE STORAGE (localStorage, with Firestore cloud sync for cross-device P&L) ----
   // localStorage stays the source of truth the rest of the app reads from — Firestore just
   // keeps it topped up in the background. If Firebase is unreachable for any reason, the
@@ -2372,7 +3088,7 @@
     }
     tjAddTrade({ id: Date.now(), index: "QUICK", type: "", qty: null, entry: null, exit: null, pnl: amount, ts: Date.now() });
     updatePnL();
-    renderMonthlySummary();
+    renderMonthlySummary(); renderGrandTotal();
     renderWeeklySummary();
     renderWeekGraph();
     input.value = '';
@@ -2450,9 +3166,10 @@
   // new 3:16 PM slot below can safely push into alertHistory/renderAlerts — both are declared
   // just above this point now, so no risk of referencing them before they exist.
   const TIME_WINDOW_ALERTS = [
-    { h: 9,  m: 25, text: "Market opens in 5 mins. Be ready." },
+    // SWITCHED OFF (2026-11-03): admin — too many alerts. Remove the // to turn back on.
+    // { h: 9,  m: 25, text: "Market opens in 5 mins. Be ready." },
     { h: 9,  m: 30, text: "Market open. Watch for signals." },
-    { h: 10, m: 30, text: "Best entry window closing." },
+    // { h: 10, m: 30, text: "Best entry window closing." },  // SWITCHED OFF (2026-11-03)
     // FEATURE CHANGE (2026-09-04): this used to fire every trading day; admin asked it to only
     // fire on an actual expiry day for any of the 3 indexes (Nifty=Tue weekly, Sensex=Thu weekly,
     // BankNifty=last Tue of the month), not a regular day. requiresExpiryDay checked below via
@@ -2564,6 +3281,7 @@
           <span style="font-size:1.3rem;">🔄</span>
           <div style="flex:1;">
             <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">${a.flipWord || `FLIP: ${a.fromCode} → ${a.toCode}`}</span>
+            ${a.ctx ? `<div style="font-size:0.72rem; color:var(--muted); margin-top:2px;">${a.ctx}</div>` : ''}
           </div>
           <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
         </div>`;
@@ -2577,6 +3295,7 @@
         <span style="color:${color}; font-size:1.3rem; font-weight:800;">${arrow}</span>
         <div style="flex:1;">
           <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">${a.direction} STRONG</span>
+          ${a.ctx ? `<div style="font-size:0.72rem; color:var(--muted); margin-top:2px;">${a.ctx}</div>` : ''}
         </div>
         <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
       </div>`;
@@ -2672,7 +3391,7 @@
         renderAlerts();
         return; // another device already announced this — stay quiet here
       }
-      alertHistory.unshift({ index: idxName, direction, ts: Date.now() });
+      alertHistory.unshift({ index: idxName, direction, ts: Date.now(), ctx: ecContext(elId, direction) });
       if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
       renderAlerts();
       playBeep(direction === "CE" ? 880 : 440); // higher pitch for CE, lower for PE
@@ -2737,7 +3456,8 @@
     // FEATURE CHANGE (2026-09-04): the lunch-lull tag is gone — this function is now never
     // called during lunch lull at all (checkAlertTrigger suppresses it upstream), so there's
     // nothing left to tag.
-    const text = `${emoji} ${indexName} STRONG ${direction} — ${spotStr} (${sideWord} zone ${zoneStr})\n${dirArrow} held 15+ min · ${timeStr} IST`;
+    const sCtx = ecContext(elId, direction);
+    const text = `${emoji} ${indexName} STRONG ${direction} — ${spotStr} (${sideWord} zone ${zoneStr})\n${dirArrow} held 15+ min · ${timeStr} IST` + (sCtx ? `\n${sCtx}` : '');
     sendTelegramText(text);
   }
 
@@ -2854,6 +3574,7 @@
     }
 
     if (stCode === prevCode) {
+      if (pendingStCode[elId]) { try { ecNoteFakeFlip(elId, pendingStCode[elId]); } catch (e) { /* note is best-effort */ } }
       delete pendingStCode[elId]; // matches the confirmed baseline — any blip is over, forget it
       heldMinutesBeforeFlip[elId] = (currentDuration[elId] || 0) * 5;
       persistStCodeState();
@@ -2867,6 +3588,7 @@
       return;
     }
     pend.last = now;
+    if (!pend.warned) { pend.warned = true; ecFlipAgainst(elId, direction, pend); } // 2nd straight reading of the new side (~30-60 s): instant exit warning if you hold the opposite side
     const needMs = (heldMinutesBeforeFlip[elId] || 0) >= FLIP_LONG_TREND_MIN ? FLIP_HOLD_LONG_MS : FLIP_HOLD_MS;
     if (now - pend.since < needMs) { persistStCodeState(); return; } // still proving itself — say nothing
     const heldMin = Math.floor((now - pend.since) / 60000);
@@ -2889,7 +3611,8 @@
     for (let i = alertHistory.length - 1; i >= 0; i--) {
       if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
     }
-    alertHistory.unshift({ index: idxName, direction, ts: Date.now(), isFlip: true, fromCode: prevCode, toCode: stCode, flipWord });
+    const ecCtx = ecContext(elId, direction);
+    alertHistory.unshift({ index: idxName, direction, ts: Date.now(), isFlip: true, fromCode: prevCode, toCode: stCode, flipWord, ctx: ecCtx });
     if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
     renderAlerts();
 
@@ -2901,7 +3624,7 @@
       // Distinct two-tone beep so a flip doesn't sound identical to a Strong trigger
       playBeep(isCE ? 700 : 350);
       setTimeout(() => playBeep(isCE ? 900 : 300), 160);
-      sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP: ${flipWord}\n${spotLine}held ${heldMin}+ min · ${timeStr} IST`);
+      sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP: ${flipWord}\n${spotLine}held ${heldMin}+ min · ${timeStr} IST` + (ecCtx ? `\n${ecCtx}` : ''));
     });
 
     // Animated flip badge in the Manual Spot result box, if it's showing this index
@@ -3397,6 +4120,26 @@
     });
   }
 
+  // GRAND TOTAL (2026-11-03): one line under the Monthly chart = sum of ALL logged trades (every month, also the ones older than the 6 on the chart).
+  function renderGrandTotal() {
+    const el = document.getElementById('grand-total');
+    if (!el) return;
+    const trades = tjLoad();
+    if (!trades.length) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+    let sum = 0, minTs = Infinity, maxTs = -Infinity; const months = {};
+    trades.forEach(t => {
+      sum += Number(t.pnl) || 0;
+      if (t.ts < minTs) minTs = t.ts; if (t.ts > maxTs) maxTs = t.ts;
+      months[new Date(t.ts).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', year: 'numeric' })] = 1;
+    });
+    const mn = (ts) => new Date(ts).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', year: 'numeric' });
+    const nM = Object.keys(months).length;
+    const range = nM > 1 ? mn(minTs) + ' – ' + mn(maxTs) : mn(minTs);
+    const txt = (sum > 0 ? '+' : (sum < 0 ? '-' : '')) + '₹' + Math.abs(Math.round(sum)).toLocaleString('en-IN');
+    el.innerHTML = '<div class="gt-lbl">Grand total<small>' + range + ' · ' + nM + ' month' + (nM === 1 ? '' : 's') + ' · ' + trades.length + ' trades</small></div>' +
+      '<div class="gt-val ' + (sum > 0 ? 'pos' : (sum < 0 ? 'neg' : '')) + '">' + txt + '</div>';
+    el.classList.remove('hidden');
+  }
   // ---- FEATURE 6: WEEKLY TOTALS (new — same pattern as renderMonthlySummary, grouped Mon–Sun) ----
   // ---- WEEKLY PROGRESS GRAPH (2026-10-15) ----
   // One point per trading day (Mon-Fri; Sat/Sun only if something was logged then) = the NET of every
@@ -3893,6 +4636,7 @@
     const bar = document.getElementById('op-used-bar');
     if (bar) { bar.style.width = Math.min(100, opState.positions.length / OP_MAX * 100) + '%'; bar.classList.toggle('full', opState.positions.length >= OP_MAX); }
     opSetCell(opTotalsEl, 'tpoints', opFmt(r2(points), true, false), sign(r2(points)));
+    try { rlCheck(); } catch (e) { /* discipline check is best-effort */ }
   }
   function opRefreshAll() {
     opListEl.querySelectorAll('.op-pos').forEach(el => {
@@ -3920,6 +4664,7 @@
       };
       const sorted = opState.positions.map((p, i) => ({ p, i, r: rank(p) }))
         .sort((x, y) => (x.r[0] - y.r[0]) || (x.r[1] - y.r[1]) || (x.i - y.i)).map(x => x.p);
+      let tkMap = {}; try { scLoad().forEach(r => { if (r && r.tk) tkMap[r.id] = r; }); } catch (e) { tkMap = {}; }
       opListEl.innerHTML = sorted.map(p => {
         const v = (n) => n == null ? '' : n;
         const exited = p.status === 'EXITED';
@@ -3952,6 +4697,7 @@
                 '<button class="op-field op-tile" type="button" data-tile="balance"><span class="op-k">🏦 Balance</span><span class="op-v" data-o="balance"></span></button>' +
               '</div>' +
               '<div class="op-tilehelp hidden" data-o="tilehelp"></div>' +
+              (tkMap[p.id] ? '<div class="op-tk" data-tk-row="' + id + '"><button class="op-link" type="button" data-tk-edit="' + id + '">⏰ Taken at ' + opEsc(tkMap[p.id].tk) + ' · tap to change</button></div>' : '') +
               '<div class="op-btns">' + moreBtns + '</div>' +
             '</div>') +
           '</div>' +
@@ -4084,6 +4830,7 @@
         opQFillExp(opQIdxEl.value, '');
       }
       opQPreview();
+      opQWarn();
       const first = [opQAcctEl, opQIdxEl, opQTypeEl].find(e => !e.value);
       (first || (pos ? opQQtyEl : opQStrikeEl)).focus();
     }
@@ -4123,6 +4870,7 @@
     if (opState.positions.length >= OP_MAX) { opQErrEl.textContent = 'Max ' + OP_MAX + ' positions.'; return; }
     const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     opState.positions.push({ id, label: nm.label, acct: nm.acct, status: 'ONGOING', qty, buy, cmp: cmp != null ? cmp : null });
+    try { rlAfterAdd(id); } catch (e) { /* discipline note is best-effort */ }
     opOpenQuick(false);
     opTouchAndSave();
     opRender();
@@ -4142,6 +4890,7 @@
   opQNameLinkEl.addEventListener('click', () => { opShowNameBox(true); opQNameEl.focus(); });
   [opQAcctEl, opQIdxEl, opQTypeEl].forEach(el => el.addEventListener('change', () => { opQErrEl.textContent = ''; }));
   opQIdxEl.addEventListener('change', () => opQFillExp(opQIdxEl.value, ''));
+  [opQIdxEl, opQTypeEl].forEach(el => el.addEventListener('change', opQWarn));
   opQExpEl.addEventListener('change', () => { opQErrEl.textContent = ''; const o = opQExpEl.value === '__other'; opQExpDateEl.classList.toggle('hidden', !o); if (o) { try { opQExpDateEl.focus(); } catch (e) {} } });
   [opQQtyEl, opQBuyEl].forEach(el => el.addEventListener('input', opQPreview));
   const opQOrder = [opQStrikeEl, opQQtyEl, opQBuyEl, opQCmpEl];
@@ -4256,6 +5005,24 @@
     const nxt = all[all.indexOf(e.target) + 1];
     if (nxt) { nxt.focus(); nxt.select(); nxt.scrollIntoView({ block: 'center', behavior: 'smooth' }); } else { e.target.blur(); }
   });
+  // ⏰ Taken at — optional correction of the entry time (scorecard / revenge check only)
+  opListEl.addEventListener('click', (e) => {
+    const ed = e.target.closest('[data-tk-edit]');
+    if (ed) {
+      const id = ed.getAttribute('data-tk-edit'), row = ed.closest('[data-tk-row]'), r = scLoad().find(x => x.id === id); if (!row || !r) return;
+      row.innerHTML = '⏰ Taken at <input class="op-tkin" type="text" inputmode="numeric" maxlength="5" value="' + opEsc(r.tk || '') + '" data-tk-in="' + opEsc(id) + '"> <button class="op-link" type="button" data-tk-ok="' + opEsc(id) + '">OK</button><span class="op-tk-msg"></span>';
+      const inp = row.querySelector('input'); if (inp) { inp.focus(); inp.select(); }
+      return;
+    }
+    const ok = e.target.closest('[data-tk-ok]');
+    if (ok) { opTkApply(ok.closest('[data-tk-row]')); return; }
+  });
+  opListEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-tk-in]')) { e.preventDefault(); opTkApply(e.target.closest('[data-tk-row]')); } });
+  function opTkApply(row) {
+    if (!row) return;
+    const inp = row.querySelector('[data-tk-in]'), msg = row.querySelector('.op-tk-msg'); if (!inp) return;
+    scSetTaken(inp.getAttribute('data-tk-in'), inp.value).then(err => { if (err) { if (msg) msg.textContent = err; } else opRender(); }).catch(() => { if (msg) msg.textContent = 'Could not save.'; });
+  }
   opListEl.addEventListener('click', (e) => {
     const cardEl = e.target.closest('.op-pos');
     const cardId = cardEl ? cardEl.getAttribute('data-id') : null;
@@ -4377,6 +5144,7 @@
     p.status = 'EXITED'; p.exitPrice = v; p.cmp = v;
     opState.exited = opState.exited.filter(x => x.id !== p.id);
     opState.exited.push({ id: p.id, label: p.label, acct: opAcctOf(p), qty: p.qty, buy: p.buy, exit: v, pl, day: opIstDay(Date.now()), ts: Date.now() });
+    try { scExit(p.id, pl); } catch (e) { /* scorecard is best-effort */ }
     opCloseExit();
     opTouchAndSave();
     opRender();
@@ -4444,7 +5212,7 @@
     });
     opTouchAndSave();
     opRenderExited();
-    updatePnL(); renderMonthlySummary(); renderWeeklySummary(); renderWeekGraph();
+    updatePnL(); renderMonthlySummary(); renderGrandTotal(); renderWeeklySummary(); renderWeekGraph();
   }
   document.getElementById('op-pl-cancel').addEventListener('click', opPlClose);
   document.getElementById('op-pl-ok').addEventListener('click', opPlConfirm);
@@ -4512,6 +5280,16 @@
     clearTimeout(opExitTimer);
     opExitTimer = setTimeout(opCheckExits, 1800);
   }
+  // Repeat-alarm limit (2026-11-03): the same lead may sound the EXIT NOW alarm (Telegram + banner + siren + tab flash) twice a day;
+  // from the 3rd time the card keeps its red look/animation but stays quiet. Counted per lead per day, saved on this device.
+  const OP_EXIT_MAX_ALARMS = 2;
+  function opExitCountKey() { return 'signa365_op_exit_count_' + (currentUid || 'anon'); }
+  function opExitCountLoad() {
+    const day = opIstDay(Date.now());
+    try { const o = JSON.parse(localStorage.getItem(opExitCountKey())); if (o && o.day === day && o.ids) return o; } catch (e) { /* fall through */ }
+    return { day, ids: {} };
+  }
+  function opExitCountSave(o) { try { localStorage.setItem(opExitCountKey(), JSON.stringify(o)); } catch (e) { /* best effort */ } }
   function opExitStamp(p, sl) { return p.buy + '/' + sl; } // a dismissal applies to this buy price + stoploss only
   function opCheckExits() {
     clearTimeout(opExitTimer);
@@ -4519,6 +5297,7 @@
     const freshToday = opState.updatedAt && opIstDay(opState.updatedAt) === opIstDay(Date.now());
     const dismissed = opExitLoadDismissed();
     let dismissedChanged = false;
+    const exitCnt = opExitCountLoad(); let exitCntChanged = false;
     const nowExiting = {};
     const stillThere = {};
     opState.positions.forEach(p => {
@@ -4535,6 +5314,7 @@
       } else { delete opCmpSuspect[p.id]; if (!ongoing) delete opLastGoodCmp[p.id]; }
       const live = !suspect && c.action === 'EXIT' && ongoing;
       if (!live) {
+        if (!suspect && exitCnt.ids[p.id] && exitCnt.ids[p.id].on) { exitCnt.ids[p.id].on = false; exitCntChanged = true; } // recovered / closed: the next drop is a new alarm
         // back above SL (or closed/removed values/suspect): re-arm, forget any dismissal, cancel a waiting Telegram, free the shared claim
         opTgCancel(p.id);
         if (dismissed[p.id]) { delete dismissed[p.id]; dismissedChanged = true; }
@@ -4544,12 +5324,18 @@
       if (!freshToday) return;
       const stamp = opExitStamp(p, c.sl);
       if (dismissed[p.id] === stamp) return; // you already dismissed this one
-      nowExiting[p.id] = { label: p.label || 'Position', cmp: p.cmp, sl: c.sl, pl: c.pl, qty: p.qty, buy: p.buy, stamp: stamp };
+      // a new alarm starts when the lead drops to/below its stoploss (not on a reload while it is still down)
+      const rec = exitCnt.ids[p.id] || (exitCnt.ids[p.id] = { n: 0, on: false });
+      if (!rec.on) { rec.n++; rec.on = true; exitCntChanged = true; }
+      const silent = rec.n > OP_EXIT_MAX_ALARMS;
+      nowExiting[p.id] = { label: p.label || 'Position', cmp: p.cmp, sl: c.sl, pl: c.pl, qty: p.qty, buy: p.buy, stamp: stamp, silent: silent, n: rec.n };
       // Telegram only once this CMP has stayed unchanged (and still at/below the stoploss) for 30 s
-      if (!opExitTelegramSent[p.id]) opTgSchedule(p.id, nowExiting[p.id]);
+      if (silent) opTgCancel(p.id);
+      else if (!opExitTelegramSent[p.id]) opTgSchedule(p.id, nowExiting[p.id]);
     });
     Object.keys(opCmpSuspect).forEach(id => { if (!stillThere[id]) delete opCmpSuspect[id]; });
     if (dismissedChanged) opExitSaveDismissed(dismissed);
+    if (exitCntChanged) opExitCountSave(exitCnt);
     opExitActive = nowExiting;
     opExitApply();
     opRenderSuspects();
@@ -4632,13 +5418,21 @@
         if (opListEl.firstElementChild !== el && !el.contains(document.activeElement)) opListEl.prepend(el);
       }
     });
-    if (!ids.length) {
+    // quiet leads (3rd alarm onwards today): card stays red/animated, but no banner, siren or tab flash
+    opListEl.querySelectorAll('.op-pos').forEach(el => {
+      const aid = el.getAttribute('data-id'), q = opExitActive[aid] && opExitActive[aid].silent;
+      const old = el.querySelector('.op-mutednote');
+      if (q && !old) { const l1 = el.querySelector('.op-l1'); if (l1) { const d = document.createElement('div'); d.className = 'op-mutednote'; d.textContent = '🔕 EXIT alerts stopped for this lead today (sent ' + OP_EXIT_MAX_ALARMS + ')'; l1.insertAdjacentElement('afterend', d); } }
+      else if (!q && old) old.remove();
+    });
+    const loud = ids.filter(id => !opExitActive[id].silent);
+    if (!loud.length) {
       opExitBannerEl.classList.add('hidden'); opExitBannerEl.innerHTML = '';
       clearInterval(opExitSirenTimer); opExitSirenTimer = null;
       if (opTitleTimer) { clearInterval(opTitleTimer); opTitleTimer = null; document.title = opBaseTitle; }
       return;
     }
-    opExitBannerEl.innerHTML = ids.map(id => {
+    opExitBannerEl.innerHTML = loud.map(id => {
       const e = opExitActive[id];
       return '<div class="op-exit-row"><div class="op-exit-txt">🚨 EXIT NOW — ' + opEsc(e.label) +
         '<small>CMP ₹' + opEsc(String(e.cmp)) + ' is at/below stoploss ₹' + opEsc(String(e.sl)) + (e.pl != null ? ' · ' + opEsc(opFmt(e.pl, true, true)) : '') + '</small></div>' +
@@ -4669,7 +5463,7 @@
 
   pnlToggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    renderMonthlySummary();
+    renderMonthlySummary(); renderGrandTotal();
     renderWeeklySummary();
     renderWeekGraph();
     positionRibbonPanel(pnlPanelEl);
@@ -4886,7 +5680,7 @@
     pageNavBtns.forEach((btn, i) => btn.classList.toggle('active', i === currentPageIdx));
     window.scrollTo({ top: 0 });
     if (typeof opSyncFab === 'function') opSyncFab();
-    if (currentPageIdx === 2) { try { renderMonthlySummary(); renderWeeklySummary(); } catch (e) {} }
+    if (currentPageIdx === 2) { try { renderMonthlySummary(); renderGrandTotal(); renderWeeklySummary(); } catch (e) {} try { rkRender(); } catch (e) {} }
   }
   pageNavBtns[0].addEventListener('click', () => goToPage(0));
   pageNavBtns[1].addEventListener('click', () => goToPage(1));
@@ -4977,6 +5771,8 @@
     // of waiting for a toggle click that no longer exists.
     adminPanelEl.classList.toggle('hidden', !isAdmin);
     { const tc = document.getElementById('admin-totals-card'); if (tc) tc.classList.toggle('hidden', !isAdmin); }
+    { const rc = document.getElementById('admin-risk-card'); if (rc) rc.classList.toggle('hidden', !isAdmin); const sc2 = document.getElementById('admin-score-card'); if (sc2) sc2.classList.toggle('hidden', !isAdmin); }
+    if (isAdmin) { try { rkRender(); } catch (e) { /* settings card is optional */ } }
     if (isAdmin) { loadAdminUserList(); computeNextUsername(); startAdminExpiryPingLoop(); startPresenceRefreshLoop(); }
     else { stopAdminExpiryPingLoop(); stopPresenceRefreshLoop(); }
     // PAGE NAV: only admin has anything on page 2 — show the tab strip only for admin, and if a
@@ -5215,7 +6011,7 @@
         const cloudTrades = snapshot.docs.map(d => d.data());
         const merged = tjMergeFromCloud(cloudTrades);
         updatePnL();
-        renderMonthlySummary();
+        renderMonthlySummary(); renderGrandTotal();
         renderWeeklySummary();
         renderWeekGraph();
         // One-time per login: push any trades that existed locally before cloud sync was
@@ -6088,7 +6884,7 @@
         opStartForCurrentUser();
         subscribeToOwnUserDoc(user.uid);
         updatePnL();
-        renderMonthlySummary();
+        renderMonthlySummary(); renderGrandTotal();
         renderWeeklySummary();
         renderWeekGraph();
       } catch (err) {
@@ -6316,6 +7112,7 @@
     // FIX (2026-09-07): skip this cycle's destroy+rebuild if a credential keypress landed very
     // recently — see markCredentialTyping() above. Harmless to skip: this function re-runs on its
     // own 30s interval (or the next on-demand call), so the chart is never more than one cycle stale.
+    try { ecRender(); } catch (e) { /* Entry check follows the live chart's index */ }
     if (Date.now() - lastCredentialKeyAt < 1500) return;
     const placeholderEl = document.getElementById('chart-placeholder');
     const wrapEl = document.getElementById('chart-wrap');
@@ -6549,6 +7346,21 @@
               c.setLineDash([]);
               c.fillText(label, xScale.right - 4, yPixel - 4);
             }
+            c.restore();
+          }
+        }, {
+          id: 'openRange',
+          afterDraw(chart) {
+            const st = ecStatus[meta.zoneEl];
+            if (!st || st.hi == null || st.forming) return;
+            const yScale = chart.scales.y, area = chart.chartArea, c = chart.ctx;
+            c.save(); c.font = '10px -apple-system, Segoe UI, sans-serif'; c.setLineDash([2, 4]); c.lineWidth = 1; c.strokeStyle = '#c27a00'; c.fillStyle = '#c27a00'; c.textAlign = 'left';
+            [[st.hi, 'Range high ' + ecN(st.hi), 11], [st.lo, 'Range low ' + ecN(st.lo), -3]].forEach(([v, lbl, dy]) => {
+              const y = yScale.getPixelForValue(v);
+              if (y < area.top || y > area.bottom) return;
+              c.beginPath(); c.moveTo(area.left, y); c.lineTo(area.right, y); c.stroke();
+              c.setLineDash([]); c.fillText(lbl, area.left + 4, y + dy); c.setLineDash([2, 4]);
+            });
             c.restore();
           }
         }, {
