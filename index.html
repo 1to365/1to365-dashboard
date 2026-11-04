@@ -1776,7 +1776,7 @@
     <button id="sound-enable-btn" style="padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text); font-size:0.85rem; font-weight:700; cursor:pointer;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Enable Sound</button>
   </div>
   <div id="alerts-list" style="flex:1; overflow-y:auto; min-height:0;">
-    <p class="placeholder" style="font-size:0.92rem;">Waiting for a Strong signal…</p>
+    <p class="placeholder" style="font-size:0.92rem;">Waiting for a Go signal…</p>
   </div>
 </div>
 
@@ -1794,6 +1794,7 @@
 <div class="card ec-card" id="ec-card" style="grid-column: 1 / -1;">
   <div class="ec-head"><span class="ec-title" id="ec-title">🧭 Entry check</span><span class="ec-week" id="ec-week"></span></div>
   <div id="ec-body"><div class="ec-sub">Loading…</div></div>
+  <div class="ec-sub" id="ec-upd" style="text-align:center;margin-top:8px;"></div>
 </div>
 
 <!-- MARKET CONTEXT (Build B, 2026-11-04): 2 short lines — global tally + event/big-move flag. Display only. -->
@@ -2675,6 +2676,13 @@
       const fk = last ? `<div class="ec-fake">↩️ Fake flip${last.dir ? ' ' + last.dir : ''} at ${new Date(last.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} — went back in ${last.mins || 0} min · ${fl.length} today</div>` : '';
       return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span>${top}</div>${bits.length ? '<div class="ec-sub">' + bits.join(' · ') + '</div>' : ''}${fk}</div>`;
     }).join('');
+    try { // when the candles behind this card were last fetched (turns amber if the feed is late)
+      const ue = document.getElementById('ec-upd'), dd = selZ ? ecData[selZ] : null;
+      if (ue) {
+        if (dd && dd.at) { const late = Date.now() - dd.at > 3 * 60000; ue.textContent = 'Last updated: ' + new Date(dd.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }) + (late ? ' · feed is late' : ''); ue.style.color = late ? '#b45309' : ''; }
+        else ue.textContent = '';
+      }
+    } catch (e) { /* cosmetic */ }
     const wk = document.getElementById('ec-week');
     if (wk) {
       const dirs = EC_ZONES.map(z => ecWeek[z] && ecWeek[z].dir).filter(Boolean), have = EC_ZONES.filter(z => ecWeek[z]).length;
@@ -2689,6 +2697,7 @@
     if (ecMarketHours()) await Promise.all(EC_ZONES.map(ecFetchCandles));
     EC_ZONES.forEach(z => { try { ecStatus[z] = ecCompute(z); } catch (e) { ecStatus[z] = null; } });
     ecRender();
+    try { ecGoAlerts(); } catch (e) { /* alerts must never break the refresh */ }
     try { if (typeof opQWarn === 'function') opQWarn(); } catch (e) { /* form not open */ }
     try { if (liveChart) liveChart.draw(); } catch (e) { /* chart redraw is cosmetic */ }
   }
@@ -2716,6 +2725,36 @@
   }
 
   // ---- Add-position form: warn (never block) when the chosen index is choppy / counter-trend / against the signal ----
+  // ---- Alerts follow the Entry check: one alert when an index turns Go CE / Go PE (or an early strong move) ----
+  var ecGoSeen = {}; // zone -> "dir@since" already announced today (var: read by ecTick before this point in the file runs)
+  try { const o = JSON.parse(localStorage.getItem('signa365_ec_goann') || 'null'); if (o && o.day === todayIstKey()) ecGoSeen = o.z || {}; } catch (e) { ecGoSeen = {}; }
+  function ecGoAlerts() {
+    if (!ALERT_ON_GO_ONLY) return;
+    EC_ZONES.forEach(z => {
+      const st = ecStatus[z]; if (!st) return;
+      const live = (st.key === 'go' || st.key === 'early') && st.dir;
+      if (!live) { if (ecGoSeen[z]) { delete ecGoSeen[z]; ecGoSave(); } return; } // left Go: a later Go is a new alert
+      const sig = st.dir + '@' + (st.since || ''); if (ecGoSeen[z] === sig) return;
+      ecGoSeen[z] = sig; ecGoSave();
+      const idxName = alertIndexNames[z], dir = st.dir, early = st.key === 'early';
+      const word = early ? '🔥 Strong ' + dir + ' (early)' : (dir === 'CE' ? '🚀 Go CE' : '🪂 Go PE');
+      const ctx = [st.tag, ecContext(z, dir).split(' · ').filter(x => !/moving/.test(x)).join(' · ')].filter(Boolean).join(' · ');
+      claimStrongAlertInCloud('go_' + z, sig).then(res => {
+        for (let i = alertHistory.length - 1; i >= 0; i--) { if (alertHistory[i].index === idxName) alertHistory.splice(i, 1); }
+        alertHistory.unshift({ index: idxName, direction: dir, ts: Date.now(), isGo: true, word, since: st.since || '', ctx });
+        if (alertHistory.length > MAX_ALERTS) alertHistory.pop();
+        renderAlerts();
+        if (res.alreadyAnnounced) return; // another device already announced it
+        playBeep(dir === 'CE' ? 880 : 440);
+        if (currentRole === 'admin') {
+          const spot = currentPrice[zoneToPriceEl[z]], sp = spot != null ? ' — ' + spot.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '';
+          sendTelegramText(word + ' · ' + idxName + sp + (st.since ? '\nsince ' + st.since : '') + (st.rangeTxt ? ' · range ' + st.rangeTxt : '') + (ctx ? '\n' + ctx : ''));
+        }
+      });
+    });
+  }
+  function ecGoSave() { try { localStorage.setItem('signa365_ec_goann', JSON.stringify({ day: todayIstKey(), z: ecGoSeen })); } catch (e) { /* best effort */ } }
+
   function ecWarnHtml(idx, ty) {
     const zone = EC_IDX_ZONE[idx]; if (!zone || !ty) return { html: '', good: false };
     const st = ecStatus[zone], w = ecWeek[zone], L = [];
@@ -3490,7 +3529,7 @@
     card.classList.remove('hidden'); card.classList.toggle('strong', s.strong);
     const l1 = document.getElementById('mc-l1');
     const txt = s.lean === 'CE' ? 'Global: ' + s.n + ' of ' + s.M + ' positive → supports CE'
-      : (s.lean === 'PE' ? 'Global: ' + s.n + ' of ' + s.M + ' negative → supports PE' : 'Global: mixed (' + s.pos + ' positive, ' + s.neg + ' negative) → no clear help');
+      : (s.lean === 'PE' ? 'Global: ' + s.n + ' of ' + s.M + ' negative → supports PE' : 'Global: split (' + s.pos + ' up, ' + s.neg + ' down) · ignore, follow Entry check');
     const sig = s.reasons.map(r => r.key).join(',') + '|' + s.evl.map(e => e.label + (e.bias.side || '') + (e.bias.strong ? 'S' : '')).join(',');
     mcSig = sig;
     const co = mcColLoad(), collapsed = !!(co.c && co.day === todayIstKey() && co.sig === sig);
@@ -4129,7 +4168,7 @@
     persistAlertHistory(); // every render = the list just changed — keep storage in sync, single choke point
     const listEl = document.getElementById('alerts-list');
     if (alertHistory.length === 0) {
-      listEl.innerHTML = '<p class="placeholder" style="font-size:0.92rem;">Waiting for a Strong signal…</p>';
+      listEl.innerHTML = '<p class="placeholder" style="font-size:0.92rem;">Waiting for a Go signal…</p>';
       return;
     }
     listEl.innerHTML = alertHistory.map(a => {
@@ -4142,6 +4181,16 @@
         return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
           <span style="font-size:1.3rem;">⏰</span>
           <div style="flex:1; font-weight:700;">${a.text}</div>
+          <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
+        </div>`;
+      }
+      if (a.isGo) {
+        return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.92rem;">
+          <span style="font-size:1.3rem;">${a.word && a.word.indexOf('🔥') === 0 ? '🔥' : (isCE ? '🚀' : '🪂')}</span>
+          <div style="flex:1;">
+            <strong>${a.index}</strong> <span style="color:${color}; font-weight:700;">${(a.word || '').replace(/^[^A-Za-z]+/, '')}${a.since ? ' · since ' + a.since : ''}</span>
+            ${a.ctx ? `<div style="font-size:0.72rem; color:var(--muted); margin-top:2px;">${a.ctx}</div>` : ''}
+          </div>
           <span style="color:var(--muted); font-size:0.78rem;">${timeStr}</span>
         </div>`;
       }
@@ -4208,8 +4257,12 @@
   // & sent — it's used as "already alerted this side", not as a raw per-cycle mirror, and only
   // changes on a genuine CE<->PE flip (see the fix note above checkAlertTrigger).
   const pendingStrong = {}; // elId -> direction seen once at Strong, awaiting a second confirming refresh
+  // 2026-11-06 (admin): alerts only when the Entry check says Go CE / Go PE — Supertrend "Strong" and flip alerts no longer announce.
+  // Set to false to bring the old alerts back. The flip-against-your-position warning is a separate safety and stays.
+  var ALERT_ON_GO_ONLY = true;
 
   function checkAlertTrigger(elId, direction, strength) {
+    if (ALERT_ON_GO_ONLY) return; // alerts follow the Entry check (see ecGoAlerts)
     if (strength !== "Strong") {
       delete pendingStrong[elId];
       // NOTE: deliberately NOT touching lastAlertedDirection here — a dip to Bias while the
@@ -4477,6 +4530,7 @@
     const flipWord = `${sideWord[isCE ? "PE" : "CE"]} is now ${sideWord[direction]}`;
 
     // On-screen alert list (reuses the same Alerts card, marked as a flip)
+    if (!ALERT_ON_GO_ONLY) {
     for (let i = alertHistory.length - 1; i >= 0; i--) {
       if (alertHistory[i].index === idxName) alertHistory.splice(i, 1);
     }
@@ -4495,6 +4549,7 @@
       setTimeout(() => playBeep(isCE ? 900 : 300), 160);
       sendTelegramText(`🔄 ${alertIndexNames[elId]} FLIP: ${flipWord}\n${spotLine}held ${heldMin}+ min · ${timeStr} IST` + (ecCtx ? `\n${ecCtx}` : ''));
     });
+    }
 
     // Animated flip badge in the Manual Spot result box, if it's showing this index
     recentFlipTs[elId] = Date.now();
