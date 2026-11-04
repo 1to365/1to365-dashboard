@@ -2544,30 +2544,34 @@
     const done = cs.map(c => c.time + 5 * 60000 <= now); // completed 5-min candles only
     let hi = -Infinity, lo = Infinity, nR = 0;
     cs.forEach((c, i) => { const m = ecIstMins(c.time); if (m >= EC_RANGE_START && m < EC_RANGE_END && done[i]) { hi = Math.max(hi, c.close); lo = Math.min(lo, c.close); nR++; } });
-    const forming = nowMin < EC_RANGE_END;
+    // the last range candle (10:25-10:30) must really be loaded, otherwise the range is incomplete and a Go could be wrong
+    const rangeReady = cs.some((c, i) => done[i] && ecIstMins(c.time) === EC_RANGE_END - 5) || nowMin >= EC_RANGE_END + 20;
+    const lagging = nowMin >= EC_RANGE_END && !rangeReady, forming = nowMin < EC_RANGE_END || lagging;
     let lastTrend = null; for (let i = ts.length - 1; i >= 0; i--) { if (ts[i] != null) { lastTrend = ts[i]; break; } }
     const signal = lastTrend === 1 ? 'CE' : (lastTrend === -1 ? 'PE' : null);
     let flips = 0;
     for (let i = 1; i < cs.length; i++) { if (ts[i] != null && ts[i - 1] != null && ts[i] !== ts[i - 1] && cs[i].time >= now - EC_CHOP_WINDOW_MS) flips++; }
-    const rangeTxt = nR >= 2 && isFinite(hi) ? ecN(lo) + '–' + ecN(hi) : '';
-    const out = { signal, flips, hi: nR >= 2 ? hi : null, lo: nR >= 2 ? lo : null, rangeTxt, forming, dir: null, since: '', key: '', cls: 'wait', ico: '', text: '', long: '', sub: '', tag: '', exp: null };
+    const rangeTxt = nR >= 2 && isFinite(hi) && !lagging ? ecN(lo) + '–' + ecN(hi) : '';
+    const out = { signal, flips, hi: nR >= 2 && !lagging ? hi : null, lo: nR >= 2 && !lagging ? lo : null, rangeTxt, forming, dir: null, since: '', key: '', cls: 'wait', ico: '', text: '', long: '', sub: '', tag: '', exp: null };
     const dn = cs.filter((c, i) => done[i]);
     try { out.exp = ecExpiry(elId, dn); } catch (e) { out.exp = null; }
     if (forming || nR < 2) {
       let er = null; try { er = ecEarly(cs, done, nowMin, signal, flips); } catch (e) { er = null; }
       if (er) { out.key = 'early'; out.cls = 'go'; out.dir = er.dir; out.since = er.since; out.ico = '🔥'; out.text = 'Strong ' + er.dir + ' (early). Smaller size.'; out.long = 'Early move: two closes beyond the first 15 minutes, up to ' + Math.abs(er.pct).toFixed(2) + '% from the open, signal agrees, no flips. Use a smaller size.'; return out; }
-      out.key = 'forming'; out.ico = '⏳'; out.text = 'Wait. Market is settling.'; out.long = 'Opening range 9:15–10:30 is still forming. Ignore every flip until it ends.'; return out;
+      out.key = 'forming'; out.ico = '⏳'; out.text = 'Wait. Market is settling.'; out.long = lagging ? 'Waiting for the last opening-range candle (10:25–10:30) to load, so the range is complete. Ignore every flip until then.' : 'Opening range 9:15–10:30 is still forming. Ignore every flip until it ends.'; return out;
     }
     const sideAt = (c) => c.close > hi ? 1 : (c.close < lo ? -1 : 0);
     let lastI = -1, everBroke = false;
     cs.forEach((c, i) => { const m = ecIstMins(c.time); if (m >= EC_RANGE_END && done[i]) { lastI = i; if (sideAt(c) !== 0) everBroke = true; } });
     const lastSide = lastI >= 0 ? sideAt(cs[lastI]) : 0;
+    let prevI = -1; for (let j = lastI - 1; j >= 0; j--) { if (done[j] && ecIstMins(cs[j].time) >= EC_RANGE_END) { prevI = j; break; } }
+    const confirmed = lastSide !== 0 && prevI >= 0 && sideAt(cs[prevI]) === lastSide; // Go needs 2 closes outside the range, same side
     if (lastSide !== 0) { let j = lastI; while (j - 1 >= 0 && ecIstMins(cs[j - 1].time) >= EC_RANGE_END && sideAt(cs[j - 1]) === lastSide) j--; out.since = ecHm(ecIstMins(cs[j].time) + 5); }
     out.dir = lastSide === 1 ? 'CE' : (lastSide === -1 ? 'PE' : null);
     const w = ecWeek[elId], counter = !!(out.dir && w && w.dir && w.dir !== out.dir);
     if (nowMin >= EC_LAST_ENTRY) { out.key = 'late'; out.cls = 'wait'; out.ico = '🌙'; out.text = 'Too late for new entries.'; out.long = 'No new entries after 3:00 pm.'; return out; }
     if (flips >= EC_CHOP_FLIPS) { out.key = 'chop'; out.cls = 'warn'; out.ico = '🌀'; out.text = 'Choppy. Skip it.'; out.long = flips + ' flips in the last hour — treat as a choppy day, do not trade flips.'; return out; }
-    if (out.dir && out.dir === signal) {
+    if (out.dir && out.dir === signal && confirmed) {
       out.key = 'go'; out.cls = counter ? 'warn' : 'go'; out.ico = out.dir === 'CE' ? '🚀' : '🪂';
       out.text = 'Go ' + out.dir + '. Moving ' + (out.dir === 'CE' ? 'up' : 'down') + (out.since ? ' · since ' + out.since : '') + '.';
       if (counter) out.sub = 'Careful: against the week.';
@@ -2575,8 +2579,10 @@
       out.long = 'Closed outside the opening range (' + out.dir + ') and the signal agrees.' + (counter ? ' But the week is ' + w.dir + ' — extra care.' : '');
       return out;
     }
+    if (out.dir && out.dir === signal && !confirmed) { out.key = 'confirm'; out.cls = 'wait'; out.ico = '👀'; out.text = 'First close ' + (out.dir === 'CE' ? 'above' : 'below') + ' the range. Wait for one more.'; out.long = 'One candle closed outside the opening range (' + out.dir + '). Go needs two closes in a row — wait for the next candle.'; return out; }
     if (out.dir && signal) { out.key = 'mismatch'; out.cls = 'warn'; out.ico = '🚦'; out.text = 'Mixed signals. Wait.'; out.long = 'Price and signal disagree — wait.'; return out; }
-    if (everBroke) { out.key = 'fake'; out.cls = 'warn'; out.ico = '🎭'; out.text = 'Fake move. Wait.'; out.long = 'Price broke the range but closed back inside — treat the break as fake.'; return out; }
+    if (everBroke) { out.key = 'fake'; out.cls = 'warn'; out.ico = '🎭'; out.text = 'Fake move. Wait.';
+      try { for (let j = lastI; j >= 0; j--) { if (done[j] && ecIstMins(cs[j].time) >= EC_RANGE_END && sideAt(cs[j]) !== 0) { out.sub = 'Broke ' + (sideAt(cs[j]) === 1 ? 'CE' : 'PE') + ' at ' + ecHm(ecIstMins(cs[j].time) + 5) + ', then closed back inside.'; break; } } } catch (e) { /* wording only */ } out.long = 'Price broke the range but closed back inside — treat the break as fake.'; return out; }
     if (nowMin >= EC_NO_TRADE_FROM) { out.key = 'notrade'; out.cls = 'bad'; out.ico = '⛔'; out.text = 'No trade today.'; out.long = 'No candle has closed outside the opening range by 1:00 pm.'; return out; }
     out.key = 'inside'; out.cls = 'wait'; out.ico = '🧘'; out.text = 'Wait. No clear move yet.'; out.long = 'Price is still inside the opening range — wait for a close outside it.';
     return out;
@@ -2701,6 +2707,7 @@
         else if (st.key === 'notrade') parts.push('⛔ no clear move today');
         else if (st.key === 'early' && st.dir) parts.push('🔥 early strong ' + st.dir);
         else if (st.key === 'go' && st.dir) parts.push(st.dir === dir ? '🚀 moving ' + st.dir + (st.since ? ' since ' + st.since : '') : '🚦 moving ' + st.dir + ' (other way)');
+        else if (st.key === 'confirm') parts.push('👀 first close outside — wait for one more');
         else if (st.key === 'mismatch') parts.push('🚦 mixed signals');
       }
       if (mcState && mcState.lean) parts.push(mcState.lean === dir ? '🌍 world says ' + dir : '⚠️ world says ' + mcState.lean);
@@ -2984,7 +2991,42 @@
     if (!res.idx && res.rows.length) { const m = res.rows[Math.floor(res.rows.length / 2)].strike; res.idx = m >= 65000 ? 'SENSEX' : (m >= 40000 ? 'BANKNIFTY' : 'NIFTY'); }
     return res;
   }
+  // ICICI web / laptop table:  BUY SENSEX05 NOV 76300 PE NORMAL BFO  700  223.17  155.40  -47,441.00
+  function pkWebExpiry(idx, dayTok, mo) {
+    const now = getIstDate(), yr = now.getFullYear(), want = idx === 'SENSEX' ? 4 : 2;
+    const ok = (dd) => dd >= 1 && dd <= 31 && new Date(Date.UTC(yr, mo, dd)).getUTCMonth() === mo && new Date(Date.UTC(yr, mo, dd)).getUTCDay() === want;
+    const t = dayTok.split('').map(c => ({ O: '0', o: '0', S: '5', s: '5', I: '1', l: '1' }[c] || c)).join('').replace(/\D/g, ''), cand = [];
+    if (t.length <= 2 && t) cand.push(+t); else if (t.length >= 3) { for (let i = 0; i < t.length; i++) { const u = t.slice(0, i) + t.slice(i + 1); if (u.length === 2) cand.push(+u); } cand.push(+t.slice(0, 2), +t.slice(-2)); }
+    const good = Array.from(new Set(cand.filter(ok))), today = now.getDate(), curMo = now.getMonth();
+    let d = null;
+    if (good.length === 1) d = good[0];
+    else if (good.length > 1) d = good.filter(x => mo !== curMo || x >= today)[0] || good[0];
+    else { for (let x = (mo === curMo ? today : 1); x <= 31; x++) { if (ok(x)) { d = x; break; } } }
+    return d == null ? '' : String(d).padStart(2, '0') + OP_MON[mo];
+  }
+  function pkParsePositionsWeb(text) {
+    const L = String(text || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean), out = []; let bad = 0;
+    const wre = /(?:^|\s)(BUY|SELL|BUV|SUV|8UY)?\s*(BANKNIFTY|NIFTY|SENSEX)\s*([0-9OoSsIl]{1,4})\s+([A-Za-z0]{3})\s+(\d{4,6})\s+(CE|PE)\b(.*)$/i, nre = /^[-−]?[\d,]*\.?\d+$/;
+    for (const l of L) {
+      const m = wre.exec(l); if (!m) continue;
+      const idx = m[2].toUpperCase(), mo = OP_MON.indexOf(m[4].toUpperCase().replace(/0/g, 'O'));
+      const nums = m[7].split(/\s+/).filter(x => nre.test(x));
+      if (mo < 0 || nums.length < 4) { bad++; continue; }
+      const t = nums.slice(-4), fx = (x) => { x = x.replace(/,/g, '').replace('−', '-'); return (x.indexOf('.') < 0 && /^\d{3,}$/.test(x)) ? parseFloat(x.slice(0, -2) + '.' + x.slice(-2)) : parseFloat(x); };
+      const qty = parseFloat(t[0].replace(/,/g, '')), avg = fx(t[1]), ltp = fx(t[2]), pnl = parseFloat(t[3].replace(/,/g, '').replace('−', '-')), exp = pkWebExpiry(idx, m[3], mo);
+      if (!(qty > 0) || !(avg > 0) || !exp) { bad++; continue; }
+      const r = { idx, exp, strike: +m[5], ty: m[6].toUpperCase(), ltp, qty, avg, pnl: isFinite(pnl) ? pnl : null, side: /SELL/i.test(m[1] || '') ? 'SELL' : 'BUY' };
+      r.pnlOk = r.pnl == null ? null : Math.abs((r.ltp - r.avg) * r.qty - r.pnl) <= Math.max(5, Math.abs(r.pnl) * 0.02);
+      out.push(r);
+    }
+    return { rows: out, bad };
+  }
   function pkParsePositions(text) {
+    const a = pkParsePositionsPhone(text), w = pkParsePositionsWeb(text), rows = a.rows.slice();
+    w.rows.forEach(x => { if (!rows.some(y => y.idx === x.idx && y.strike === x.strike && y.ty === x.ty)) rows.push(x); });
+    return { rows, bad: Math.max(a.bad, w.bad) };
+  }
+  function pkParsePositionsPhone(text) {
     const L = String(text || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean), out = []; let bad = 0;
     const hre = /(BANKNIFTY|NIFTY|SENSEX)\s+(\d{1,2})\s+([A-Za-z]{3})\s+(\d{2})\s+(\d{4,6})\s+(CE|PE)\s+(.*)$/i;
     for (let i = 0; i < L.length; i++) {
@@ -3094,8 +3136,10 @@
       if (res.picks.length) h += res.picks.map(p => pkPickHtml(p, res.side)).join('');
       else h += '<div class="pk-verdict care">No usable ' + res.side + ' strike on this screenshot. Scroll and upload again.</div>';
     }
-    h += '<div class="pk-msg">Screenshot ' + nSnap + ' today · max 6. Not advice — your call.</div>';
+    h += '<div class="pk-msg">Screenshot ' + nSnap + ' today · max 15. Not advice — your call.</div><button type="button" class="pk-btn" id="pk-edit">✏️ Check the numbers</button>';
     out.innerHTML = h;
+    // the long number table hides and the picks scroll into view — the result must be the first thing seen
+    try { const cf = document.getElementById('pk-conf'); if (cf) cf.style.display = 'none'; out.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { /* cosmetic */ }
   }
   function pkRenderConfirm() {
     const c = document.getElementById('pk-conf'); if (!c) return;
@@ -3113,14 +3157,14 @@
     const res = pkDecide(idx, exp, rows);
     const o = pkLoad();
     o.snaps.push({ ts: Date.now(), tk: ecHm(ecIstMins(Date.now())), idx, exp, rows: rows.map(r => ({ strike: r.strike, ceLtp: r.ceLtp, peLtp: r.peLtp, ceOi: r.ceOi, peOi: r.peOi })) });
-    o.snaps = o.snaps.slice(-6);
+    o.snaps = o.snaps.slice(-15);
     if (res.side && res.picks.length) { o.picks.push({ ts: Date.now(), idx, exp, side: res.side, strikes: res.picks.map(p => p.strike) }); o.picks = o.picks.slice(-30); }
     pkSave(o);
     pkRenderResult(res, o.snaps.length);
   }
   async function pkFileChosen(file) {
     const msg = document.getElementById('pk-msg'), conf = document.getElementById('pk-conf'), out = document.getElementById('pk-out');
-    pkSt = null; conf.innerHTML = ''; out.innerHTML = '';
+    pkSt = null; conf.innerHTML = ''; conf.style.display = ''; out.innerHTML = '';
     msg.textContent = '⏳ Reading the screenshot… (the first time takes a little longer)';
     try {
       const c = await pkReadChain(file, (p, n) => { msg.textContent = '⏳ Reading the screenshot… ' + (n > 1 ? '(try ' + n + ') ' : '') + p + '%'; });
@@ -3217,6 +3261,7 @@
       const v = parseFloat(ev.target.value); if (isFinite(v)) pkSt.rows[+i][ev.target.getAttribute('data-pk-f')] = v;
     });
     g('pk-conf').addEventListener('click', (ev) => { if (ev.target.id === 'pk-go') pkRun(); });
+    g('pk-out').addEventListener('click', (ev) => { if (ev.target.id === 'pk-edit') { const cf = g('pk-conf'); cf.style.display = ''; try { cf.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { /* ok */ } } });
   })();
 
   // ---- open positions from a screenshot (ICICI layout; other apps can be added later) ----
@@ -3232,8 +3277,8 @@
     if (!(r.qty > 0)) return { k: 'zero', t: 'Quantity is 0 — skipped.', on: false, lock: true };
     const d = piFind(acct, r);
     if (!d) return { k: 'new', t: r.pnlOk === false ? '⚠️ P&L on screen does not match these numbers — check them.' : 'New — will be added.', on: true, warn: r.pnlOk === false };
-    if (Number(d.qty) === Number(r.qty) && Math.abs(Number(d.buy) - r.avg) < 0.005) return { k: 'same', t: 'Already in app — skipped.', on: false, lock: true };
-    return { k: 'diff', t: 'Already in app but qty/buy differ (' + d.qty + ' @ ' + d.buy + '). Tick to update it.', on: false, warn: true };
+    if (Number(d.qty) === Number(r.qty) && Math.abs(Number(d.buy) - r.avg) < 0.005) return { k: 'same', t: 'Same as in the app — only the price (CMP) is refreshed.', on: true };
+    return { k: 'diff', t: 'Already in app but qty/buy differ (' + d.qty + ' @ ' + d.buy + '). ' + (r.pnlOk === true ? 'Numbers match the P&L on screen — will update.' : 'Tick to update it.'), on: r.pnlOk === true, warn: r.pnlOk !== true };
   }
   function piRender() {
     const box = document.getElementById('pi-rows'), go = document.getElementById('pi-go'), acct = document.getElementById('pi-acct').value; if (!box) return;
@@ -3615,10 +3660,11 @@
     let flips = 0;
     for (let i = 1; i < cs.length; i++) { if (tr[i] != null && tr[i - 1] != null && tr[i] !== tr[i - 1] && cs[i].time >= asOfMs - EC_CHOP_WINDOW_MS) flips++; }
     if (flips >= EC_CHOP_FLIPS) return { key: 'chop', go: false };
-    const last = cs[cs.length - 1], side = last.close > hi ? 'CE' : (last.close < lo ? 'PE' : null);
+    const last = cs[cs.length - 1], prv = cs[cs.length - 2], sd = (c) => (c.close > hi ? 'CE' : (c.close < lo ? 'PE' : null));
+    const side = sd(last) && prv && ecIstMins(prv.time) >= EC_RANGE_END && sd(prv) === sd(last) ? sd(last) : null, one = sd(last);
     let sig = null; for (let i = tr.length - 1; i >= 0; i--) { if (tr[i] != null) { sig = tr[i] === 1 ? 'CE' : 'PE'; break; } }
     if (side && side === sig) return { key: 'go', go: side === ty };
-    return { key: side ? 'mismatch' : 'inside', go: false };
+    return { key: one ? 'mismatch' : 'inside', go: false };
   }
   // the admin corrects the time a lead was really taken (optional, from the position card); returns '' or an error text
   async function scSetTaken(id, hhmm) {
