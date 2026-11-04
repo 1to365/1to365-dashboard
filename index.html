@@ -3171,7 +3171,12 @@
       if (c.rows.length < 3) { msg.textContent = 'Could not read this screenshot. Use the option-chain page (portrait) or just enter leads by hand — that works the same.'; return; }
       pkSt = { idx: c.idx || ((ecSelZone() && EC_NAME[ecSelZone()]) || 'NIFTY'), exp: c.exp, rows: c.rows, bad: c.bad, warnN: c.rows.filter(r => r.warn).length };
       msg.textContent = '';
+      try { if (!pkSt.exp) { const pr = pkLoad().snaps.filter(x => x.idx === pkSt.idx && x.exp).slice(-1)[0]; if (pr) pkSt.exp = pr.exp; } } catch (e) { /* optional */ }
       pkRenderConfirm();
+      // everything read cleanly (no doubtful number, no missing strike) -> no questions asked: go straight to the picks
+      try {
+        if (c.ok && pkSt.exp && pkSt.rows.length >= 5) { msg.textContent = '✅ Read ' + pkSt.rows.length + ' strikes.'; pkRun(); }
+      } catch (e) { /* the numbers table stays available */ }
     } catch (e) { msg.textContent = 'Could not read it' + (e && e.message === 'offline' ? ' (needs internet the first time)' : '') + '. You can still enter leads by hand.'; }
   }
 
