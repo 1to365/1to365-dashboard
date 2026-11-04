@@ -1373,6 +1373,7 @@
   .op-maxq.hidden { display: none; }
   .pk-card summary { cursor: pointer; font-weight: 800; font-size: 0.92rem; list-style: none; display: flex; align-items: center; gap: 8px; }
   .pk-card summary::-webkit-details-marker { display: none; }
+  .pk-btn.hidden { display: none; }
   .pk-btn { display: inline-block; padding: 9px 12px; border-radius: 11px; border: 1px solid var(--border); background: var(--panel); color: var(--accent); font-size: 0.82rem; font-weight: 800; cursor: pointer; font-family: inherit; }
   .pk-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   .pk-msg { font-size: 0.78rem; font-weight: 700; color: var(--muted); margin-top: 8px; line-height: 1.4; }
@@ -1424,6 +1425,15 @@
   #ds-details[open] > summary, #tot-details[open] > summary { margin-bottom: 8px; }
   #ds-details .rk-sub { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
 
+
+  /* ===== BUILD H (2026-11-06): faster screenshot input — crop box, paste, laptop capture, preview ===== */
+  .pk-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pk-cbox { position: absolute; border: 2px solid #f5b800; background: rgba(245,184,0,0.2); pointer-events: none; box-sizing: border-box; }
+  .pk-cbox.hidden { display: none; }
+  .pk-prev { display: block; max-height: 80px; max-width: 100%; margin-top: 8px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; }
+  .pk-prev.big { max-height: none; width: 100%; }
+  .pk-prev.hidden { display: none; }
+
   /* Phone typing fix (2026-10-22): easy-to-hit CMP / SL boxes, no iPhone auto-zoom (needs >=16px text), FAB out of the way while typing */
   #open-positions-card .op-in, .op-sheet .op-in, .op-sheet select, .op-modal .op-in { font-size: 16px !important; touch-action: manipulation; }
   .op-cmpwrap { padding: 4px 0; }
@@ -1459,6 +1469,15 @@
     <div class="op-f hidden" id="op-q-name-wrap"><span class="op-k">Custom name</span><input class="op-in" id="op-q-name" type="text" maxlength="30" enterkeyhint="done" placeholder="Only if you want your own name"></div>
     <div id="op-q-err" class="op-qerr"></div>
     <div class="op-sheet-btns"><button class="op-btn" id="op-q-cancel" type="button">Cancel</button><button class="op-btn primary" id="op-q-add" type="button">✅ Save position</button></div>
+  </div>
+</div>
+<div id="pk-crop" class="op-sheet-wrap hidden" role="dialog" aria-modal="true">
+  <div class="op-sheet" style="max-height:94vh;overflow:auto;padding:12px;">
+    <div class="op-sheet-title">✂️ Pick the strikes</div>
+    <div class="pk-msg" style="margin-top:0;">Drag a box over the option-chain rows — or use the whole screenshot.</div>
+    <div id="pk-crop-wrap" style="position:relative;margin:8px auto 0;width:fit-content;max-width:100%;touch-action:none;user-select:none;-webkit-user-select:none;"><canvas id="pk-crop-cv" style="display:block;max-width:100%;max-height:56vh;width:auto;height:auto;border-radius:8px;"></canvas><div id="pk-crop-box" class="pk-cbox hidden"></div></div>
+    <label class="pi-all" style="font-size:0.74rem;"><input type="checkbox" id="pk-crop-skip"> Skip this step next time</label>
+    <div class="op-sheet-btns"><button class="op-btn" id="pk-crop-cancel" type="button">Cancel</button><button class="op-btn" id="pk-crop-reset" type="button">Whole</button><button class="op-btn primary" id="pk-crop-ok" type="button">✅ Use</button></div>
   </div>
 </div>
 <div id="pi-sheet" class="op-sheet-wrap hidden" role="dialog" aria-modal="true">
@@ -1789,7 +1808,12 @@
     <summary>🎯 Pick my lead <span style="font-weight:600;color:var(--muted);font-size:0.74rem;">optional · from a screenshot</span></summary>
     <div style="margin-top:10px;">
       <input type="file" id="pk-file" accept="image/*" hidden>
-      <button type="button" class="pk-btn primary" id="pk-up">📷 Option-chain screenshot</button>
+      <div class="pk-row">
+        <button type="button" class="pk-btn primary" id="pk-up">📷 Option-chain screenshot</button>
+        <button type="button" class="pk-btn" id="pk-paste">📋 Paste screenshot</button>
+        <button type="button" class="pk-btn hidden" id="pk-cap">🖥️ Capture screen</button>
+      </div>
+      <img class="pk-prev hidden" id="pk-prev" alt="Your screenshot (tap to enlarge)">
       <div class="pk-msg" id="pk-msg">Upload a screenshot any time from 9:15 to 2:30 (up to 6 a day). Skip it and pick by hand if you like.</div>
       <div id="pk-conf"></div>
       <div id="pk-out"></div>
@@ -3029,10 +3053,88 @@
       pkRenderConfirm();
     } catch (e) { msg.textContent = 'Could not read it' + (e && e.message === 'offline' ? ' (needs internet the first time)' : '') + '. You can still enter leads by hand.'; }
   }
+
+  // ---- faster input for Pick my lead: crop box · paste · laptop screen capture · preview ----
+  function pkShowPreview(blob) {
+    const im = document.getElementById('pk-prev'); if (!im) return;
+    try { if (im.dataset.u) URL.revokeObjectURL(im.dataset.u); const u = URL.createObjectURL(blob); im.dataset.u = u; im.src = u; im.classList.remove('hidden', 'big'); } catch (e) { /* preview is cosmetic */ }
+  }
+  // shows the picture with a draggable box; resolves with the cropped picture, the whole picture, or null (cancel)
+  function pkCrop(blob) {
+    return new Promise((resolve) => {
+      const g = (id) => document.getElementById(id), md = g('pk-crop'), cv = g('pk-crop-cv'), wrap = g('pk-crop-wrap'), box = g('pk-crop-box'), url = URL.createObjectURL(blob), img = new Image();
+      let sel = null, drag = null;
+      const done = (v) => { md.classList.add('hidden'); URL.revokeObjectURL(url); ['pk-crop-ok', 'pk-crop-cancel', 'pk-crop-reset'].forEach(i => { g(i).onclick = null; }); wrap.onpointerdown = wrap.onpointermove = wrap.onpointerup = wrap.onpointercancel = null; resolve(v); };
+      const draw = () => { if (!sel) { box.classList.add('hidden'); return; } box.classList.remove('hidden'); box.style.left = sel.x * 100 + '%'; box.style.top = sel.y * 100 + '%'; box.style.width = sel.w * 100 + '%'; box.style.height = sel.h * 100 + '%'; };
+      const pt = (e) => { const r = wrap.getBoundingClientRect(); return { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) }; };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(blob); };
+      img.onload = () => {
+        const W = img.naturalWidth, H = img.naturalHeight, sc = Math.min(1, 1200 / W); cv.width = Math.round(W * sc); cv.height = Math.round(H * sc);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        try { g('pk-crop-skip').checked = false; } catch (e) { /* ok */ }
+        md.classList.remove('hidden'); sel = null; draw();
+        wrap.onpointerdown = (e) => { drag = pt(e); sel = { x: drag.x, y: drag.y, w: 0, h: 0 }; try { wrap.setPointerCapture(e.pointerId); } catch (er) { /* ok */ } draw(); e.preventDefault(); };
+        wrap.onpointermove = (e) => { if (!drag) return; const q = pt(e); sel = { x: Math.min(drag.x, q.x), y: Math.min(drag.y, q.y), w: Math.abs(q.x - drag.x), h: Math.abs(q.y - drag.y) }; draw(); };
+        wrap.onpointerup = wrap.onpointercancel = () => { drag = null; if (sel && (sel.w < 0.03 || sel.h < 0.03)) { sel = null; draw(); } };
+        g('pk-crop-reset').onclick = () => { sel = null; draw(); };
+        g('pk-crop-cancel').onclick = () => done(null);
+        g('pk-crop-ok').onclick = () => {
+          try { if (g('pk-crop-skip').checked) localStorage.setItem('signa365_pk_skipcrop', '1'); } catch (e) { /* ok */ }
+          if (!sel) { done(blob); return; }
+          const c = document.createElement('canvas'), sx = Math.round(sel.x * W), sy = Math.round(sel.y * H), sw = Math.max(1, Math.round(sel.w * W)), sh = Math.max(1, Math.round(sel.h * H));
+          c.width = sw; c.height = sh; c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+          c.toBlob((b) => done(b || blob), 'image/png');
+        };
+      };
+      img.src = url;
+    });
+  }
+  async function pkAcquire(blob) {
+    const msg = document.getElementById('pk-msg');
+    let skip = false; try { skip = localStorage.getItem('signa365_pk_skipcrop') === '1'; } catch (e) { skip = false; }
+    const out = skip ? blob : await pkCrop(blob);
+    if (!out) { msg.textContent = 'Cancelled.'; return; }
+    pkShowPreview(out); pkFileChosen(out);
+  }
+  async function pkPasteBtn() {
+    const msg = document.getElementById('pk-msg');
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.read) throw new Error('no');
+      const items = await navigator.clipboard.read();
+      for (const it of items) { const ty = it.types.find(t => /^image\//.test(t)); if (ty) { pkAcquire(await it.getType(ty)); return; } }
+      msg.textContent = 'No picture on the clipboard. Take the screenshot first (or run your Shortcut), then tap Paste.';
+    } catch (e) { msg.textContent = 'Paste was not allowed here. Use the photo button instead.'; }
+  }
+  async function pkCapture() {
+    const msg = document.getElementById('pk-msg');
+    try {
+      const st = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }), v = document.createElement('video');
+      v.srcObject = st; v.muted = true; await v.play(); await new Promise(r => setTimeout(r, 500));
+      const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d').drawImage(v, 0, 0);
+      st.getTracks().forEach(t => t.stop());
+      const b = await new Promise(r => c.toBlob(r, 'image/png')); pkAcquire(b);
+    } catch (e) { msg.textContent = 'Screen capture was cancelled or is not allowed here.'; }
+  }
+  function pkOpenCard() { try { const d = document.getElementById('pk-det'); if (d) d.open = true; const c = document.getElementById('pk-card'); if (c && !c.classList.contains('hidden')) c.scrollIntoView({ block: 'start' }); } catch (e) { /* ok */ } }
+  document.addEventListener('paste', (ev) => {
+    try {
+      if (currentRole !== 'admin' || currentPageIdx !== 0) return;
+      const a = document.activeElement; if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+      const f = Array.from((ev.clipboardData && ev.clipboardData.files) || []).find(x => /^image\//.test(x.type)); if (!f) return;
+      ev.preventDefault(); pkOpenCard(); pkAcquire(f);
+    } catch (e) { /* paste shortcut is optional */ }
+  });
+  // opened from the iPhone Shortcut (…/?snap): open Pick my lead and tell him what to tap
+  setTimeout(() => { try { if (/[?&]snap\b/.test(location.search)) { pkOpenCard(); const m = document.getElementById('pk-msg'); if (m) m.textContent = '📋 Tap “Paste screenshot”.'; } } catch (e) { /* ok */ } }, 2500);
+
   (function pkWire() {
     const g = (id) => document.getElementById(id); if (!g('pk-card')) return;
     g('pk-up').addEventListener('click', () => g('pk-file').click());
-    g('pk-file').addEventListener('change', () => { const f = g('pk-file').files && g('pk-file').files[0]; g('pk-file').value = ''; if (f) pkFileChosen(f); });
+    g('pk-paste').addEventListener('click', pkPasteBtn);
+    g('pk-cap').addEventListener('click', pkCapture);
+    try { if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia && !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) g('pk-cap').classList.remove('hidden'); } catch (e) { /* laptop-only button */ }
+    g('pk-prev').addEventListener('click', () => g('pk-prev').classList.toggle('big'));
+    g('pk-file').addEventListener('change', () => { const f = g('pk-file').files && g('pk-file').files[0]; g('pk-file').value = ''; if (f) pkAcquire(f); });
     g('pk-conf').addEventListener('input', (ev) => {
       const i = ev.target.getAttribute && ev.target.getAttribute('data-pk-r'); if (i == null || !pkSt) return;
       const v = parseFloat(ev.target.value); if (isFinite(v)) pkSt.rows[+i][ev.target.getAttribute('data-pk-f')] = v;
