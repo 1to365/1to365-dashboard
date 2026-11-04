@@ -1373,6 +1373,7 @@
   .op-maxq.hidden { display: none; }
   .pk-card summary { cursor: pointer; font-weight: 800; font-size: 0.92rem; list-style: none; display: flex; align-items: center; gap: 8px; }
   .pk-card summary::-webkit-details-marker { display: none; }
+  .pk-tbl tr.pk-warn input { background: #fef3c7; border-color: #f59e0b; color: #78350f; }
   .pk-btn.hidden { display: none; }
   .pk-btn { display: inline-block; padding: 9px 12px; border-radius: 11px; border: 1px solid var(--border); background: var(--panel); color: var(--accent); font-size: 0.82rem; font-weight: 800; cursor: pointer; font-family: inherit; }
   .pk-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -2845,10 +2846,17 @@
       img.onload = () => {
         try {
           const W0 = img.naturalWidth, H0 = img.naturalHeight;
-          let sc = Math.min(3, Math.max(1, (o.t || 2400) / W0)); if (W0 * H0 * sc * sc > 14e6) sc = Math.max(1, Math.sqrt(14e6 / (W0 * H0)));
+          let sc = o.k ? o.k : Math.min(3, Math.max(1, (o.t || 2400) / W0)); if (W0 * H0 * sc * sc > 14e6) sc = Math.max(1, Math.sqrt(14e6 / (W0 * H0)));
           const w = Math.round(W0 * sc), h = Math.round(H0 * sc), cv = document.createElement('canvas'); cv.width = w; cv.height = h;
           const cx = cv.getContext('2d'); cx.imageSmoothingQuality = 'high'; cx.drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url);
           const id = cx.getImageData(0, 0, w, h), d = id.data, n = w * h, g = new Uint8Array(n), hist = new Uint32Array(256); let sum = 0;
+          if (o.ink || o.soft) { // coloured bars / tints behind the numbers: keep only the dark ink (light screens only)
+            let ls = 0; for (let j = 0; j < d.length; j += 4) ls += d[j] + d[j + 1] + d[j + 2];
+            if (ls / (3 * n) >= 110) {
+              for (let j = 0; j < d.length; j += 4) { const m = Math.max(d[j], d[j + 1], d[j + 2]); let v; if (o.ink) v = m < o.ink ? 0 : 255; else { v = Math.round((m - o.soft[0]) / (o.soft[1] - o.soft[0]) * 255); v = v < 0 ? 0 : (v > 255 ? 255 : v); } d[j] = d[j + 1] = d[j + 2] = v; d[j + 3] = 255; }
+              cx.putImageData(id, 0, 0); res(cv); return;
+            }
+          }
           for (let i = 0, j = 0; i < n; i++, j += 4) { const v = (0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2]) | 0; g[i] = v; hist[v]++; sum += v; }
           const inv = (sum / n) < 110, cut = n * (o.clip != null ? o.clip : 0.002); let lo = 0, hi = 255, acc = 0;
           for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc > cut) { lo = v; break; } }
@@ -2882,29 +2890,99 @@
     }
     return String(d).padStart(2, '0') + OP_MON[mo];
   }
+  // one number token from a line of text: "598.70", "3.15L" (OI in lakhs) -> number text; anything else -> null
+  function pkNumTok(x) { const m = /^([\d,]*\.?\d+)[Ll]?$/.exec(String(x).replace(/^[|(\[]+|[|)\]]+$/g, '')); return m ? m[1] : null; }
+  // OI is always shown as "x.xx L"; the reader sometimes drops the dot ("515") or reads the L as a 1 ("11.981")
+  function pkOi(x) { x = String(x); if (/^\d+\.\d{2}[1Il|]$/.test(x)) x = x.slice(0, -1); else if (/^\d{3,5}$/.test(x)) x = x.slice(0, -2) + '.' + x.slice(-2); return pkNum(x); }
+  function pkIsStrike(x) { return /^\d{4,6}(\.0{1,2})?$/.test(x) && pkNum(x) >= 1000 && pkNum(x) % 50 === 0; }
   function pkParseChain(text) {
     const L = String(text || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
     let idx = null, exp = '';
-    for (const l of L) {
+    const dre = /(\d{1,2})\s*-\s*([A-Za-z0]{3})[A-Za-z]*\s*-\s*(20\d{2})/, nre = /\b(BANK\s*NIFTY|NIFTY|SENSEX)\b/i, fixIdx = (x) => x.toUpperCase().replace(/\s+/g, '');
+    for (const l of L) { // index name and date on one line
       const m = /(BANKNIFTY|NIFTY|SENSEX)\s+(\d{1,2})\s*-\s*([A-Za-z0]{3})[A-Za-z]*\s*-\s*(20\d{2})/i.exec(l); if (!m) continue;
       idx = m[1].toUpperCase(); const mon = m[3].toUpperCase().replace(/0/g, 'O'), mo = OP_MON.indexOf(mon);
       if (mo >= 0) exp = pkFixExpiry(idx, +m[2], mo, +m[4]);
       break;
     }
+    if (!idx) { // other layouts: name in the title line, date on the "Expiry" line
+      for (const l of L) { if (/CALL|PUT|Strike/i.test(l)) break; const all = l.match(/\b(BANK\s*NIFTY|NIFTY|SENSEX)\b/gi); if (all && new Set(all.map(fixIdx)).size === 1) { idx = fixIdx(all[0]); break; } }
+    }
+    if (idx && !exp) {
+      for (const l of L) { const m = dre.exec(l); if (!m) continue; const mon = m[2].toUpperCase().replace(/0/g, 'O'), mo = OP_MON.indexOf(mon); if (mo >= 0) { exp = pkFixExpiry(idx, +m[1], mo, +m[3]); break; } }
+    }
     const rows = []; let bad = 0;
     for (let i = 0; i < L.length; i++) {
-      const t = L[i].split(/\s+/);
-      if (t.length === 5 && t.every(x => pkNumRe.test(x)) && /^\d{4,6}$/.test(t[2])) {
-        const r = { strike: +t[2], ceOi: pkNum(t[0]), ceLtp: pkNum(t[1]), peLtp: pkNum(t[3]), peOi: pkNum(t[4]), ceChg: null, peChg: null };
+      const nums = L[i].split(/\s+/).map(pkNumTok).filter(x => x !== null);
+      if (nums.length === 5 && pkIsStrike(nums[2])) {
+        const r = { strike: pkNum(nums[2]), ceOi: pkOi(nums[0]), ceLtp: pkNum(nums[1]), peLtp: pkNum(nums[3]), peOi: pkOi(nums[4]), ceChg: null, peChg: null };
         const nx = L[i + 1] || '', pc = nx.match(/\(?-?[\d.,]+%\)?/g);
         if (pc && pc.length >= 2 && nx.replace(/\(?-?[\d.,]+%\)?/g, '').trim() === '') {
           const par = pc.filter(x => x.charAt(0) === '(');
           if (par.length === 2) { r.ceChg = pkNum(par[0].replace(/[()%]/g, '')); r.peChg = pkNum(par[1].replace(/[()%]/g, '')); }
         }
         rows.push(r);
-      } else if (t.length >= 4 && /^\d{4,6}$/.test(t.find(x => /^\d{4,6}$/.test(x)) || '') && t.filter(x => pkNumRe.test(x)).length >= 4) bad++;
+      } else if (nums.length >= 4 && nums.some(pkIsStrike)) bad++;
     }
     return { idx, exp, rows, bad };
+  }
+  // look-alike digits the reader mixes up (5 read as 2 or 9 …)
+  const PK_CONF = { '0': '86', '1': '7', '2': '57', '3': '58', '4': '9', '5': '29368', '6': '58', '7': '12', '8': '356', '9': '58' };
+  function pkMajor(a) { const c = {}; a.forEach(x => { c[x] = (c[x] || 0) + 1; }); let best = null, bn = 0, tie = false; Object.keys(c).forEach(k => { if (c[k] > bn) { best = +k; bn = c[k]; tie = false; } else if (c[k] === bn) tie = true; }); return { v: best, n: bn, tie }; }
+  // Several readings of the same screenshot -> one table. Prices are cross-checked: call price minus put price must fall by about one strike step
+  // from one strike to the next, which fixes the usual misread digits.
+  function pkMergeChain(list) {
+    let idx = null, exp = ''; list.forEach(c => { if (!idx && c.idx) idx = c.idx; if (!exp && c.exp) exp = c.exp; });
+    const all = []; list.forEach(c => c.rows.forEach(r => all.push(r)));
+    const bad = list.reduce((m, c) => Math.max(m, c.bad || 0), 0);
+    if (!all.length) return { idx, exp, rows: [], ok: false, bad };
+    const med = pkMedian(all.map(r => r.strike)), cnt = {}; all.forEach(r => { if (Math.abs(r.strike - med) <= med * 0.15) cnt[r.strike] = (cnt[r.strike] || 0) + 1; });
+    let ks = Object.keys(cnt).map(Number).sort((a, b) => a - b);
+    const dc = {}; for (let i = 1; i < ks.length; i++) { const d = ks[i] - ks[i - 1]; if (d > 0) dc[d] = (dc[d] || 0) + 1; }
+    let step = 0, sc = 0; Object.keys(dc).forEach(d => { if (dc[d] > sc || (dc[d] === sc && +d < step)) { step = +d; sc = dc[d]; } });
+    if (!step) step = (idx === 'NIFTY') ? 50 : 100;
+    const base = ks.slice().sort((a, b) => cnt[b] - cnt[a])[0]; ks = ks.filter(k => Math.abs(k - base) % step === 0);
+    const rk = ks.map(k => {
+      const rd = all.filter(r => r.strike === k), g = (f) => rd.map(r => r[f]).filter(x => isFinite(x));
+      const cand = (arr) => { // value -> score: readings count, look-alike alternatives slightly negative
+        const m = new Map(); arr.forEach(v => m.set(v, (m.get(v) || 0) + 1));
+        arr.slice().forEach(v => { const t = String(v), dec = t.indexOf('.') >= 0; for (let i = 0; i < t.length; i++) { (PK_CONF[t[i]] || '').split('').forEach(c => { const nv = parseFloat(t.slice(0, i) + c + t.slice(i + 1)); if (isFinite(nv) && !m.has(nv)) m.set(nv, -0.6); }); } });
+        return Array.from(m.entries()).sort((a, b) => b[1] - a[1]).slice(0, 26);
+      };
+      const ce = g('ceLtp'), pe = g('peLtp');
+      return { k, ce, pe, C: ce.length ? cand(ce) : [], P: pe.length ? cand(pe) : [], ceOi: pkMajor(g('ceOi')), peOi: pkMajor(g('peOi')), chg: rd.find(r => r.ceChg != null) || null };
+    }).filter(r => r.C.length && r.P.length && r.ceOi.v != null && r.peOi.v != null);
+    if (!rk.length) return { idx, exp, rows: [], ok: false, bad };
+    let prev = null; const back = [];
+    rk.forEach((r, ri) => {
+      const st = []; r.C.forEach(c => r.P.forEach(p => st.push({ ce: c[0], pe: p[0], s: c[1] + p[1], par: c[0] - p[0] })));
+      if (prev) {
+        const stp = r.k - rk[ri - 1].k, tol = Math.max(8, stp * 0.12);
+        st.forEach(x => { let bj = -1, bs = -1e9, bv = false; prev.forEach((y, j) => { const err = Math.abs((y.par - x.par) - stp), v = err > tol, t = y.tot + (v ? -4 : -err / (stp * 50)); if (t > bs) { bs = t; bj = j; bv = v; } }); x.tot = x.s + bs; x.from = bj; x.viol = bv; });
+      } else st.forEach(x => { x.tot = x.s; x.from = -1; x.viol = false; });
+      back.push(st); prev = st;
+    });
+    let cur = prev.reduce((b, x) => (x.tot > b.tot ? x : b), prev[0]); const pick = [];
+    for (let ri = rk.length - 1; ri >= 0; ri--) { pick[ri] = cur; cur = ri > 0 ? back[ri - 1][cur.from] : null; }
+    const rows = rk.map((r, i) => {
+      const x = pick[i], warn = !r.ce.includes(x.ce) || !r.pe.includes(x.pe) || x.viol || (pick[i + 1] && pick[i + 1].viol) || r.ceOi.tie || r.peOi.tie || (list.length > 1 && (r.ceOi.n < 2 || r.peOi.n < 2) && false);
+      return { strike: r.k, ceOi: r.ceOi.v, ceLtp: x.ce, peLtp: x.pe, peOi: r.peOi.v, ceChg: r.chg ? r.chg.ceChg : null, peChg: r.chg ? r.chg.peChg : null, warn: !!warn };
+    });
+    const want = rows.length ? Math.round((rows[rows.length - 1].strike - rows[0].strike) / step) + 1 : 0, gap = Math.max(0, want - rows.length);
+    return { idx, exp, rows, ok: rows.length >= 5 && gap === 0 && rows.every(r => !r.warn), bad: Math.max(bad, gap), gap };
+  }
+  // The coloured bars on some screens confuse the reader, so read up to 6 times with different clean-ups and keep what the readings agree on.
+  async function pkReadChain(file, onProg) {
+    const passes = [{}, { ink: 90, k: 1 }, { ink: 90, k: 1.5 }, { soft: [60, 200], k: 1.5 }, { ink: 100, k: 1.25 }, { ink: 120, k: 1 }], parsed = []; let res = { rows: [], ok: false, idx: null, exp: '', bad: 0 };
+    for (let n = 0; n < passes.length; n++) {
+      const txt = await pkRead(file, onProg ? (p) => onProg(p, n + 1) : null, passes[n]);
+      parsed.push(pkParseChain(txt)); res = pkMergeChain(parsed);
+      const got = parsed.filter(c => c.rows.length).length;
+      if (res.ok && (n === 0 || got >= 2)) break;
+      if (n >= 3 && res.rows.length >= 5 && !res.gap && n >= (res.rows.some(r => r.warn) ? 5 : 3)) break;
+    }
+    if (!res.idx && res.rows.length) { const m = res.rows[Math.floor(res.rows.length / 2)].strike; res.idx = m >= 65000 ? 'SENSEX' : (m >= 40000 ? 'BANKNIFTY' : 'NIFTY'); }
+    return res;
   }
   function pkParsePositions(text) {
     const L = String(text || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean), out = []; let bad = 0;
@@ -3024,8 +3102,8 @@
     if (!pkSt) { c.innerHTML = ''; return; }
     const f = (i, k) => '<td><input type="text" inputmode="decimal" data-pk-r="' + i + '" data-pk-f="' + k + '" value="' + pkSt.rows[i][k] + '"></td>';
     c.innerHTML = '<div class="pk-hd">Index <select id="pk-idx">' + ['NIFTY', 'BANKNIFTY', 'SENSEX'].map(x => '<option' + (x === pkSt.idx ? ' selected' : '') + '>' + x + '</option>').join('') + '</select> Expiry <input id="pk-exp" type="text" maxlength="5" value="' + mcEsc(pkSt.exp) + '" placeholder="29OCT"></div>' +
-      '<div class="pk-msg">Check the numbers against your screenshot. Fix any that are wrong.' + (pkSt.bad ? ' ' + pkSt.bad + ' row(s) could not be read.' : '') + '</div>' +
-      '<table class="pk-tbl"><tr><th>Strike</th><th>CE ₹</th><th>CE OI</th><th>PE ₹</th><th>PE OI</th></tr>' + pkSt.rows.map((r, i) => '<tr>' + f(i, 'strike') + f(i, 'ceLtp') + f(i, 'ceOi') + f(i, 'peLtp') + f(i, 'peOi') + '</tr>').join('') + '</table>' +
+      '<div class="pk-msg">Check the numbers against your screenshot. Fix any that are wrong.' + (pkSt.bad ? ' Rows cut off at the edge were skipped.' : '') + (pkSt.warnN ? ' <b>Yellow rows: please check these.</b>' : '') + '</div>' +
+      '<table class="pk-tbl"><tr><th>Strike</th><th>CE ₹</th><th>CE OI</th><th>PE ₹</th><th>PE OI</th></tr>' + pkSt.rows.map((r, i) => '<tr' + (r.warn ? ' class="pk-warn"' : '') + '>' + f(i, 'strike') + f(i, 'ceLtp') + f(i, 'ceOi') + f(i, 'peLtp') + f(i, 'peOi') + '</tr>').join('') + '</table>' +
       '<div style="margin-top:10px"><button type="button" class="pk-btn primary" id="pk-go">✅ Looks right — pick my lead</button></div>';
   }
   function pkRun() {
@@ -3045,10 +3123,9 @@
     pkSt = null; conf.innerHTML = ''; out.innerHTML = '';
     msg.textContent = '⏳ Reading the screenshot… (the first time takes a little longer)';
     try {
-      const text = await pkRead(file, (p) => { msg.textContent = '⏳ Reading the screenshot… ' + p + '%'; });
-      const c = pkParseChain(text);
+      const c = await pkReadChain(file, (p, n) => { msg.textContent = '⏳ Reading the screenshot… ' + (n > 1 ? '(try ' + n + ') ' : '') + p + '%'; });
       if (c.rows.length < 3) { msg.textContent = 'Could not read this screenshot. Use the option-chain page (portrait) or just enter leads by hand — that works the same.'; return; }
-      pkSt = { idx: c.idx || ((ecSelZone() && EC_NAME[ecSelZone()]) || 'NIFTY'), exp: c.exp, rows: c.rows, bad: c.bad };
+      pkSt = { idx: c.idx || ((ecSelZone() && EC_NAME[ecSelZone()]) || 'NIFTY'), exp: c.exp, rows: c.rows, bad: c.bad, warnN: c.rows.filter(r => r.warn).length };
       msg.textContent = '';
       pkRenderConfirm();
     } catch (e) { msg.textContent = 'Could not read it' + (e && e.message === 'offline' ? ' (needs internet the first time)' : '') + '. You can still enter leads by hand.'; }
