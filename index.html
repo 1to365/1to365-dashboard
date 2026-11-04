@@ -1402,6 +1402,28 @@
   .pi-row.pi-off { opacity: 0.55; }
   .pi-bar { margin: 6px 0 2px; }
 
+
+  /* ===== BUILD G (2026-11-06): split bar, top-3 picks, collapsible admin cards ===== */
+  .op-fab.op-fabbar { display: flex; gap: 8px; padding: 0; background: none; box-shadow: none; border-radius: 0; font-size: 0.92rem; }
+  .op-fab.op-fabbar.hidden, .op-fab.op-fabbar.typing { display: none; }
+  .op-fb { border: none; font-family: inherit; font-weight: 800; font-size: 0.92rem; padding: 14px 8px; cursor: pointer; white-space: nowrap; box-shadow: 0 8px 22px rgba(26,99,232,0.35); }
+  .op-fb.main { flex: 3; background: var(--accent); color: #fff; border-radius: 16px 6px 6px 16px; }
+  .op-fb.shot { flex: 2; background: var(--panel); color: var(--accent); border: 2px solid var(--accent); border-radius: 6px 16px 16px 6px; padding: 12px 8px; }
+  .op-fb:disabled { background: var(--muted); color: #fff; border-color: var(--muted); box-shadow: none; cursor: not-allowed; }
+  .pi-all { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.82rem; font-weight: 800; cursor: pointer; }
+  .pi-all input { width: 20px; height: 20px; }
+  .pi-all.hidden { display: none; }
+  .pk-pick.gold { border: 2px solid #f5b800; }
+  .pk-tag { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.04em; color: var(--muted); }
+  .pk-pick.gold .pk-tag { color: #8a5a00; }
+  .pk-oi { display: inline-flex; align-items: center; font-weight: 800; }
+  .pk-oi .mc-dot { margin: 0 8px 0 6px; }
+  .ds-line { display: block; font-size: 0.76rem; font-weight: 700; color: var(--muted); margin-top: 3px; }
+  .ds-sum { cursor: pointer; list-style: none; } .ds-sum::-webkit-details-marker { display: none; }
+  #ds-details[open] > summary .sc-arrow, #tot-details[open] > summary .sc-arrow { transform: rotate(90deg); }
+  #ds-details[open] > summary, #tot-details[open] > summary { margin-bottom: 8px; }
+  #ds-details .rk-sub { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+
   /* Phone typing fix (2026-10-22): easy-to-hit CMP / SL boxes, no iPhone auto-zoom (needs >=16px text), FAB out of the way while typing */
   #open-positions-card .op-in, .op-sheet .op-in, .op-sheet select, .op-modal .op-in { font-size: 16px !important; touch-action: manipulation; }
   .op-cmpwrap { padding: 4px 0; }
@@ -1412,7 +1434,7 @@
 </head>
 <body>
 <div id="op-exit-banner" class="op-exit-banner hidden" role="alert" aria-live="assertive"></div>
-<button class="op-fab hidden" id="op-add-btn" type="button">＋ Add position</button>
+<div class="op-fab op-fabbar hidden" id="op-add-btn"><button type="button" class="op-fb main" id="op-add-main">＋ Add position</button><button type="button" class="op-fb shot" id="op-add-shot">📷 Screenshot</button></div>
 <div id="op-quick" class="op-sheet-wrap hidden" role="dialog" aria-modal="true">
   <div class="op-sheet">
     <div class="op-sheet-title" id="op-sheet-title">➕ Add position</div>
@@ -1446,6 +1468,7 @@
     <input type="file" id="pi-file" accept="image/*" hidden>
     <div style="margin-top:10px;"><button type="button" class="pk-btn primary" id="pi-pick">📷 Choose screenshot</button></div>
     <div class="pk-msg" id="pi-msg"></div>
+    <label class="pi-all hidden" id="pi-all-wrap"><input type="checkbox" id="pi-all"> ☑ Select all</label>
     <div id="pi-rows"></div>
     <div class="op-sheet-btns"><button class="op-btn" id="pi-cancel" type="button">Close</button><button class="op-btn primary hidden" id="pi-go" type="button">✅ Import ticked</button></div>
   </div>
@@ -1767,7 +1790,6 @@
     <div style="margin-top:10px;">
       <input type="file" id="pk-file" accept="image/*" hidden>
       <button type="button" class="pk-btn primary" id="pk-up">📷 Option-chain screenshot</button>
-      <div class="pk-band">Premium band ₹ <input id="pk-lo" type="number" inputmode="decimal" aria-label="Band from"> to <input id="pk-hi" type="number" inputmode="decimal" aria-label="Band to"></div>
       <div class="pk-msg" id="pk-msg">Upload a screenshot any time from 9:15 to 2:30 (up to 6 a day). Skip it and pick by hand if you like.</div>
       <div id="pk-conf"></div>
       <div id="pk-out"></div>
@@ -1786,7 +1808,6 @@
 <div class="card theme-teal" id="open-positions-card" style="grid-column: 1 / -1;">
   <h2>💼 Open Positions <button class="info-icon-btn" data-info="info-openpos">i</button></h2>
   <div id="info-openpos" class="info-popover hidden">Tap “＋ Add position” and enter the index, strike, Qty and Buy price. After that you only type the CMP (the current price) — press Next on the keypad to jump to the next position. Everything else is calculated: profit/loss, 🟢 HOLD / 🔴 EXIT, and the stoploss (automatically 40% below your buy price; to use your own, just type it in the SL box on the card — clear the box to go back to automatic). The alarm rings when the CMP is at or below the stoploss. Tap Exit when you sell: the profit/loss is kept under Exited today for the day (record it in P&amp;L yourself). Close clears an exited card and frees the slot. Tap a name to minimise or expand it. Cards in danger move to the top. If you hold the same option (same index, strike and CE/PE) in two accounts, typing the CMP on one card fills it on the other too.</div>
-  <div class="pi-bar"><button type="button" class="pk-btn" id="pi-btn">📷 From screenshot <span style="font-weight:600;color:var(--muted);">(optional)</span></button></div>
   <div class="op-totals hidden" id="op-totals">
     <div class="op-sumbox">
       <div class="op-sumtitle">📅 Today summary — open positions</div>
@@ -1904,7 +1925,8 @@
 
 <!-- 2026-10-29: Weekly Totals + Monthly Totals moved here from the P&L panel (admin asked for less information in P&L). Same elements/ids, same render functions. -->
 <div class="card hidden" id="admin-totals-card" style="grid-column: 1 / -1;">
-  <div style="font-size:0.9rem; font-weight:800; margin-bottom:8px;">📊 Weekly &amp; Monthly Totals</div>
+  <details id="tot-details">
+  <summary class="ds-sum" style="font-size:0.9rem; font-weight:800;"><span class="sc-arrow">▸</span> 📊 Weekly &amp; Monthly Totals<small class="ds-line" id="tot-sum"></small></summary>
       <div class="tot-box tot-wk"><p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Weekly Totals</p>
       <div id="weekly-list"></div>
       </div>
@@ -1912,11 +1934,15 @@
       <div id="monthly-list"></div>
       </div>
       <div id="grand-total" class="gt-row hidden"></div>
+  </details>
 </div>
 
 <!-- 2026-11-04 (Build B): trading discipline settings — admin only -->
 <div class="card rk-card hidden" id="admin-risk-card" style="grid-column: 1 / -1;">
-  <div class="rk-title">🛡️ Trading discipline <small class="sc-count">· automatic — nothing to set</small></div>
+  <details id="ds-details">
+  <summary class="rk-title ds-sum" style="margin-bottom:0;"><span class="sc-arrow">▸</span> 🛡️ Discipline &amp; scorecard<small class="ds-line" id="ds-sum"></small></summary>
+  <div class="rk-sub">
+  <div class="rk-title">Trading discipline <small class="sc-count">· automatic — nothing to set</small></div>
   <div class="rk-stat"><span>Today's loss limit</span><b id="rk-st-limit">—</b></div>
   <div class="rk-msg" id="rk-st-why"></div>
   <div class="rk-stat"><span>Recorded today (P&amp;L log)</span><b id="rk-st-pl">—</b></div>
@@ -1937,14 +1963,14 @@
     </div>
     <div class="rk-msg" id="rk-msg"></div>
   </details>
-</div>
-
-<!-- 2026-11-04 (Build C): rules scorecard — admin only -->
-<div class="card rk-card hidden" id="admin-score-card" style="grid-column: 1 / -1;">
+  </div>
+  <div class="rk-sub">
   <details id="sc-details">
     <summary class="rk-title sc-sum"><span class="sc-arrow">▸</span> 📋 Rules scorecard <small id="sc-count" class="sc-count"></small></summary>
     <div class="rk-msg" id="sc-sub"></div>
     <div id="sc-body"></div>
+  </details>
+  </div>
   </details>
 </div>
 
@@ -2758,11 +2784,10 @@
   // Nothing is suggested or saved until the admin has checked the numbers in the confirm table.
   // =====================================================================================
   var pkLibP = null, pkWorkerP = null, pkProg = null, pkSt = null, piRows = [];
-  const PK_BAND_KEY = 'signa365_pk_band', PK_MIN_OI = 0.5, PI_ACCT_KEY = 'signa365_pi_acct';
+  const PK_MIN_OI = 0.5, PI_ACCT_KEY = 'signa365_pi_acct';
   function pkKey() { return 'signa365_pk_' + (currentUid || 'x'); }
   function pkLoad() { try { const o = JSON.parse(localStorage.getItem(pkKey())); if (o && o.day === todayIstKey() && Array.isArray(o.snaps) && Array.isArray(o.picks)) return o; } catch (e) { /* fresh */ } return { day: todayIstKey(), snaps: [], picks: [] }; }
   function pkSave(o) { try { localStorage.setItem(pkKey(), JSON.stringify(o)); } catch (e) { /* best effort */ } }
-  function pkBand() { try { const b = JSON.parse(localStorage.getItem(PK_BAND_KEY)); if (b && b.lo > 0 && b.hi >= b.lo) return b; } catch (e) { /* default */ } return { lo: 5, hi: 25 }; }
   // scorecard: did the lead taken match one of today's picks? (null = no pick was made for that index today)
   function pkFollowed(m) {
     const o = pkLoad(); if (!o.picks.some(x => x.idx === m.idx)) return null;
@@ -2893,8 +2918,9 @@
   }
 
   // ---- Pick my lead: gate → side → strikes in the band ----
+  function pkMedian(a) { const t = a.slice().sort((x, y) => x - y), n = t.length; return n ? (n % 2 ? t[(n - 1) / 2] : (t[n / 2 - 1] + t[n / 2]) / 2) : 0; }
   function pkDecide(idx, exp, rows) {
-    const res = { cls: 'no', head: '', notes: [], picks: [], close: [], side: null, band: pkBand() };
+    const res = { cls: 'no', head: '', notes: [], picks: [], side: null };
     const zone = EC_IDX_ZONE[idx];
     if (!zone) { res.head = 'Pick NIFTY, BANKNIFTY or SENSEX first.'; return res; }
     const d = getIstDate(), nowMin = d.getHours() * 60 + d.getMinutes(), st = ecStatus[zone];
@@ -2928,32 +2954,43 @@
     } catch (e) { /* optional */ }
     const k = side === 'CE' ? 'ce' : 'pe', prior = pkLoad().snaps.filter(x => x.idx === idx && x.exp === exp);
     const au = rlAuto(); let rem = null; try { if (!au.off && au.limit > 0) rem = au.limit + Math.min(0, rlDayPl()); } catch (e) { rem = null; }
-    const mk = (r) => {
-      const ltp = r[k + 'Ltp'], oi = r[k + 'Oi'], chg = r[k + 'Chg'];
-      let first = null; for (const s of prior) { const o = s.rows.find(x => x.strike === r.strike); if (o && o[k + 'Ltp'] > 0) { first = o[k + 'Ltp']; break; } }
-      return { strike: r.strike, ltp, oi, chg, first, qty: rem == null ? null : (rem <= 0 ? 0 : Math.floor(rem / (ltp * 0.4))), sl: opAutoSL(ltp) };
-    };
-    const ok = rows.filter(r => r[k + 'Oi'] >= PK_MIN_OI);
-    const inBand = ok.filter(r => r[k + 'Ltp'] >= res.band.lo && r[k + 'Ltp'] <= res.band.hi).sort((a, b) => b[k + 'Oi'] - a[k + 'Oi'] || (b[k + 'Chg'] || 0) - (a[k + 'Chg'] || 0)).slice(0, 3);
-    res.picks = inBand.map(mk);
-    if (!res.picks.length) res.close = ok.filter(r => r[k + 'Ltp'] > res.band.hi).sort((a, b) => a[k + 'Ltp'] - b[k + 'Ltp']).slice(0, 2).map(mk);
+    // at-the-money strike: the app's live price when it fits this screenshot, else where call and put cost about the same
+    const byStrike = rows.slice().sort((x, y) => x.strike - y.strike); let atm = null;
+    try {
+      const key = Object.keys(spotIndexMeta).find(x => spotIndexMeta[x].label === idx), sp = key ? currentPrice[spotIndexMeta[key].priceEl] : null;
+      const steps = byStrike.slice(1).map((r, i) => r.strike - byStrike[i].strike).filter(x => x > 0), step = steps.length ? pkMedian(steps) : 100;
+      if (sp > 0) { const nr = byStrike.slice().sort((x, y) => Math.abs(x.strike - sp) - Math.abs(y.strike - sp))[0]; if (Math.abs(nr.strike - sp) <= step * 2) atm = nr.strike; }
+    } catch (e) { atm = null; }
+    if (atm == null) atm = byStrike.slice().sort((x, y) => Math.abs(x.ceLtp - x.peLtp) - Math.abs(y.ceLtp - y.peLtp))[0].strike;
+    const med = pkMedian(rows.map(r => r[k + 'Oi']));
+    const cand = rows.filter(r => (side === 'CE' ? r.strike >= atm : r.strike <= atm) && r[k + 'Ltp'] > 0 && r[k + 'Oi'] >= PK_MIN_OI);
+    if (!cand.length) return res;
+    const maxOi = Math.max.apply(null, cand.map(r => r[k + 'Oi']));
+    const score = (r) => r[k + 'Oi'] / maxOi + (r[k + 'Chg'] != null && r[k + 'Chg'] > 0 ? 0.25 : 0);
+    const ranked = cand.slice().sort((x, y) => score(y) - score(x));
+    const chosen = [ranked[0], ranked[1]].filter(Boolean);
+    const near = cand.slice().sort((x, y) => Math.abs(x.strike - atm) - Math.abs(y.strike - atm)).find(r => chosen.indexOf(r) < 0);
+    const labels = ['🥇 TOP PICK', '🥈 2ND BEST', '🥉 CLOSEST TO THE MONEY'], list = chosen.concat(near ? [near] : []);
+    res.picks = list.map((r, i) => {
+      const ltp = r[k + 'Ltp'], chg = r[k + 'Chg'];
+      let first = null; for (const sn of prior) { const o = sn.rows.find(x => x.strike === r.strike); if (o && o[k + 'Ltp'] > 0) { first = o[k + 'Ltp']; break; } }
+      return { label: labels[chosen.length < 3 && i === chosen.length ? 2 : i], gold: i === 0, strike: r.strike, ltp, chg, first, oiHigh: r[k + 'Oi'] >= med, qty: rem == null ? null : (rem <= 0 ? 0 : Math.floor(rem / (ltp * 0.4))), sl: opAutoSL(ltp) };
+    });
     return res;
   }
   function pkPickHtml(p, side) {
     const trend = p.first != null && Math.abs(p.first - p.ltp) > 0.001 ? '<br>Trend ₹' + p.first + ' → ₹' + p.ltp + (p.ltp > p.first ? ' <span class="up">▲</span>' : ' <span class="dn">▼</span>') : '';
     const chg = p.chg != null ? ' <span class="' + (p.chg >= 0 ? 'up' : 'dn') + '">' + (p.chg >= 0 ? '▲' : '▼') + Math.abs(p.chg) + '%</span>' : '';
-    return '<div class="pk-pick"><b>' + p.strike + ' ' + side + '</b> · ₹' + p.ltp + chg + ' · OI ' + p.oi + 'L' + trend + '<br>' + (p.qty != null ? 'Max qty ' + p.qty.toLocaleString('en-IN') + ' · ' : '') + 'SL ₹' + p.sl + '</div>';
+    const oi = '<span class="pk-oi"><i class="mc-dot ' + (p.oiHigh ? 'ce' : 'pe') + ' pulse"></i>OI ' + (p.oiHigh ? 'High' : 'Low') + '</span>';
+    return '<div class="pk-pick' + (p.gold ? ' gold' : '') + '"><div class="pk-tag">' + p.label + '</div><b>' + p.strike + ' ' + side + '</b> · ₹' + p.ltp + chg + ' · ' + oi + trend + '<br>' + (p.qty != null ? 'Max qty ' + p.qty.toLocaleString('en-IN') + ' · ' : '') + 'SL ₹' + p.sl + '</div>';
   }
   function pkRenderResult(res, nSnap) {
     const out = document.getElementById('pk-out'); if (!out) return;
     let h = '<div class="pk-verdict ' + res.cls + '">' + mcEsc(res.head) + '</div>';
     res.notes.forEach(n => { h += '<div class="pk-note">' + mcEsc(n) + '</div>'; });
     if (res.side) {
-      if (res.picks.length) { h += '<div class="pk-msg">Best ' + res.side + ' leads · ₹' + res.band.lo + '–' + res.band.hi + ' · most OI first</div>' + res.picks.map(p => pkPickHtml(p, res.side)).join(''); }
-      else {
-        h += '<div class="pk-verdict care">No strike in your band (₹' + res.band.lo + '–' + res.band.hi + '). Scroll further out and upload again.</div>';
-        if (res.close.length) h += '<div class="pk-msg">Closest above the band:</div>' + res.close.map(p => pkPickHtml(p, res.side)).join('');
-      }
+      if (res.picks.length) h += res.picks.map(p => pkPickHtml(p, res.side)).join('');
+      else h += '<div class="pk-verdict care">No usable ' + res.side + ' strike on this screenshot. Scroll and upload again.</div>';
     }
     h += '<div class="pk-msg">Screenshot ' + nSnap + ' today · max 6. Not advice — your call.</div>';
     out.innerHTML = h;
@@ -2994,9 +3031,6 @@
   }
   (function pkWire() {
     const g = (id) => document.getElementById(id); if (!g('pk-card')) return;
-    const b = pkBand(); g('pk-lo').value = b.lo; g('pk-hi').value = b.hi;
-    const sv = () => { const lo = parseFloat(g('pk-lo').value), hi = parseFloat(g('pk-hi').value); if (lo > 0 && hi >= lo) { try { localStorage.setItem(PK_BAND_KEY, JSON.stringify({ lo, hi })); } catch (e) { /* ok */ } } };
-    g('pk-lo').addEventListener('change', sv); g('pk-hi').addEventListener('change', sv);
     g('pk-up').addEventListener('click', () => g('pk-file').click());
     g('pk-file').addEventListener('change', () => { const f = g('pk-file').files && g('pk-file').files[0]; g('pk-file').value = ''; if (f) pkFileChosen(f); });
     g('pk-conf').addEventListener('input', (ev) => {
@@ -3031,6 +3065,8 @@
         '<div class="pi-st ' + (s.warn ? 'warn' : (s.k === 'new' ? 'ok' : '')) + '">' + mcEsc(s.t) + '</div></div>';
     }).join('');
     go.classList.toggle('hidden', !piRows.length);
+    { const el = piRows.filter(r => !piState(acct, r).lock), aw = document.getElementById('pi-all-wrap'), ac = document.getElementById('pi-all');
+      if (aw && ac) { aw.classList.toggle('hidden', !el.length); ac.checked = !!el.length && el.every(r => r.on); } }
   }
   async function piFileChosen(file) {
     const msg = document.getElementById('pi-msg'); piRows = []; piRender();
@@ -3061,9 +3097,9 @@
     document.getElementById('pi-go').classList.add('hidden');
   }
   (function piWire() {
-    const g = (id) => document.getElementById(id); if (!g('pi-btn')) return;
+    const g = (id) => document.getElementById(id); if (!g('op-add-shot')) return;
     try { const a = localStorage.getItem(PI_ACCT_KEY); if (a) g('pi-acct').value = a; } catch (e) { /* default */ }
-    g('pi-btn').addEventListener('click', () => { piRows = []; piRender(); g('pi-msg').textContent = 'Pick your account, then choose the screenshot of your open positions.'; g('pi-sheet').classList.remove('hidden'); });
+    g('op-add-shot').addEventListener('click', () => { piRows = []; piRender(); g('pi-msg').textContent = 'Pick your account, then choose the screenshot of your open positions.'; g('pi-sheet').classList.remove('hidden'); });
     g('pi-cancel').addEventListener('click', () => g('pi-sheet').classList.add('hidden'));
     g('pi-sheet').addEventListener('click', (e) => { if (e.target === g('pi-sheet')) g('pi-sheet').classList.add('hidden'); });
     g('pi-acct').addEventListener('change', () => { try { localStorage.setItem(PI_ACCT_KEY, g('pi-acct').value); } catch (e) { /* ok */ } piRows.forEach(r => { r.on = null; }); piRender(); });
@@ -3075,6 +3111,7 @@
       if (t.hasAttribute('data-pi-i')) { const v = parseFloat(t.value); if (isFinite(v)) { piRows[+t.getAttribute('data-pi-i')][t.getAttribute('data-pi-f')] = v; piRender(); } }
     });
     g('pi-go').addEventListener('click', piImport);
+    g('pi-all').addEventListener('change', () => { const acct = g('pi-acct').value, on = g('pi-all').checked; piRows.forEach(r => { if (!piState(acct, r).lock) r.on = on; }); piRender(); });
   })();
 
   // =====================================================================================
@@ -3472,6 +3509,12 @@
     let v = 0; try { v = rlDayPl(); } catch (e) { v = 0; }
     pl.textContent = (v < 0 ? '−' : (v > 0 ? '+' : '')) + rlFmt(v); pl.className = v > 0 ? 'pos' : (v < 0 ? 'neg' : '');
   }
+  function rkSum() {
+    const el = document.getElementById('ds-sum'); if (!el) return;
+    try { rkStatus(); } catch (e) { /* status is best-effort */ }
+    const g = (id) => { const x = document.getElementById(id); return x ? x.textContent.trim() : ''; };
+    el.textContent = 'Loss limit ' + (g('rk-st-limit') || '—') + ' · Today ' + (g('rk-st-pl') || '₹0') + (g('sc-count') ? ' ' + g('sc-count') : '');
+  }
   function rkRender() {
     try { scRender(); } catch (e) { /* scorecard is optional */ }
     const inp = document.getElementById('rk-limit'); if (!inp) return;
@@ -3490,6 +3533,7 @@
       const btn = e.b ? '<button type="button" class="rk-evb" data-rk-hide="' + mcEsc(e.iso + '|' + e.x) + '" aria-label="Hide">hide</button>' : '<button type="button" data-rk-del="' + mcEsc(e.d + '|' + e.t + '|' + e.x) + '" aria-label="Remove">×</button>';
       return '<div class="rk-ev"><span>' + mcEsc(String(p[2]).padStart(2, '0') + '/' + String(p[1] + 1).padStart(2, '0') + ' ' + (e.t || '') + ' · ' + e.x) + '</span>' + btn + '</div>';
     }).join('') : '<div class="rk-msg">No events coming up.</div>';
+    try { rkSum(); } catch (e) { /* summary line is cosmetic */ }
     document.getElementById('rk-cal-note').textContent = 'Built-in calendar checked 4 Nov 2026 · RBI dates known till Feb 2027 · US dates till Dec 2027. Dates can shift — treat as a heads-up.';
   }
   (function rkWire() {
@@ -4628,6 +4672,12 @@
   // keep it as is, do not change it."
   let monthlyChart = null;
 
+  // "Nov 2026" -> a number (year*12 + month). Safari / iPhone cannot read that text as a date, so never sort it with new Date().
+  document.addEventListener('toggle', (e) => { try { if (e.target && e.target.id === 'tot-details' && e.target.open && monthlyChart) monthlyChart.resize(); } catch (err) { /* cosmetic */ } }, true);
+  function monKey(label) {
+    const m = /^([A-Za-z]{3})[A-Za-z]*\.?,?\s+(\d{4})$/.exec(String(label || '').trim()); if (!m) return 0;
+    const i = 'janfebmaraprmayjunjulaugsepoctnovdec'.indexOf(m[1].toLowerCase()); return i < 0 ? 0 : (+m[2]) * 12 + i / 3;
+  }
   function renderMonthlySummary() {
     const trades = tjLoad();
     if (trades.length === 0) {
@@ -4644,7 +4694,7 @@
     // calendar months — a classic rolling window: once a 7th month has data, the oldest of the
     // 6 drops off automatically since this always takes the most recent 6, nothing is hard-reset.
     const sorted = Object.entries(totals)
-      .sort((a, b) => new Date(b[0]) - new Date(a[0]))
+      .sort((a, b) => monKey(b[0]) - monKey(a[0]))
       .slice(0, 6);
     const chronological = sorted.slice().reverse(); // oldest -> newest, left to right on the chart
 
@@ -4721,7 +4771,7 @@
     const el = document.getElementById('grand-total');
     if (!el) return;
     const trades = tjLoad();
-    if (!trades.length) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+    if (!trades.length) { el.classList.add('hidden'); el.innerHTML = ''; { const ts = document.getElementById('tot-sum'); if (ts) ts.textContent = 'No trades logged yet'; } try { rkSum(); } catch (e) { /* cosmetic */ } return; }
     let sum = 0, minTs = Infinity, maxTs = -Infinity; const months = {};
     trades.forEach(t => {
       sum += Number(t.pnl) || 0;
@@ -4736,6 +4786,8 @@
       '<div class="gt-val ' + (sum > 0 ? 'pos' : (sum < 0 ? 'neg' : '')) + '">' + txt + '</div>';
     el.classList.toggle('neg', sum < 0);
     el.classList.remove('hidden');
+    { const ts = document.getElementById('tot-sum'); if (ts) ts.textContent = 'Grand total ' + txt + ' · ' + nM + ' month' + (nM === 1 ? '' : 's'); }
+    try { rkSum(); } catch (e) { /* summary line is cosmetic */ }
   }
   // ---- FEATURE 6: WEEKLY TOTALS (new — same pattern as renderMonthlySummary, grouped Mon–Sun) ----
   // ---- WEEKLY PROGRESS GRAPH (2026-10-15) ----
@@ -5244,8 +5296,7 @@
 
   function opRender() {
     opCountEl.textContent = opState.positions.length + '/' + OP_MAX;
-    opAddBtn.disabled = opState.positions.length >= OP_MAX;
-    opAddBtn.textContent = opState.positions.length >= OP_MAX ? '🚫 Max ' + OP_MAX + ' positions' : '＋ Add position';
+    { const mb = document.getElementById('op-add-main'); if (mb) { mb.disabled = opState.positions.length >= OP_MAX; mb.textContent = opState.positions.length >= OP_MAX ? '🚫 Max ' + OP_MAX : '＋ Add position'; } }
     if (opState.positions.length >= OP_MAX && !opEditingId) opQuickEl.classList.add('hidden');
     if (opState.positions.length === 0) {
       opListEl.innerHTML = '<div class="op-empty"><div class="e1">💼</div><div class="e2">No open positions yet</div><div class="e3">Tap <strong>＋ Add position</strong> below.<br>Enter index, strike, Qty and Buy price — then just type the CMP.</div></div>';
@@ -5493,7 +5544,7 @@
       if (cmpEl) { cmpEl.focus(); cmpEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } // straight to the one number you update during the day
     }
   }
-  opAddBtn.addEventListener('click', () => {
+  document.getElementById('op-add-main').addEventListener('click', () => {
     if (opState.positions.length >= OP_MAX) return;
     opOpenQuick(true);
   });
