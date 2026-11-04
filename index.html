@@ -1371,9 +1371,13 @@
   .ec-st.exp { display: inline-flex; align-items: center; gap: 6px; }
   .op-maxq { margin-top: 8px; padding: 7px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; background: var(--panel-alt); color: var(--accent); line-height: 1.35; }
   .op-maxq.hidden { display: none; }
+  .op-rem { margin-top: 8px; padding: 7px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 700; background: var(--panel-alt); color: var(--muted); line-height: 1.4; }
+  .op-rem.hidden { display: none; }
   .pk-card summary { cursor: pointer; font-weight: 800; font-size: 0.92rem; list-style: none; display: flex; align-items: center; gap: 8px; }
   .pk-card summary::-webkit-details-marker { display: none; }
   .pk-tbl tr.pk-warn input { background: #fef3c7; border-color: #f59e0b; color: #78350f; }
+  .pk-tbl td.pk-x { width: 40px; text-align: center; }
+  .pk-del { border: 1px solid var(--border); background: var(--panel); border-radius: 9px; padding: 7px 9px; font-size: 0.95rem; cursor: pointer; line-height: 1; }
   .pk-btn.hidden { display: none; }
   .pk-btn { display: inline-block; padding: 9px 12px; border-radius: 11px; border: 1px solid var(--border); background: var(--panel); color: var(--accent); font-size: 0.82rem; font-weight: 800; cursor: pointer; font-family: inherit; }
   .pk-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -1468,6 +1472,7 @@
     </div>
     <button class="op-link" id="op-q-name-link" type="button">✏️ custom name</button>
     <div class="op-f hidden" id="op-q-name-wrap"><span class="op-k">Custom name</span><input class="op-in" id="op-q-name" type="text" maxlength="30" enterkeyhint="done" placeholder="Only if you want your own name"></div>
+    <div id="op-q-rem" class="op-rem">📝 Before you buy: know your <b>exit price</b>, your <b>stop-loss</b> and your <b>max qty</b>. Place the stop-loss order at your broker now.</div>
     <div id="op-q-err" class="op-qerr"></div>
     <div class="op-sheet-btns"><button class="op-btn" id="op-q-cancel" type="button">Cancel</button><button class="op-btn primary" id="op-q-add" type="button">✅ Save position</button></div>
   </div>
@@ -2502,6 +2507,7 @@
   const EC_IDX_ZONE = { NIFTY: 'nifty-zone', BANKNIFTY: 'banknifty-zone', SENSEX: 'sensex-zone' };
   const EC_RANGE_START = 9 * 60 + 15, EC_RANGE_END = 10 * 60 + 30, EC_NO_TRADE_FROM = 13 * 60, EC_LAST_ENTRY = 15 * 60;
   const EC_CHOP_FLIPS = 2, EC_CHOP_WINDOW_MS = 60 * 60 * 1000;
+  const EC_WHIP_FAILS = 2; // Go signals that failed today before the index is locked as a choppy day
   const EC_BAND_5D = 2, EC_BAND_1M = 3.5; // % — inside this band the trend counts as "flat"
   const ecData = {};   // elId -> { candles, trend, prevClose, at }
   const ecStatus = {}; // elId -> computed entry status (or null)
@@ -2570,6 +2576,8 @@
     out.dir = lastSide === 1 ? 'CE' : (lastSide === -1 ? 'PE' : null);
     const w = ecWeek[elId], counter = !!(out.dir && w && w.dir && w.dir !== out.dir);
     if (nowMin >= EC_LAST_ENTRY) { out.key = 'late'; out.cls = 'wait'; out.ico = '🌙'; out.text = 'Too late for new entries.'; out.long = 'No new entries after 3:00 pm.'; return out; }
+    try { out.fails = ecFailedGos(cs, ts, done, hi, lo); } catch (e) { out.fails = 0; }
+    if (out.fails >= EC_WHIP_FAILS) { out.key = 'whipsaw'; out.cls = 'warn'; out.ico = '🌀'; out.text = 'Choppy day. Skip.'; out.sub = out.fails + ' Go signals failed today.'; out.long = out.fails + ' Go signals have already failed today — a whipsaw day. No new entries for the rest of today.'; return out; }
     if (flips >= EC_CHOP_FLIPS) { out.key = 'chop'; out.cls = 'warn'; out.ico = '🌀'; out.text = 'Choppy. Skip it.'; out.long = flips + ' flips in the last hour — treat as a choppy day, do not trade flips.'; return out; }
     if (out.dir && out.dir === signal && confirmed) {
       out.key = 'go'; out.cls = counter ? 'warn' : 'go'; out.ico = out.dir === 'CE' ? '🚀' : '🪂';
@@ -2580,12 +2588,29 @@
       return out;
     }
     if (out.dir && out.dir === signal && !confirmed) { out.key = 'confirm'; out.cls = 'wait'; out.ico = '👀'; out.text = 'First close ' + (out.dir === 'CE' ? 'above' : 'below') + ' the range. Wait for one more.'; out.long = 'One candle closed outside the opening range (' + out.dir + '). Go needs two closes in a row — wait for the next candle.'; return out; }
-    if (out.dir && signal) { out.key = 'mismatch'; out.cls = 'warn'; out.ico = '🚦'; out.text = 'Mixed signals. Wait.'; out.long = 'Price and signal disagree — wait.'; return out; }
+    const watchTxt = (bk) => { if (!signal || signal === bk || hi == null || lo == null) return ''; return (bk ? bk + ' break failed. ' : '') + 'Signal now ' + signal + ' — not a Go yet. Go ' + signal + ' needs 2 closes ' + (signal === 'CE' ? 'above ' + ecN(hi) : 'below ' + ecN(lo)) + '.'; };
+    if (out.dir && signal) { out.key = 'mismatch'; out.cls = 'warn'; out.ico = '🚦'; out.text = 'Mixed signals. Wait.'; out.long = 'Price and signal disagree — wait.'; try { out.watch = everBroke ? watchTxt('') : ''; } catch (e) { out.watch = ''; } return out; }
     if (everBroke) { out.key = 'fake'; out.cls = 'warn'; out.ico = '🎭'; out.text = 'Fake move. Wait.';
-      try { for (let j = lastI; j >= 0; j--) { if (done[j] && ecIstMins(cs[j].time) >= EC_RANGE_END && sideAt(cs[j]) !== 0) { out.sub = 'Broke ' + (sideAt(cs[j]) === 1 ? 'CE' : 'PE') + ' at ' + ecHm(ecIstMins(cs[j].time) + 5) + ', then closed back inside.'; break; } } } catch (e) { /* wording only */ } out.long = 'Price broke the range but closed back inside — treat the break as fake.'; return out; }
+      try { for (let j = lastI; j >= 0; j--) { if (done[j] && ecIstMins(cs[j].time) >= EC_RANGE_END && sideAt(cs[j]) !== 0) { const bk = sideAt(cs[j]) === 1 ? 'CE' : 'PE'; out.sub = 'Broke ' + bk + ' at ' + ecHm(ecIstMins(cs[j].time) + 5) + ', then closed back inside.'; out.text = 'Fake move ' + bk + ' → ' + (signal && signal !== bk ? signal : 'inside') + '. Wait.'; out.watch = watchTxt(bk); break; } } } catch (e) { /* wording only */ } out.long = 'Price broke the range but closed back inside — treat the break as fake.'; return out; }
     if (nowMin >= EC_NO_TRADE_FROM) { out.key = 'notrade'; out.cls = 'bad'; out.ico = '⛔'; out.text = 'No trade today.'; out.long = 'No candle has closed outside the opening range by 1:00 pm.'; return out; }
     out.key = 'inside'; out.cls = 'wait'; out.ico = '🧘'; out.text = 'Wait. No clear move yet.'; out.long = 'Price is still inside the opening range — wait for a close outside it.';
     return out;
+  }
+  // Whipsaw-day count: how many times today a Go (2 closes outside the range + signal agrees) stopped being Go on a closed candle.
+  // Replayed from today's candles, so every device gives the same number — nothing is stored.
+  function ecFailedGos(cs, ts, done, hi, lo) {
+    let n = 0, sig = null, prevGo = false, prevSide = 0;
+    cs.forEach((c, i) => {
+      if (ts[i] != null) sig = ts[i] === 1 ? 'CE' : 'PE';
+      if (!done[i]) return;
+      const m = ecIstMins(c.time); if (m < EC_RANGE_END) return;
+      if (m >= EC_LAST_ENTRY) { prevGo = false; return; }
+      const side = c.close > hi ? 1 : (c.close < lo ? -1 : 0), dir = side === 1 ? 'CE' : (side === -1 ? 'PE' : null);
+      const go = !!dir && prevSide === side && sig === dir;
+      if (prevGo && !go) n++;
+      prevGo = go; prevSide = side;
+    });
+    return n;
   }
   // Early Strong (9:40–10:30): 2 closed 5-min candles beyond the first-15-min range, >=0.35% from the open, signal agrees, no flips
   function ecEarly(cs, done, nowMin, signal, flips) {
@@ -2673,7 +2698,8 @@
       if (w) bits.push('5d ' + f(w.d5) + (w.m1 != null ? ' · 1m ' + f(w.m1) : '') + (w.dir ? ' · ' + w.dir + ' week' : ''));
       const fl = (fake[elId] || []), last = fl[fl.length - 1];
       const fk = last ? `<div class="ec-fake">↩️ Fake flip${last.dir ? ' ' + last.dir : ''} at ${new Date(last.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} — went back in ${last.mins || 0} min · ${fl.length} today</div>` : '';
-      return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span>${top}</div>${bits.length ? '<div class="ec-sub">' + bits.join(' · ') + '</div>' : ''}${fk}</div>`;
+      const wt = st && st.watch ? '<div class="ec-sub"><b style="color:#b45309">👁 ' + st.watch + '</b></div>' : '';
+      return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span>${top}</div>${bits.length ? '<div class="ec-sub">' + bits.join(' · ') + '</div>' : ''}${wt}${fk}</div>`;
     }).join('');
     try { // when the candles behind this card were last fetched (turns amber if the feed is late)
       const ue = document.getElementById('ec-upd'), dd = selZ ? ecData[selZ] : null;
@@ -2713,6 +2739,7 @@
         else if (st.key === 'inside') parts.push('🧘 no clear move yet');
         else if (st.key === 'fake') parts.push('🎭 fake move');
         else if (st.key === 'chop') parts.push('🌀 choppy');
+        else if (st.key === 'whipsaw') parts.push('🌀 choppy day — skip');
         else if (st.key === 'notrade') parts.push('⛔ no clear move today');
         else if (st.key === 'early' && st.dir) parts.push('🔥 early strong ' + st.dir);
         else if (st.key === 'go' && st.dir) parts.push(st.dir === dir ? '🚀 moving ' + st.dir + (st.since ? ' since ' + st.since : '') : '🚦 moving ' + st.dir + ' (other way)');
@@ -2730,10 +2757,15 @@
   try { const o = JSON.parse(localStorage.getItem('signa365_ec_goann') || 'null'); if (o && o.day === todayIstKey()) ecGoSeen = o.z || {}; } catch (e) { ecGoSeen = {}; }
   function ecGoAlerts() {
     if (!ALERT_ON_GO_ONLY) return;
+    let dirty = false;
+    // the Alerts card shows what the Entry check says NOW: old Supertrend entries go; a Go entry goes the moment that Go ends
+    for (let i = alertHistory.length - 1; i >= 0; i--) { const a = alertHistory[i]; if (!a.isTimeWindow && !a.isGo) { alertHistory.splice(i, 1); dirty = true; } }
     EC_ZONES.forEach(z => {
       const st = ecStatus[z]; if (!st) return;
       const live = (st.key === 'go' || st.key === 'early') && st.dir;
+      const nm = alertIndexNames[z];
       if (!live) {
+        for (let i = alertHistory.length - 1; i >= 0; i--) { if (alertHistory[i].isGo && alertHistory[i].index === nm) { alertHistory.splice(i, 1); dirty = true; } }
         if (ecGoLive[z] && st.key !== 'late' && st.key !== 'forming') ecGoEnded(z, ecGoLive[z], st);
         delete ecGoLive[z];
         if (ecGoSeen[z]) { delete ecGoSeen[z]; ecGoSave(); }
@@ -2741,7 +2773,14 @@
       } // left Go: a later Go is a new alert
       ecGoLive[z] = { dir: st.dir, since: st.since || '' };
       Object.keys(ecWarns).forEach(k => { if (k.indexOf('goend_' + z + '|') === 0) delete ecWarns[k]; }); try { ecWarnRender(); } catch (e) { /* cosmetic */ }
-      const sig = st.dir + '@' + (st.since || ''); if (ecGoSeen[z] === sig) return;
+      const sig = st.dir + '@' + (st.since || '');
+      if (ecGoSeen[z] === sig) {
+        if (!alertHistory.some(a => a.isGo && a.index === nm && a.direction === st.dir)) {
+          const w0 = st.key === 'early' ? '🔥 Strong ' + st.dir + ' (early)' : (st.dir === 'CE' ? '🚀 Go CE' : '🪂 Go PE');
+          alertHistory.unshift({ index: nm, direction: st.dir, ts: Date.now(), isGo: true, word: w0, since: st.since || '', ctx: ecContext(z, st.dir).split(' · ').filter(x => !/moving/.test(x)).join(' · ') }); dirty = true;
+        }
+        return;
+      }
       ecGoSeen[z] = sig; ecGoSave();
       const idxName = alertIndexNames[z], dir = st.dir, early = st.key === 'early';
       const word = early ? '🔥 Strong ' + dir + ' (early)' : (dir === 'CE' ? '🚀 Go CE' : '🪂 Go PE');
@@ -2759,6 +2798,22 @@
         }
       });
     });
+    if (dirty) { try { renderAlerts(); } catch (e) { /* cosmetic */ } }
+    try { ecWhipAnnounce(); } catch (e) { /* announcement is optional */ }
+  }
+  // ---- Whipsaw-day lock: told once per index per day (banner here, Telegram for the admin) ----
+  function ecWhipAnnounce() {
+    let o = null; try { o = JSON.parse(localStorage.getItem('signa365_ec_whip') || 'null'); } catch (e) { o = null; }
+    if (!o || o.day !== todayIstKey()) o = { day: todayIstKey(), z: {} };
+    let ch = false;
+    EC_ZONES.forEach(z => {
+      const st = ecStatus[z]; if (!st || st.key !== 'whipsaw' || o.z[z]) return;
+      o.z[z] = 1; ch = true;
+      const nm = EC_NAME[z], t = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+      try { if (typeof opAllowed !== 'function' || opAllowed()) { ecWarns['whip_' + z] = { html: '🌀 ' + nm + ' is a choppy day — ' + st.fails + ' Go signals failed<small>No new ' + nm + ' entries for the rest of today. Pick my lead gives no pick. · ' + t + '</small>' }; ecWarnRender(); } } catch (e) { /* banner is optional */ }
+      if (currentRole === 'admin') claimStrongAlertInCloud('whip_' + z, todayIstKey()).then(res => { if (!res.alreadyAnnounced) sendTelegramText('🌀 ' + nm + ' is a choppy day — ' + st.fails + ' Go signals failed.\nSkip new entries for the rest of today.'); });
+    });
+    if (ch) { try { localStorage.setItem('signa365_ec_whip', JSON.stringify(o)); } catch (e) { /* best effort */ } }
   }
   // ---- Go ended: an index that was Go CE/PE is no longer Go while you hold that side -> red banner + beep + Telegram (warning only, nothing is exited) ----
   var ecGoLive = {}; // zone -> { dir, since } seen live in this session
@@ -2822,6 +2877,7 @@
     }
     if (st) {
       if (st.key === 'chop') L.push('🌀 ' + idx + ' is choppy. Skip it.');
+      else if (st.key === 'whipsaw') L.push('🌀 ' + idx + ': choppy day (' + st.fails + ' Go signals failed). Skip it.');
       else if (st.key === 'forming') L.push('⏳ ' + idx + ': market is settling. Wait.');
       else if (st.key === 'inside') L.push('🧘 ' + idx + ': no clear move yet. Wait.');
       else if (st.key === 'fake') L.push('🎭 ' + idx + ': fake move. Wait.');
@@ -3239,10 +3295,17 @@
   function pkRenderConfirm() {
     const c = document.getElementById('pk-conf'); if (!c) return;
     if (!pkSt) { c.innerHTML = ''; return; }
-    const f = (i, k) => '<td><input type="text" inputmode="decimal" data-pk-r="' + i + '" data-pk-f="' + k + '" value="' + pkSt.rows[i][k] + '"></td>';
+    pkSt.warnN = pkSt.rows.filter(r => r.warn).length;
+    const f = (i, k) => '<td><input type="text" inputmode="decimal" data-pk-r="' + i + '" data-pk-f="' + k + '" value="' + (pkSt.rows[i][k] == null ? '' : pkSt.rows[i][k]) + '"></td>';
+    // only the doubtful (yellow) rows are shown: fix them or delete them — every other row is used exactly as read
+    const bad = []; pkSt.rows.forEach((r, i) => { if (r.warn) bad.push(i); });
+    const okN = pkSt.rows.length - bad.length;
+    const msg = bad.length
+      ? 'Only the rows I am unsure about are shown. <b>Fix each one or delete it.</b> The other ' + okN + ' rows are used as read.'
+      : 'All ' + pkSt.rows.length + ' rows read fine.';
     c.innerHTML = '<div class="pk-hd">Index <select id="pk-idx">' + ['NIFTY', 'BANKNIFTY', 'SENSEX'].map(x => '<option' + (x === pkSt.idx ? ' selected' : '') + '>' + x + '</option>').join('') + '</select> Expiry <input id="pk-exp" type="text" maxlength="5" value="' + mcEsc(pkSt.exp) + '" placeholder="29OCT"></div>' +
-      '<div class="pk-msg">Check the numbers against your screenshot. Fix any that are wrong.' + (pkSt.bad ? ' Rows cut off at the edge were skipped.' : '') + (pkSt.warnN ? ' <b>Yellow rows: please check these.</b>' : '') + '</div>' +
-      '<table class="pk-tbl"><tr><th>Strike</th><th>CE ₹</th><th>CE OI</th><th>PE ₹</th><th>PE OI</th></tr>' + pkSt.rows.map((r, i) => '<tr' + (r.warn ? ' class="pk-warn"' : '') + '>' + f(i, 'strike') + f(i, 'ceLtp') + f(i, 'ceOi') + f(i, 'peLtp') + f(i, 'peOi') + '</tr>').join('') + '</table>' +
+      '<div class="pk-msg">' + msg + (pkSt.bad ? ' Rows cut off at the edge were skipped.' : '') + '</div>' +
+      (bad.length ? '<table class="pk-tbl"><tr><th>Strike</th><th>CE ₹</th><th>CE OI</th><th>PE ₹</th><th>PE OI</th><th></th></tr>' + bad.map(i => '<tr class="pk-warn">' + f(i, 'strike') + f(i, 'ceLtp') + f(i, 'ceOi') + f(i, 'peLtp') + f(i, 'peOi') + '<td class="pk-x"><button type="button" class="pk-del" data-pk-del="' + i + '" title="Delete this row" aria-label="Delete this row">🗑</button></td></tr>').join('') + '</table>' : '') +
       '<div style="margin-top:10px"><button type="button" class="pk-btn primary" id="pk-go">✅ Looks right — pick my lead</button></div>';
   }
   function pkRun() {
@@ -3360,7 +3423,11 @@
       const i = ev.target.getAttribute && ev.target.getAttribute('data-pk-r'); if (i == null || !pkSt) return;
       const v = parseFloat(ev.target.value); if (isFinite(v)) pkSt.rows[+i][ev.target.getAttribute('data-pk-f')] = v;
     });
-    g('pk-conf').addEventListener('click', (ev) => { if (ev.target.id === 'pk-go') pkRun(); });
+    g('pk-conf').addEventListener('click', (ev) => {
+      if (ev.target.id === 'pk-go') { pkRun(); return; }
+      const d = ev.target.closest && ev.target.closest('[data-pk-del]');
+      if (d && pkSt) { const i = +d.getAttribute('data-pk-del'); if (i >= 0 && i < pkSt.rows.length) { pkSt.rows.splice(i, 1); pkRenderConfirm(); } }
+    });
     g('pk-out').addEventListener('click', (ev) => { if (ev.target.id === 'pk-edit') { const cf = g('pk-conf'); cf.style.display = ''; try { cf.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { /* ok */ } } });
   })();
 
@@ -5818,6 +5885,7 @@
     opEditingId = open && pos ? pos.id : null;
     opQAddBtn.textContent = opEditingId ? '✅ Save changes' : '✅ Save position';
     document.getElementById('op-sheet-title').textContent = opEditingId ? '✏️ Edit position' : '➕ Add position';
+    try { document.getElementById('op-q-rem').classList.toggle('hidden', !!opEditingId); } catch (e) { /* reminder is optional */ }
     opQuickEl.classList.toggle('hidden', !open);
     opQErrEl.textContent = '';
     opSyncFab();
