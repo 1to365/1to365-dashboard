@@ -1792,9 +1792,8 @@
 
 <!-- ENTRY CHECK (Build A, 2026-11-03): per index — opening-range status, trend of the week, fake-flip notes. Display only. -->
 <div class="card ec-card" id="ec-card" style="grid-column: 1 / -1;">
-  <div class="ec-head"><span class="ec-title" id="ec-title">🧭 Entry check</span><span class="ec-week" id="ec-week"></span></div>
+  <div class="ec-head"><span style="display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap;"><span class="ec-title" id="ec-title">🧭 Entry check</span><span class="ec-sub" id="ec-upd" style="margin-top:0;"></span></span><span class="ec-week" id="ec-week"></span></div>
   <div id="ec-body"><div class="ec-sub">Loading…</div></div>
-  <div class="ec-sub" id="ec-upd" style="text-align:center;margin-top:8px;"></div>
 </div>
 
 <!-- MARKET CONTEXT (Build B, 2026-11-04): 2 short lines — global tally + event/big-move flag. Display only. -->
@@ -2679,7 +2678,7 @@
     try { // when the candles behind this card were last fetched (turns amber if the feed is late)
       const ue = document.getElementById('ec-upd'), dd = selZ ? ecData[selZ] : null;
       if (ue) {
-        if (dd && dd.at) { const late = Date.now() - dd.at > 3 * 60000; ue.textContent = 'Last updated: ' + new Date(dd.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }) + (late ? ' · feed is late' : ''); ue.style.color = late ? '#b45309' : ''; }
+        if (dd && dd.at) { const late = Date.now() - dd.at > 3 * 60000; ue.textContent = 'Last updated ' + new Date(dd.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }) + (late ? ' · feed is late' : ''); ue.style.color = late ? '#b45309' : ''; }
         else ue.textContent = '';
       }
     } catch (e) { /* cosmetic */ }
@@ -2698,6 +2697,7 @@
     EC_ZONES.forEach(z => { try { ecStatus[z] = ecCompute(z); } catch (e) { ecStatus[z] = null; } });
     ecRender();
     try { ecGoAlerts(); } catch (e) { /* alerts must never break the refresh */ }
+    try { opBackToCost(); } catch (e) { /* alert is optional */ }
     try { if (typeof opQWarn === 'function') opQWarn(); } catch (e) { /* form not open */ }
     try { if (liveChart) liveChart.draw(); } catch (e) { /* chart redraw is cosmetic */ }
   }
@@ -2733,7 +2733,14 @@
     EC_ZONES.forEach(z => {
       const st = ecStatus[z]; if (!st) return;
       const live = (st.key === 'go' || st.key === 'early') && st.dir;
-      if (!live) { if (ecGoSeen[z]) { delete ecGoSeen[z]; ecGoSave(); } return; } // left Go: a later Go is a new alert
+      if (!live) {
+        if (ecGoLive[z] && st.key !== 'late' && st.key !== 'forming') ecGoEnded(z, ecGoLive[z], st);
+        delete ecGoLive[z];
+        if (ecGoSeen[z]) { delete ecGoSeen[z]; ecGoSave(); }
+        return;
+      } // left Go: a later Go is a new alert
+      ecGoLive[z] = { dir: st.dir, since: st.since || '' };
+      Object.keys(ecWarns).forEach(k => { if (k.indexOf('goend_' + z + '|') === 0) delete ecWarns[k]; }); try { ecWarnRender(); } catch (e) { /* cosmetic */ }
       const sig = st.dir + '@' + (st.since || ''); if (ecGoSeen[z] === sig) return;
       ecGoSeen[z] = sig; ecGoSave();
       const idxName = alertIndexNames[z], dir = st.dir, early = st.key === 'early';
@@ -2752,6 +2759,55 @@
         }
       });
     });
+  }
+  // ---- Go ended: an index that was Go CE/PE is no longer Go while you hold that side -> red banner + beep + Telegram (warning only, nothing is exited) ----
+  var ecGoLive = {}; // zone -> { dir, since } seen live in this session
+  function ecHeldOn(name, ty) {
+    const out = [];
+    (opState.positions || []).forEach(p => { if (!/^ONGOING$/i.test(p.status)) return; const m = opParseLabel(p.label); if (m && m.idx === name && m.ty === ty) out.push(p); });
+    return out;
+  }
+  function ecGoEnded(z, prev, st) {
+    try {
+      if (typeof opAllowed === 'function' && !opAllowed()) return;
+      const name = EC_NAME[z], held = ecHeldOn(name, prev.dir); if (!held.length) return;
+      const key = 'goend_' + z + '|' + prev.since; if (ecWarns[key]) return;
+      const t = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+      const names = held.map(p => opEsc(p.label)).join(', '), why = (st.text || '').replace(/\.$/, '');
+      ecWarns[key] = { html: '⚠️ ' + name + ' Go ' + prev.dir + ' ended — ' + why + '<small>Your ' + prev.dir + ' is no longer backed: ' + names + ' · exit or tighten the stop? · ' + t + '</small>' };
+      ecWarnRender(); playBeep(prev.dir === 'CE' ? 600 : 300);
+      if (currentRole === 'admin') {
+        claimStrongAlertInCloud('goend_' + z, prev.dir + '@' + prev.since).then(res => {
+          if (res.alreadyAnnounced) return;
+          sendTelegramText('⚠️ ' + name + ' Go ' + prev.dir + ' ended — ' + why + '\nYour ' + prev.dir + ' is no longer backed:\n' + held.map(p => p.label).join('\n') + '\nExit or tighten the stop?');
+        });
+      }
+    } catch (e) { /* warning is best-effort */ }
+  }
+  // ---- Back to cost: a position that was well down comes back up to its buy price -> one prompt (alert only) ----
+  function opBackToCost() {
+    try {
+      if (typeof opAllowed === 'function' && !opAllowed()) return;
+      let o = null; try { o = JSON.parse(localStorage.getItem('signa365_btc') || 'null'); } catch (e) { o = null; }
+      if (!o || o.day !== todayIstKey()) o = { day: todayIstKey(), m: {} };
+      let ch = false;
+      (opState.positions || []).forEach(p => {
+        if (!/^ONGOING$/i.test(p.status)) return;
+        const cmp = Number(p.cmp), buy = Number(p.buy); if (!(cmp > 0) || !(buy > 0)) return;
+        const r = o.m[p.id] || { lo: cmp, armed: false };
+        if (cmp < r.lo) r.lo = cmp;
+        if (r.lo <= buy * 0.8) r.armed = true;
+        if (r.armed && cmp >= buy) {
+          r.n = (r.n || 0) + 1; const key = 'btc_' + p.id + '|' + r.n + '|' + Date.now(), t = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+          ecWarns[key] = { html: '↩️ ' + opEsc(p.label) + ' is back to your buy price<small>Bought ₹' + buy + ' · it was down to ₹' + r.lo + ' · now ₹' + cmp + ' · exit at cost? · ' + t + '</small>' };
+          ecWarnRender(); playBeep(700);
+          if (currentRole === 'admin') sendTelegramText('↩️ ' + p.label + ' is back to your buy price\nBought ₹' + buy + ' · low ₹' + r.lo + ' · now ₹' + cmp + '\nExit at cost?');
+          r.armed = false; r.lo = cmp;
+        }
+        o.m[p.id] = r; ch = true;
+      });
+      if (ch) localStorage.setItem('signa365_btc', JSON.stringify(o));
+    } catch (e) { /* alert is best-effort */ }
   }
   function ecGoSave() { try { localStorage.setItem('signa365_ec_goann', JSON.stringify({ day: todayIstKey(), z: ecGoSeen })); } catch (e) { /* best effort */ } }
 
@@ -5580,6 +5636,7 @@
   }
 
   function opRender() {
+    try { opBackToCost(); } catch (e) { /* alert is optional */ }
     opCountEl.textContent = opState.positions.length + '/' + OP_MAX;
     { const mb = document.getElementById('op-add-main'); if (mb) { mb.disabled = opState.positions.length >= OP_MAX; mb.textContent = opState.positions.length >= OP_MAX ? '🚫 Max ' + OP_MAX : '＋ Add position'; } }
     if (opState.positions.length >= OP_MAX && !opEditingId) opQuickEl.classList.add('hidden');
