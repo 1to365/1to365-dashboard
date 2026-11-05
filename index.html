@@ -1379,6 +1379,15 @@
   .op-maxq.hidden { display: none; }
   .op-rem { margin-top: 8px; padding: 7px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 700; background: var(--panel-alt); color: var(--muted); line-height: 1.4; }
   .op-rem.hidden { display: none; }
+  .op-xplan { margin-top: 8px; padding: 7px 10px; border-radius: 10px; font-size: 0.76rem; font-weight: 700; line-height: 1.5; background: var(--panel-alt); color: var(--text); }
+  .op-xplan:empty { display: none; }
+  .op-xplan .xw { color: #b45309; }
+  .op-permit { margin-top: 8px; padding: 8px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; line-height: 1.55; background: var(--panel-alt); color: var(--text); }
+  .op-permit.hidden { display: none; }
+  .op-permit .pv { margin-top: 4px; padding-top: 5px; border-top: 1px solid var(--border); font-weight: 800; }
+  .op-permit .pv.no { color: #c81e3a; } .op-permit .pv.ok { color: #0f7a3d; } .op-permit .pv.wait { color: #b45309; }
+  .op-permit label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+  .op-permit input[type=checkbox] { margin-top: 3px; width: 18px; height: 18px; flex: none; }
   .pk-card summary { cursor: pointer; font-weight: 800; font-size: 0.92rem; list-style: none; display: flex; align-items: center; gap: 8px; }
   .pk-card summary::-webkit-details-marker { display: none; }
   .pk-tbl tr.pk-warn input { background: #fef3c7; border-color: #f59e0b; color: #78350f; }
@@ -1478,6 +1487,7 @@
     </div>
     <button class="op-link" id="op-q-name-link" type="button">✏️ custom name</button>
     <div class="op-f hidden" id="op-q-name-wrap"><span class="op-k">Custom name</span><input class="op-in" id="op-q-name" type="text" maxlength="30" enterkeyhint="done" placeholder="Only if you want your own name"></div>
+    <div id="op-q-permit" class="op-permit hidden"></div>
     <div id="op-q-rem" class="op-rem">📝 Before you buy: know your <b>exit price</b>, your <b>stop-loss</b> and your <b>max qty</b>. Place the stop-loss order at your broker now.</div>
     <div id="op-q-err" class="op-qerr"></div>
     <div class="op-sheet-btns"><button class="op-btn" id="op-q-cancel" type="button">Cancel</button><button class="op-btn primary" id="op-q-add" type="button">✅ Save position</button></div>
@@ -2738,7 +2748,10 @@
     ecRender();
     try { ecGoAlerts(); } catch (e) { /* alerts must never break the refresh */ }
     try { opBackToCost(); } catch (e) { /* alert is optional */ }
+    try { opTimeReview(); } catch (e) { /* reminder is optional */ }
+    try { opXPlanAll(); } catch (e) { /* cosmetic */ }
     try { if (typeof opQWarn === 'function') opQWarn(); } catch (e) { /* form not open */ }
+    try { if (typeof opQPermit === 'function') opQPermit(); } catch (e) { /* form not open */ }
     try { if (liveChart) liveChart.draw(); } catch (e) { /* chart redraw is cosmetic */ }
   }
 
@@ -5749,6 +5762,58 @@
     opSetCell(opTotalsEl, 'tpoints', opFmt(r2(points), true, false), sign(r2(points)));
     try { rlCheck(); } catch (e) { /* discipline check is best-effort */ }
   }
+  // ---- Exit plan (Build Q): every open position shows where its idea is dead (index back inside the opening range) + a 30-minute review ----
+  const OP_REVIEW_MIN = 30;
+  function opEntryTs(p) {
+    try {
+      const r = scLoad().find(x => x.id === p.id); if (r && r.ts > 0) return r.ts;
+      const m = /^p([0-9a-z]+)$/.exec(String(p.id || '')); if (m && m[1].length > 5) { const t = parseInt(m[1].slice(0, -4), 36); if (t > 1.7e12 && t <= Date.now() + 60000) return t; }
+    } catch (e) { /* unknown entry time */ }
+    return null;
+  }
+  function opXPlanHtml(p) {
+    try {
+      if (!/^ONGOING$/i.test(p.status)) return '';
+      const m = opParseLabel(p.label); if (!m || !m.idx || !m.ty) return '';
+      const z = EC_IDX_ZONE[m.idx], st = z ? ecStatus[z] : null, bits = [];
+      if (!st) bits.push('🚪 Exit plan: waiting for the Entry check to load.');
+      else if (st.hi == null || st.lo == null) bits.push('🚪 Exit plan: the opening range is still forming. Use your broker stop-loss for now.');
+      else {
+        const pe = m.ty === 'PE', line = pe ? st.lo : st.hi;
+        const key = Object.keys(spotIndexMeta).find(k => spotIndexMeta[k].label === m.idx), spot = key ? currentPrice[spotIndexMeta[key].priceEl] : null;
+        let t = '🚪 Exit if ' + m.idx + ' closes back ' + (pe ? 'above ' : 'below ') + '<b>' + ecN(line) + '</b>';
+        if (spot != null) { const dist = pe ? line - spot : spot - line; t += dist > 0 ? ' · now ' + ecN(spot) + ' (' + Math.round(dist).toLocaleString('en-IN') + ' pts away)' : '<br><span class="xw">⚠️ ' + m.idx + ' is ' + (pe ? 'above ' : 'below ') + ecN(line) + ' now (' + ecN(spot) + '). If the 5-min candle closes here, exit.</span>'; }
+        bits.push(t);
+      }
+      const et = opEntryTs(p);
+      if (et) { const at = et + OP_REVIEW_MIN * 60000, hm = new Date(at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }); bits.push(Date.now() < at ? '⏱ Review at ' + hm + ': not in profit by then → exit.' : '<span class="xw">⏱ ' + OP_REVIEW_MIN + '+ minutes in. Not in profit? Exit.</span>'); }
+      return bits.join('<br>');
+    } catch (e) { return ''; }
+  }
+  function opXPlanAll() {
+    try { opListEl.querySelectorAll('.op-pos').forEach(el => { const p = opState.positions.find(x => x.id === el.getAttribute('data-id')); const xe = el.querySelector('[data-o="xplan"]'); if (p && xe) xe.innerHTML = opXPlanHtml(p); }); } catch (e) { /* cosmetic */ }
+  }
+  // one banner (+ beep, + Telegram for the admin) when a position is 30 minutes old: the reminder to check it
+  function opTimeReview() {
+    try {
+      if (typeof opAllowed === 'function' && !opAllowed()) return;
+      let o = null; try { o = JSON.parse(localStorage.getItem('signa365_tstop') || 'null'); } catch (e) { o = null; }
+      if (!o || o.day !== todayIstKey()) o = { day: todayIstKey(), ids: {} };
+      let ch = false;
+      (opState.positions || []).forEach(p => {
+        if (!/^ONGOING$/i.test(p.status) || o.ids[p.id]) return;
+        const et = opEntryTs(p); if (!et || opIstDay(et) !== opIstDay(Date.now())) return;
+        if (Date.now() < et + OP_REVIEW_MIN * 60000) return;
+        o.ids[p.id] = 1; ch = true;
+        const t = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+        ecWarns['tstop_' + p.id] = { html: '⏱ ' + opEsc(p.label) + ' — ' + OP_REVIEW_MIN + ' minutes in<small>Is it in profit? If not, exit. Do not wait for it to come back. · ' + t + '</small>' };
+        ecWarnRender(); playBeep(520);
+        if (currentRole === 'admin') sendTelegramText('⏱ ' + p.label + ' — ' + OP_REVIEW_MIN + ' minutes in\nIn profit? If not, exit. Do not wait for it to come back.');
+      });
+      if (ch) localStorage.setItem('signa365_tstop', JSON.stringify(o));
+    } catch (e) { /* reminder is best-effort */ }
+  }
+  setInterval(() => { try { opXPlanAll(); } catch (e) { /* cosmetic */ } }, 15000);
   function opRefreshAll() {
     opListEl.querySelectorAll('.op-pos').forEach(el => {
       const p = opState.positions.find(x => x.id === el.getAttribute('data-id'));
@@ -5799,6 +5864,7 @@
             '</div>' +
             '<div class="op-sub"><span class="op-subtxt"><span data-o="sub"></span>' + (exited ? '' : ' <label class="op-slwrap"><span class="op-k">🛑 SL</span><input class="op-in op-sl" data-f="sl" type="number" inputmode="decimal" enterkeyhint="done" placeholder="auto" title="Stoploss — type your own, or clear it for the automatic 40% below buy"></label>') + '</span><span class="op-subbtns">' + rowBtns + '</span></div>' +
             '<div class="op-confirm hidden" data-confirm="1"></div>' +
+            (exited ? '' : '<div class="op-xplan" data-o="xplan"></div>') +
             (exited ? '' :
             '<div class="op-more hidden" data-more="1">' +
               '<div class="op-meterwrap" data-o="meter"></div>' +
@@ -5815,6 +5881,7 @@
         '</div>';
       }).join('');
       opRefreshAll();
+      opXPlanAll();
     }
     opRefreshTotals();
     opRenderExited();
@@ -5867,7 +5934,40 @@
     } catch (e) { html = ''; }
     el.innerHTML = html; el.classList.toggle('hidden', !html);
   }
+  // ---- Trade permit (Build Q): a green/red checklist before a NEW position is saved. Display only — it never blocks saving ----
+  function opQMaxNow(buy) {
+    try {
+      if (!(buy > 0)) return null; const au = rlAuto(); if (au.off || !(au.limit > 0)) return null;
+      const rem = au.limit + Math.min(0, rlDayPl()), sl = opLookupSL(buy, opState.slTable), per = sl == null ? buy * 0.4 : Math.max(0.05, buy - sl);
+      return rem <= 0 ? 0 : Math.floor(rem / per);
+    } catch (e) { return null; }
+  }
+  function opQPermit() {
+    const el = document.getElementById('op-q-permit'); if (!el) return;
+    const idx = opQIdxEl.value, ty = opQTypeEl.value;
+    if (opEditingId || !idx || !ty) { el.classList.add('hidden'); return; }
+    const chk = document.getElementById('op-q-slchk'), slOn = !!(chk && chk.checked);
+    const z = EC_IDX_ZONE[idx], st = z ? ecStatus[z] : null, rows = []; let red = 0;
+    const add = (ok, txt) => { rows.push('<div>' + (ok === true ? '✅' : (ok === false ? '❌' : '⬜')) + ' ' + txt + '</div>'); if (ok === false) red++; };
+    if (!st) add(null, 'Entry check not ready yet');
+    else if (st.exp && !st.exp.quiet) add(st.exp.dir === ty, st.exp.dir === ty ? 'Expiry: moving ' + ty : 'Expiry: moving ' + st.exp.dir + ', you picked ' + ty);
+    else if (st.exp) add(false, 'Expiry is quiet — no move to follow');
+    else if ((st.key === 'go' || st.key === 'early') && st.dir === ty) add(true, (st.key === 'early' ? 'Strong ' : 'Go ') + ty + (st.since ? ' since ' + st.since : ''));
+    else if ((st.key === 'go' || st.key === 'early') && st.dir) add(false, 'Go is ' + st.dir + ', you picked ' + ty);
+    else add(false, (st.text || 'No Go yet').replace(/\.$/, '') + ' — no Go ' + ty);
+    const qty = opNum(opQQtyEl.value), buy = opNum(opQBuyEl.value), mx = opQMaxNow(buy);
+    if (mx != null && qty != null && qty > 0) add(qty <= mx, qty <= mx ? 'Qty ' + qty + ' is within your max (' + mx.toLocaleString('en-IN') + ')' : 'Qty ' + qty + ' is above your max (' + mx.toLocaleString('en-IN') + ')');
+    else if (mx === 0) add(false, 'Loss limit is used up for today');
+    else add(null, 'Qty: enter Qty and Buy ₹ to check your max');
+    try { const lm = rlLimitNote(), rv = rlRevenge(); if ((lm && lm.bad) || (rv && rv.level === 'stop')) add(false, (lm && lm.bad) ? 'Daily loss limit reached' : '2 losses in a row — stop for today'); else add(true, 'Loss limit and losses in a row: OK'); } catch (e) { /* optional */ }
+    rows.push('<label><input type="checkbox" id="op-q-slchk"' + (slOn ? ' checked' : '') + '><span>' + (slOn ? '✅' : '🟡') + ' I have placed the stop-loss order at my broker</span></label>');
+    const v = red ? '<div class="pv no">🛑 Permit: NO — ' + red + ' red</div>' : (!slOn ? '<div class="pv wait">🟡 Place your stop-loss, then tick the box</div>' : '<div class="pv ok">✅ Permit: OK to enter</div>');
+    el.innerHTML = rows.join('') + v; el.classList.remove('hidden');
+  }
+  document.addEventListener('input', (e) => { try { if (e.target && e.target.closest && e.target.closest('#op-quick')) opQPermit(); } catch (er) { /* cosmetic */ } });
+  document.addEventListener('change', (e) => { try { if (e.target && e.target.closest && e.target.closest('#op-quick')) opQPermit(); } catch (er) { /* cosmetic */ } });
   function opQPreview() {
+    try { opQPermit(); } catch (e) { /* permit is optional */ }
     try { opQMaxQ(); } catch (e) { /* helper line is optional */ }
     const qty = opNum(opQQtyEl.value), buy = opNum(opQBuyEl.value);
     if (buy == null || buy <= 0) { opQAutoEl.textContent = '🛑 SL and 💰 capital show here'; return; }
@@ -5940,6 +6040,7 @@
     opQAddBtn.textContent = opEditingId ? '✅ Save changes' : '✅ Save position';
     document.getElementById('op-sheet-title').textContent = opEditingId ? '✏️ Edit position' : '➕ Add position';
     try { document.getElementById('op-q-rem').classList.toggle('hidden', !!opEditingId); } catch (e) { /* reminder is optional */ }
+    try { if (open && !pos) { const c = document.getElementById('op-q-slchk'); if (c) c.checked = false; } } catch (e) { /* ok */ }
     opQuickEl.classList.toggle('hidden', !open);
     opQErrEl.textContent = '';
     opSyncFab();
