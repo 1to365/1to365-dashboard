@@ -2785,6 +2785,7 @@
   function ecGoAlerts() {
     if (!ALERT_ON_GO_ONLY) return;
     let dirty = false;
+    try { let rm = false; Object.keys(ecWarns).forEach(k => { if (k.indexOf('goinfo_') === 0 && ecWarns[k].at && Date.now() - ecWarns[k].at > 15 * 60000) { delete ecWarns[k]; rm = true; } }); if (rm) ecWarnRender(); } catch (e) { /* cosmetic */ }
     // the Alerts card shows what the Entry check says NOW: old Supertrend entries go; a Go entry goes the moment that Go ends
     for (let i = alertHistory.length - 1; i >= 0; i--) { const a = alertHistory[i]; if (!a.isTimeWindow && !a.isGo) { alertHistory.splice(i, 1); dirty = true; } }
     EC_ZONES.forEach(z => {
@@ -2793,13 +2794,13 @@
       const nm = alertIndexNames[z];
       if (!live) {
         for (let i = alertHistory.length - 1; i >= 0; i--) { if (alertHistory[i].isGo && alertHistory[i].index === nm) { alertHistory.splice(i, 1); dirty = true; } }
-        if (ecGoLive[z] && st.key !== 'late' && st.key !== 'forming') ecGoEnded(z, ecGoLive[z], st);
+        if (ecGoLive[z] && st.key !== 'late' && st.key !== 'forming') { ecGoEnded(z, ecGoLive[z], st); ecGoEndedInfo(z, ecGoLive[z], st); }
         delete ecGoLive[z];
         if (ecGoSeen[z]) { delete ecGoSeen[z]; ecGoSave(); }
         return;
       } // left Go: a later Go is a new alert
       ecGoLive[z] = { dir: st.dir, since: st.since || '' };
-      Object.keys(ecWarns).forEach(k => { if (k.indexOf('goend_' + z + '|') === 0) delete ecWarns[k]; }); try { ecWarnRender(); } catch (e) { /* cosmetic */ }
+      Object.keys(ecWarns).forEach(k => { if (k.indexOf('goend_' + z + '|') === 0 || k.indexOf('goinfo_' + z + '|') === 0) delete ecWarns[k]; }); try { ecWarnRender(); } catch (e) { /* cosmetic */ }
       const sig = st.dir + '@' + (st.since || '');
       if (ecGoSeen[z] === sig) {
         if (!alertHistory.some(a => a.isGo && a.index === nm && a.direction === st.dir)) {
@@ -2848,6 +2849,15 @@
     const out = [];
     (opState.positions || []).forEach(p => { if (!/^ONGOING$/i.test(p.status)) return; const m = opParseLabel(p.label); if (m && m.idx === name && m.ty === ty) out.push(p); });
     return out;
+  }
+  // Go ended with NO position held: a small banner + beep so the change is not missed (the held-position banner above covers the other case). Once per Go, no Telegram.
+  function ecGoEndedInfo(z, prev, st) {
+    try {
+      const key = 'goinfo_' + z + '|' + prev.since; if (ecWarns[key] || ecWarns['goend_' + z + '|' + prev.since]) return;
+      const name = EC_NAME[z], why = (st.text || '').replace(/\.$/, ''), t = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+      ecWarns[key] = { at: Date.now(), html: '🔔 ' + name + ' Go ' + prev.dir + ' ended — ' + why + '<small>No new ' + prev.dir + ' entry. Wait for the next Go. · ' + t + '</small>' };
+      ecWarnRender(); playBeep(prev.dir === 'CE' ? 600 : 300);
+    } catch (e) { /* banner is best-effort */ }
   }
   function ecGoEnded(z, prev, st) {
     try {
