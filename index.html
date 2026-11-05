@@ -555,6 +555,12 @@
   .op-pos.collapsed .op-mini { display: flex; }
   .op-pos.collapsed .op-acts, .op-pos.collapsed .op-body { display: none; }
   .gt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 10px 12px; border: 1px solid #93c5fd; border-radius: 12px; background: linear-gradient(90deg, #dbeafe 0%, #7dd3fc 100%); color: #0f172a; }
+  .dc-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+  .dc-btn { padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--accent); font-size: 0.78rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+  .dc-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .dc-sum { font-size: 0.8rem; font-weight: 700; line-height: 1.5; margin-bottom: 8px; color: var(--text); }
+  .dc-sum .up { color: #0f7a3d; } .dc-sum .dn { color: #c81e3a; }
+  .dc-worst { font-size: 0.76rem; font-weight: 700; color: var(--muted); margin-top: 8px; line-height: 1.6; }
   .tot-box { border: 2px solid var(--border); border-radius: 14px; padding: 10px 12px; margin-bottom: 12px; background: transparent; }
   .tot-wk { border-color: #0d9488; } .tot-mo { border-color: #4f46e5; }
   .gt-row.hidden { display: none; }
@@ -1964,6 +1970,14 @@
       <div id="monthly-list"></div>
       </div>
       <div id="grand-total" class="gt-row hidden"></div>
+      <!-- TEMPORARY (admin asked 2026-11-05, to be removed later): day-wise running total -->
+      <div class="tot-box" id="dc-box">
+        <p style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em;">📉 Day-wise running total</p>
+        <div class="dc-tabs"><button type="button" class="dc-btn" data-dc="30">1 month</button><button type="button" class="dc-btn on" data-dc="120">4 months</button><button type="button" class="dc-btn" data-dc="0">All</button></div>
+        <div id="dc-sum" class="dc-sum"></div>
+        <div id="dc-wrap" style="position:relative; height:220px;"><canvas id="dc-chart"></canvas></div>
+        <div id="dc-worst" class="dc-worst"></div>
+      </div>
   </details>
 </div>
 
@@ -5081,12 +5095,52 @@
   let monthlyChart = null;
 
   // "Nov 2026" -> a number (year*12 + month). Safari / iPhone cannot read that text as a date, so never sort it with new Date().
-  document.addEventListener('toggle', (e) => { try { if (e.target && e.target.id === 'tot-details' && e.target.open && monthlyChart) monthlyChart.resize(); } catch (err) { /* cosmetic */ } }, true);
+  document.addEventListener('toggle', (e) => { try { if (e.target && e.target.id === 'tot-details' && e.target.open) { if (monthlyChart) monthlyChart.resize(); if (dcChart) dcChart.resize(); } } catch (err) { /* cosmetic */ } }, true);
   function monKey(label) {
     const m = /^([A-Za-z]{3})[A-Za-z]*\.?,?\s+(\d{4})$/.exec(String(label || '').trim()); if (!m) return 0;
     const i = 'janfebmaraprmayjunjulaugsepoctnovdec'.indexOf(m[1].toLowerCase()); return i < 0 ? 0 : (+m[2]) * 12 + i / 3;
   }
+  // ---- TEMPORARY Day-wise running total: one point per trading day, the line is your running P&L (shows where the downfall started) ----
+  let dcChart = null, dcRange = 120;
+  function dcMoney(n) { return (n < 0 ? '−' : '+') + '₹' + Math.round(Math.abs(n)).toLocaleString('en-IN'); }
+  function dcDays(range) {
+    const by = {}, now = Date.now(), from = range > 0 ? now - range * 86400000 : 0;
+    tjLoad().forEach(t => { const ts = Number(t.ts), v = Number(t.pnl); if (!(ts > 0) || !isFinite(v) || ts < from) return; const k = new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); by[k] = (by[k] || 0) + v; });
+    let run = 0; return Object.keys(by).sort().map(k => { run += by[k]; return { k, net: by[k], run }; });
+  }
+  function renderDayCurve() {
+    const box = document.getElementById('dc-box'), cv = document.getElementById('dc-chart'); if (!box || !cv) return;
+    document.querySelectorAll('#dc-box .dc-btn').forEach(b => b.classList.toggle('on', +b.getAttribute('data-dc') === dcRange));
+    const days = dcDays(dcRange), sum = document.getElementById('dc-sum'), worst = document.getElementById('dc-worst'), wrap = document.getElementById('dc-wrap');
+    if (!days.length) { if (dcChart) { dcChart.destroy(); dcChart = null; } wrap.style.display = 'none'; sum.textContent = 'No trades logged in this period yet.'; worst.textContent = ''; return; }
+    wrap.style.display = '';
+    const fd = (k) => new Date(k + 'T12:00:00+05:30').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+    let peak = days[0], peakRun = -Infinity; days.forEach(d => { if (d.run > peakRun) { peakRun = d.run; peak = d; } });
+    const last = days[days.length - 1], dd = peak.run - last.run;
+    const wins = days.filter(d => d.net > 0).length, losses = days.filter(d => d.net < 0).length;
+    const last7 = days.filter(d => (Date.now() - new Date(d.k + 'T12:00:00+05:30').getTime()) <= 7 * 86400000).reduce((a, d) => a + d.net, 0);
+    sum.innerHTML = 'Total <b class="' + (last.run >= 0 ? 'up' : 'dn') + '">' + dcMoney(last.run) + '</b> over ' + days.length + ' trading days (' + wins + ' green · ' + losses + ' red)<br>Highest point <b class="up">' + dcMoney(peak.run) + '</b> on ' + fd(peak.k) + (dd > 0 ? ' → down <b class="dn">' + dcMoney(-dd) + '</b> since' : ' · now at the top') + '<br>Last 7 days <b class="' + (last7 >= 0 ? 'up' : 'dn') + '">' + dcMoney(last7) + '</b>';
+    const w = days.slice().sort((a, b) => a.net - b.net).filter(d => d.net < 0).slice(0, 5);
+    worst.innerHTML = w.length ? 'Worst days: ' + w.map(d => fd(d.k) + ' <b style="color:#c81e3a">' + dcMoney(d.net) + '</b>').join(' · ') : '';
+    const labels = days.map(d => fd(d.k)), vals = days.map(d => Math.round(d.run)), cols = days.map(d => d.net >= 0 ? '#0f7a3d' : '#c81e3a');
+    if (dcChart) dcChart.destroy();
+    dcChart = new Chart(cv.getContext('2d'), {
+      type: 'line',
+      data: { labels, datasets: [{ data: vals, borderColor: '#1a63e8', borderWidth: 2.2, tension: 0, pointRadius: days.length > 60 ? 1.5 : 3.5, pointHoverRadius: 6, pointBackgroundColor: cols, pointBorderColor: cols, fill: { target: 'origin', above: 'rgba(15,122,61,0.10)', below: 'rgba(200,30,58,0.12)' } }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        layout: { padding: { top: 8, right: 6 } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { title: (it) => it[0].label, label: (c) => ['Day: ' + dcMoney(days[c.dataIndex].net), 'Running total: ' + dcMoney(c.parsed.y)] } } },
+        scales: {
+          x: { ticks: { color: '#64748b', font: { size: 10 }, maxTicksLimit: 7, autoSkip: true }, grid: { display: false } },
+          y: { ticks: { color: '#64748b', font: { size: 10 }, callback: (v) => (v < 0 ? '−' : '') + (Math.abs(v) >= 100000 ? (Math.abs(v) / 100000).toFixed(1) + 'L' : Math.abs(v) >= 1000 ? Math.round(Math.abs(v) / 1000) + 'k' : Math.abs(v)) }, grid: { color: (c) => c.tick && c.tick.value === 0 ? '#94a3b8' : 'rgba(148,163,184,0.25)' } }
+        }
+      }
+    });
+  }
+  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('#dc-box .dc-btn'); if (!b) return; dcRange = +b.getAttribute('data-dc'); try { renderDayCurve(); } catch (er) { /* cosmetic */ } });
   function renderMonthlySummary() {
+    try { renderDayCurve(); } catch (e) { /* the graph is optional */ }
     const trades = tjLoad();
     if (trades.length === 0) {
       if (monthlyChart) { monthlyChart.destroy(); monthlyChart = null; }
