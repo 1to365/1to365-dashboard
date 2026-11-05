@@ -2531,6 +2531,7 @@
   const EC_IDX_ZONE = { NIFTY: 'nifty-zone', BANKNIFTY: 'banknifty-zone', SENSEX: 'sensex-zone' };
   const EC_RANGE_START = 9 * 60 + 15, EC_RANGE_END = 10 * 60 + 30, EC_NO_TRADE_FROM = 13 * 60, EC_LAST_ENTRY = 15 * 60;
   const EC_CHOP_FLIPS = 2, EC_CHOP_WINDOW_MS = 60 * 60 * 1000;
+  const EC_EARLY_PCT = 0.25; // Early Strong: minimum % move from the open (was 0.35 — loosened 2026-11-05 so strong gap days are not missed)
   const EC_WHIP_FAILS = 2; // Go signals that failed today before the index is locked as a choppy day
   const EC_BAND_5D = 2, EC_BAND_1M = 3.5; // % — inside this band the trend counts as "flat"
   const ecData = {};   // elId -> { candles, trend, prevClose, at }
@@ -2585,7 +2586,9 @@
     const out = { signal, flips, hi: nR >= 2 && !lagging ? hi : null, lo: nR >= 2 && !lagging ? lo : null, rangeTxt, forming, dir: null, since: '', key: '', cls: 'wait', ico: '', text: '', long: '', sub: '', tag: '', exp: null };
     const dn = cs.filter((c, i) => done[i]);
     try { out.exp = ecExpiry(elId, dn); } catch (e) { out.exp = null; }
+    try { const pc = Number(d.prevClose); if (pc > 0 && cs.length) { out.gap = { pct: (cs[0].close / pc - 1) * 100, open: cs[0].close, prev: pc }; } } catch (e) { out.gap = null; }
     if (forming || nR < 2) {
+      try { const er0 = ecEarlyRange(cs, done, nowMin); if (er0 && dn.length) { out.eHi = er0.hi; out.eLo = er0.lo; const lc = dn[dn.length - 1].close; out.ePos = lc > er0.hi ? 'above' : (lc < er0.lo ? 'below' : 'inside'); } } catch (e) { /* optional */ }
       let er = null; try { er = ecEarly(cs, done, nowMin, signal, flips); } catch (e) { er = null; }
       if (er) { out.key = 'early'; out.cls = 'go'; out.dir = er.dir; out.since = er.since; out.ico = '🔥'; out.text = 'Strong ' + er.dir + ' (early). Smaller size.'; out.long = 'Early move: two closes beyond the first 15 minutes, up to ' + Math.abs(er.pct).toFixed(2) + '% from the open, signal agrees, no flips. Use a smaller size.'; return out; }
       out.key = 'forming'; out.ico = '⏳'; out.text = 'Wait. Market is settling.'; out.long = lagging ? 'Waiting for the last opening-range candle (10:25–10:30) to load, so the range is complete. Ignore every flip until then.' : 'Opening range 9:15–10:30 is still forming. Ignore every flip until it ends.'; return out;
@@ -2636,6 +2639,13 @@
     });
     return n;
   }
+  // First-15-minute range (9:15–9:30 closes): shown as provisional "early lines" from 9:30 until the real 10:30 range is ready
+  function ecEarlyRange(cs, done, nowMin) {
+    if (nowMin < 9 * 60 + 30) return null;
+    let hi = -Infinity, lo = Infinity, n = 0;
+    cs.forEach((c, i) => { if (!done[i]) return; const m = ecIstMins(c.time); if (m >= EC_RANGE_START && m < EC_RANGE_START + 15) { hi = Math.max(hi, c.close); lo = Math.min(lo, c.close); n++; } });
+    return n >= 3 ? { hi, lo } : null;
+  }
   // Early Strong (9:40–10:30): 2 closed 5-min candles beyond the first-15-min range, >=0.35% from the open, signal agrees, no flips
   function ecEarly(cs, done, nowMin, signal, flips) {
     if (nowMin < 9 * 60 + 40 || nowMin >= EC_RANGE_END || !signal || flips > 0) return null;
@@ -2644,7 +2654,7 @@
     if (n < 3 || after.length < 2) return null;
     const a = after[after.length - 1], b = after[after.length - 2], open = cs[0].close, mv = (a.close / open - 1) * 100;
     let dir = null;
-    if (a.close > hi && b.close > hi && mv >= 0.35) dir = 'CE'; else if (a.close < lo && b.close < lo && mv <= -0.35) dir = 'PE';
+    if (a.close > hi && b.close > hi && mv >= EC_EARLY_PCT) dir = 'CE'; else if (a.close < lo && b.close < lo && mv <= -EC_EARLY_PCT) dir = 'PE';
     if (!dir || dir !== signal) return null;
     return { dir, pct: mv, since: ecHm(ecIstMins(b.time) + 5) };
   }
@@ -2718,7 +2728,9 @@
       const top = st ? `<span class="ec-st ${st.cls}" title="${st.long.replace(/"/g, '')}"><span class="ec-ico ${icoCls}">${st.ico}</span>${st.text}</span>${st.tag ? ' <span class="ec-tag">' + st.tag + '</span>' : ''}` : `<span class="ec-st wait"><span class="ec-ico ic-wait">${ecMarketHours() ? '⏳' : '😴'}</span>${ecMarketHours() ? 'Loading…' : 'Market closed.'}</span>`;
       const bits = [];
       if (st && st.sub) bits.push('<b style="color:#8a5a00">' + st.sub + '</b>');
-      if (st && st.rangeTxt) bits.push('Range ' + st.rangeTxt);
+      if (st && st.gap && Math.abs(st.gap.pct) >= 0.5) bits.push('<b>Gap ' + (st.gap.pct > 0 ? 'up ' : 'down ') + Math.abs(st.gap.pct).toFixed(1) + '% from yesterday</b>');
+      if (st && st.eHi != null && st.forming) bits.push('Early lines ' + ecN(st.eLo) + '–' + ecN(st.eHi) + ' (first 15 min) · price ' + st.ePos + (st.ePos === 'inside' ? '' : ' · small size only'));
+      if (st && st.rangeTxt && !(st.forming && st.eHi != null)) bits.push('Range ' + st.rangeTxt);
       if (w) bits.push('5d ' + f(w.d5) + (w.m1 != null ? ' · 1m ' + f(w.m1) : '') + (w.dir ? ' · ' + w.dir + ' week' : ''));
       const fl = (fake[elId] || []), last = fl[fl.length - 1];
       const fk = last ? `<div class="ec-fake">↩️ Fake flip${last.dir ? ' ' + last.dir : ''} at ${new Date(last.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} — went back in ${last.mins || 0} min · ${fl.length} today</div>` : '';
@@ -8586,6 +8598,21 @@
               c.setLineDash([]);
               c.fillText(label, xScale.right - 4, yPixel - 4);
             }
+            c.restore();
+          }
+        }, {
+          id: 'earlyRange',
+          afterDraw(chart) {
+            const st = ecStatus[meta.zoneEl];
+            if (!st || st.eHi == null || !st.forming) return;
+            const yScale = chart.scales.y, area = chart.chartArea, c = chart.ctx;
+            c.save(); c.font = '10px -apple-system, Segoe UI, sans-serif'; c.setLineDash([2, 4]); c.lineWidth = 1; c.strokeStyle = '#64748b'; c.fillStyle = '#64748b'; c.textAlign = 'left';
+            [[st.eHi, 'Early high ' + ecN(st.eHi), 11], [st.eLo, 'Early low ' + ecN(st.eLo), -3]].forEach(([v, lbl, dy]) => {
+              const y = yScale.getPixelForValue(v);
+              if (y < area.top || y > area.bottom) return;
+              c.beginPath(); c.moveTo(area.left, y); c.lineTo(area.right, y); c.stroke();
+              c.setLineDash([]); c.fillText(lbl, area.left + 4, y + dy); c.setLineDash([2, 4]);
+            });
             c.restore();
           }
         }, {
