@@ -1801,6 +1801,12 @@
   </div>
 </div>
 
+<!-- ENTRY CHECK (Build A, 2026-11-03; moved ABOVE the live chart 2026-11-06 at admin's request): per index — opening-range status, trend of the week, fake-flip notes. Display only. -->
+<div class="card ec-card" id="ec-card" style="grid-column: 1 / -1;">
+  <div class="ec-head"><span style="display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap;"><span class="ec-title" id="ec-title">🧭 Entry check</span><span class="ec-sub" id="ec-upd" style="margin-top:0;"></span></span><span class="ec-week" id="ec-week"></span></div>
+  <div id="ec-body"><div class="ec-sub">Loading…</div></div>
+</div>
+
 <!-- LIVE INTRADAY CHART -->
 <div class="card" id="live-chart-card" style="grid-column: 1 / -1;">
   <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg> Live Chart <span id="chart-index-label" style="color:var(--muted); font-weight:700; text-transform:none; font-size:0.85em;"></span> <button class="info-icon-btn" data-info="info-chart">?</button> <span id="chart-price-line" style="font-weight:700; text-transform:none; font-size:0.85em;"></span> <span style="display:inline-block; border:1.5px solid var(--border); border-radius:8px; padding:3px 10px; font-size:0.72rem; font-weight:600; color:var(--muted); text-transform:none; vertical-align:middle; white-space:nowrap;">Green = <span style="color:var(--green); font-weight:800;">Call (CE)</span> · Red = <span style="color:var(--red); font-weight:800;">Put (PE)</span></span></h2>
@@ -1809,12 +1815,6 @@
   <div id="chart-wrap" class="hidden" style="position:relative; height:280px;">
     <canvas id="live-chart"></canvas>
   </div>
-</div>
-
-<!-- ENTRY CHECK (Build A, 2026-11-03): per index — opening-range status, trend of the week, fake-flip notes. Display only. -->
-<div class="card ec-card" id="ec-card" style="grid-column: 1 / -1;">
-  <div class="ec-head"><span style="display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap;"><span class="ec-title" id="ec-title">🧭 Entry check</span><span class="ec-sub" id="ec-upd" style="margin-top:0;"></span></span><span class="ec-week" id="ec-week"></span></div>
-  <div id="ec-body"><div class="ec-sub">Loading…</div></div>
 </div>
 
 <!-- MARKET CONTEXT (Build B, 2026-11-04): 2 short lines — global tally + event/big-move flag. Display only. -->
@@ -8203,7 +8203,7 @@
   // actions below — never from updateLiveChart's own 30s auto-refresh — so it scrolls once per
   // selection and doesn't yank the page around on every background price tick.
   function scrollToLiveChart() {
-    const chartCard = document.getElementById('live-chart-card');
+    const chartCard = document.getElementById('ec-card') || document.getElementById('live-chart-card'); // Entry check now sits above the chart: scroll there so both are in view
     if (chartCard) chartCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
