@@ -2567,6 +2567,25 @@
     } catch (e) { /* keep last values */ }
   }
 
+  // "Side holding": price has stayed on ONE side of the opening-range middle for ~45 min with higher lows (CE) / lower highs (PE)
+  // and the Supertrend agrees. Information only — it is never a Go, never alerts, never blocks anything.
+  const EC_HOLD_N = 9;
+  function ecHolding(cs, ts, done, hi, lo, signal) {
+    if (hi == null || lo == null || !isFinite(hi) || !isFinite(lo) || !signal) return null;
+    const idx = []; cs.forEach((c, i) => { if (done[i]) idx.push(i); });
+    if (idx.length < EC_HOLD_N) return null;
+    const w = idx.slice(-EC_HOLD_N), mid = (hi + lo) / 2, tol = mid * 0.0002;
+    const cl = w.map(i => cs[i].close);
+    const ce = signal === 'CE';
+    if (!(ce ? cl.every(x => x > mid) : cl.every(x => x < mid))) return null;
+    const tr = w.slice(-6).map(i => ts[i]); const want = ce ? 1 : -1;
+    if (!tr.every(x => x === want)) return null;
+    const ch = [cl.slice(0, 3), cl.slice(3, 6), cl.slice(6, 9)];
+    const ext = ch.map(a => ce ? Math.min.apply(null, a) : Math.max.apply(null, a));
+    const ok = ce ? (ext[1] >= ext[0] - tol && ext[2] >= ext[1] - tol) : (ext[1] <= ext[0] + tol && ext[2] <= ext[1] + tol);
+    if (!ok) return null;
+    return { dir: signal, mins: EC_HOLD_N * 5, mid, floor: ext[2] };
+  }
   function ecCompute(elId) {
     const d = ecData[elId];
     if (!d || !d.candles.length || !ecMarketHours()) return null;
@@ -2611,6 +2630,7 @@
     out.dir = lastSide === 1 ? 'CE' : (lastSide === -1 ? 'PE' : null);
     const w = ecWeek[elId], counter = !!(out.dir && w && w.dir && w.dir !== out.dir);
     if (nowMin >= EC_LAST_ENTRY) { out.key = 'late'; out.cls = 'wait'; out.ico = '🌙'; out.text = 'Too late for new entries.'; out.long = 'No new entries after 3:00 pm.'; return out; }
+    try { out.hold = ecHolding(cs, ts, done, hi, lo, signal); } catch (e) { out.hold = null; }
     try { out.fails = ecFailedGos(cs, ts, done, hi, lo); } catch (e) { out.fails = 0; }
     if (out.fails >= EC_WHIP_FAILS) { out.key = 'whipsaw'; out.cls = 'warn'; out.ico = '🌀'; out.text = 'Choppy day. Skip.'; out.sub = out.fails + ' Go signals failed today.'; out.long = out.fails + ' Go signals have already failed today — a whipsaw day. No new entries for the rest of today.'; return out; }
     if (flips >= EC_CHOP_FLIPS) { out.key = 'chop'; out.cls = 'warn'; out.ico = '🌀'; out.text = 'Choppy. Skip it.'; out.long = flips + ' flips in the last hour — treat as a choppy day, do not trade flips.'; return out; }
@@ -2742,8 +2762,9 @@
       if (w) bits.push('5d ' + f(w.d5) + (w.m1 != null ? ' · 1m ' + f(w.m1) : '') + (w.dir ? ' · ' + w.dir + ' week' : ''));
       const fl = (fake[elId] || []), nowMs = Date.now(), recentFl = fl.filter(x => nowMs - x.at <= 30 * 60000 && !(st && st.signal && x.dir === st.signal && nowMs - x.at > 5 * 60000)), last = recentFl[recentFl.length - 1];
       const fk = last ? `<div class="ec-fake">↩️ Fake flip${last.dir ? ' ' + last.dir : ''} at ${new Date(last.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} — went back in ${last.mins || 0} min</div>` : '';
+      const hd = (st && st.hold && !st.exp && ['inside', 'notrade', 'fake', 'mismatch'].indexOf(st.key) >= 0) ? '<div class="ec-sub"><b style="color:' + (st.hold.dir === 'CE' ? '#15803d' : '#b91c1c') + '">' + (st.hold.dir === 'CE' ? '📈 CE holding' : '📉 PE holding') + ' for ' + st.hold.mins + ' min (' + (st.hold.dir === 'CE' ? 'above' : 'below') + ' the range middle ' + ecN(st.hold.mid) + ', ' + (st.hold.dir === 'CE' ? 'higher lows' : 'lower highs') + '). Not a Go. Small size, ' + (st.hold.dir === 'CE' ? 'buy dips only' : 'buy PE on bounces only') + '.</b></div>' : '';
       const wt = st && st.watch ? '<div class="ec-sub"><b style="color:#b45309">👁 ' + st.watch + '</b></div>' : '';
-      return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span>${top}</div>${bits.length ? '<div class="ec-sub">' + bits.join(' · ') + '</div>' : ''}${wt}${fk}</div>`;
+      return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span>${top}</div>${bits.length ? '<div class="ec-sub">' + bits.join(' · ') + '</div>' : ''}${wt}${hd}${fk}</div>`;
     }).join('');
     try { // when the candles behind this card were last fetched (turns amber if the feed is late)
       const ue = document.getElementById('ec-upd'), dd = selZ ? ecData[selZ] : null;
