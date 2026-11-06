@@ -599,6 +599,13 @@
   .op-qwarn.hidden { display: none; }
   .op-qwarn.bad { background: var(--red-soft); color: var(--red); }
   /* ===== MARKET CONTEXT + DISCIPLINE (Build B, 2026-11-04) ===== */
+  .ps-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .mc-dotbtn { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 6px 4px; cursor: pointer; font-family: inherit; color: var(--muted); font-size: 0.7rem; font-weight: 700; }
+  .mc-bigdot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #9ca3af; box-shadow: 0 0 0 2px var(--panel), 0 0 0 3px var(--border); }
+  .mc-bigdot.ce { background: #16a34a; } .mc-bigdot.pe { background: #dc2626; }
+  .mc-bigdot.pulse.ce { animation: mcDotCe 1.2s ease-out infinite; } .mc-bigdot.pulse.pe { animation: mcDotPe 1.2s ease-out infinite; }
+  .mc-card.mc-pop { position: fixed; left: 50%; right: auto; transform: translateX(-50%); width: calc(100% - 24px); box-sizing: border-box; top: 72px; z-index: 5000; max-width: 560px; margin: 0; box-shadow: 0 10px 30px rgba(0,0,0,.28); }
+  .mc-note { margin-top: 6px; font-size: 0.7rem; font-weight: 700; color: var(--muted); }
   .mc-card { padding: 9px 14px; }
   .mc-card.hidden, .rk-card.hidden { display: none; }
   .mc-card.strong { border-color: #f59e0b; }
@@ -1769,7 +1776,7 @@
       <div id="sensex-expiry-tag" class="expiry-tag"></div>
     </div>
   </div>
-  <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin-top:8px;">Loading prices...</p>
+  <div class="ps-row"><p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin:0;">Loading prices...</p><button type="button" class="mc-dotbtn" id="mc-dot" aria-label="Global markets: tap for details" title="Global markets — tap for details"><span class="mc-gl">Global</span><i class="mc-bigdot none"></i></button></div>
 
   <!-- Google Finance links, one per index, in their own row well below the tiles above so
        there's no overlap with the tile's own tap-to-open-chart area. -->
@@ -1818,10 +1825,11 @@
 </div>
 
 <!-- MARKET CONTEXT (Build B, 2026-11-04): 2 short lines — global tally + event/big-move flag. Display only. -->
-<div class="card mc-card hidden" id="mc-card" style="grid-column: 1 / -1;">
+<div class="card mc-card mc-pop hidden" id="mc-card" style="grid-column: 1 / -1;">
   <div class="mc-l1" id="mc-l1"></div>
   <div class="mc-nums" id="mc-nums"></div>
   <div class="mc-l2 hidden" id="mc-l2"></div>
+  <div class="mc-note">Information only — the Entry check decides entries. Tap outside to close.</div>
 </div>
 
 <!-- PICK MY LEAD (Build F, 2026-11-05): OPTIONAL — option-chain screenshot → best strikes on the strong side. Admin only. -->
@@ -2732,8 +2740,8 @@
       if (st && st.eHi != null && st.forming) bits.push('Early lines ' + ecN(st.eLo) + '–' + ecN(st.eHi) + ' (first 15 min) · price ' + st.ePos + (st.ePos === 'inside' ? '' : ' · small size only'));
       if (st && st.rangeTxt && !(st.forming && st.eHi != null)) bits.push('Range ' + st.rangeTxt);
       if (w) bits.push('5d ' + f(w.d5) + (w.m1 != null ? ' · 1m ' + f(w.m1) : '') + (w.dir ? ' · ' + w.dir + ' week' : ''));
-      const fl = (fake[elId] || []), last = fl[fl.length - 1];
-      const fk = last ? `<div class="ec-fake">↩️ Fake flip${last.dir ? ' ' + last.dir : ''} at ${new Date(last.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} — went back in ${last.mins || 0} min · ${fl.length} today</div>` : '';
+      const fl = (fake[elId] || []), nowMs = Date.now(), recentFl = fl.filter(x => nowMs - x.at <= 30 * 60000 && !(st && st.signal && x.dir === st.signal && nowMs - x.at > 5 * 60000)), last = recentFl[recentFl.length - 1];
+      const fk = last ? `<div class="ec-fake">↩️ Fake flip${last.dir ? ' ' + last.dir : ''} at ${new Date(last.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} — went back in ${last.mins || 0} min</div>` : '';
       const wt = st && st.watch ? '<div class="ec-sub"><b style="color:#b45309">👁 ' + st.watch + '</b></div>' : '';
       return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span>${top}</div>${bits.length ? '<div class="ec-sub">' + bits.join(' · ') + '</div>' : ''}${wt}${fk}</div>`;
     }).join('');
@@ -3697,19 +3705,21 @@
     const card = document.getElementById('mc-card'); if (!card) return;
     const s = mcWindow() ? mcCompute() : null;
     mcState = s;
-    if (!s) { card.classList.add('hidden'); return; }
+    try { const bd = document.querySelector('#mc-dot .mc-bigdot'); if (bd) { bd.className = 'mc-bigdot ' + (s && s.lean === 'CE' ? 'ce' : (s && s.lean === 'PE' ? 'pe' : 'none')) + (s && s.strong && s.lean ? ' pulse' : ''); const db = document.getElementById('mc-dot'); if (db) db.title = s ? (s.lean === 'CE' ? 'Global markets support CE — tap for details' : (s.lean === 'PE' ? 'Global markets support PE — tap for details' : 'Global markets are split — tap for details')) : 'Global data not available now'; } } catch (e) { /* dot is cosmetic */ }
+    if (!mcPopOpen) { card.classList.add('hidden'); return; }
+    if (!s) { card.classList.remove('hidden'); card.classList.remove('strong'); document.getElementById('mc-l1').className = 'mc-l1 mix'; document.getElementById('mc-l1').innerHTML = '<span class="mc-ico">🌍</span><span>Global data is not available right now.</span>'; document.getElementById('mc-nums').innerHTML = ''; document.getElementById('mc-l2').classList.add('hidden'); return; }
     card.classList.remove('hidden'); card.classList.toggle('strong', s.strong);
     const l1 = document.getElementById('mc-l1');
     const txt = s.lean === 'CE' ? 'Global: ' + s.n + ' of ' + s.M + ' positive → supports CE'
       : (s.lean === 'PE' ? 'Global: ' + s.n + ' of ' + s.M + ' negative → supports PE' : 'Global: split (' + s.pos + ' up, ' + s.neg + ' down) · ignore, follow Entry check');
     const sig = s.reasons.map(r => r.key).join(',') + '|' + s.evl.map(e => e.label + (e.bias.side || '') + (e.bias.strong ? 'S' : '')).join(',');
     mcSig = sig;
-    const co = mcColLoad(), collapsed = !!(co.c && co.day === todayIstKey() && co.sig === sig);
-    card.classList.toggle('mc-collapsed', collapsed);
+    const collapsed = false; // the details always show in the popover
+    card.classList.toggle('mc-collapsed', false);
     const e0 = s.evl.find(e => e.bias.side) || s.evl[0];
     const miniDot = e0 ? '<i class="mc-dot ' + (e0.bias.side ? (e0.bias.side === 'CE' ? 'ce' : 'pe') + ' pulse' : 'none') + '"></i>' : '';
     l1.className = 'mc-l1 ' + (s.lean === 'CE' ? 'ce' : (s.lean === 'PE' ? 'pe' : 'mix'));
-    l1.innerHTML = '<span class="mc-ico' + (s.strong ? ' pulse' : '') + '" title="Market context">🌍</span>' + miniDot + '<span>' + mcEsc(txt) + '</span><span class="mc-tog" aria-hidden="true">' + (collapsed ? '▸' : '▾') + '</span>';
+    l1.innerHTML = '<span class="mc-ico' + (s.strong ? ' pulse' : '') + '" title="Market context">🌍</span>' + miniDot + '<span>' + mcEsc(txt) + '</span><span class="mc-tog" aria-hidden="true">' + '' + '</span>';
     document.getElementById('mc-nums').innerHTML = s.rows.map(r => {
       const nm = r.it.k === 'Dollar' ? 'USD' : (r.it.k === 'HangSeng' ? 'HSI' : r.it.k);
       return '<span class="' + (r.v > 0 ? 'g' : (r.v < 0 ? 'r' : '')) + '">' + mcEsc(nm) + ' ' + (r.chg >= 0 ? '+' : '−') + Math.abs(r.chg).toFixed(1) + '</span>';
@@ -3723,13 +3733,13 @@
   var mcSig = '';
   const MC_COL_KEY = 'signa365_mc_col';
   function mcColLoad() { try { return JSON.parse(localStorage.getItem(MC_COL_KEY)) || {}; } catch (e) { return {}; } }
-  (function mcColWire() {
-    const l1 = document.getElementById('mc-l1'); if (!l1) return;
-    l1.addEventListener('click', () => {
-      const co = mcColLoad(), cur = !!(co.c && co.day === todayIstKey() && co.sig === mcSig);
-      try { localStorage.setItem(MC_COL_KEY, JSON.stringify({ day: todayIstKey(), sig: mcSig, c: !cur })); } catch (e) { /* per-device convenience only */ }
-      mcRender();
-    });
+  var mcPopOpen = false;
+  (function mcDotWire() {
+    const dot = document.getElementById('mc-dot'), card = document.getElementById('mc-card'); if (!dot || !card) return;
+    try { document.body.appendChild(card); } catch (e) { /* the pop-up sits on the page itself so the sliding pages cannot move it */ }
+    dot.addEventListener('click', (e) => { e.stopPropagation(); mcPopOpen = !mcPopOpen; try { mcRender(); } catch (er) { /* cosmetic */ } });
+    document.addEventListener('click', (e) => { if (!mcPopOpen) return; if (e.target.closest && (e.target.closest('#mc-card') || e.target.closest('#mc-dot'))) return; mcPopOpen = false; try { mcRender(); } catch (er) { /* cosmetic */ } });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && mcPopOpen) { mcPopOpen = false; try { mcRender(); } catch (er) { /* cosmetic */ } } });
   })();
   async function mcNudge(s) {
     try {
