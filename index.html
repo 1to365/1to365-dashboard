@@ -604,6 +604,12 @@
   .mc-bigdot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #9ca3af; box-shadow: 0 0 0 2px var(--panel), 0 0 0 3px var(--border); }
   .mc-bigdot.ce { background: #16a34a; } .mc-bigdot.pe { background: #dc2626; }
   .mc-bigdot.pulse.ce { animation: mcDotCe 1.2s ease-out infinite; } .mc-bigdot.pulse.pe { animation: mcDotPe 1.2s ease-out infinite; }
+  .ec-big { border-radius: 12px; padding: 12px 14px; font-weight: 800; font-size: 1.25rem; line-height: 1.15; margin-top: 8px; }
+  .ec-big.full.ce { background: #dcfce7; color: #166534; } .ec-big.full.pe { background: #fee2e2; color: #991b1b; }
+  .ec-big.start { background: #fef9c3; color: #854d0e; } .ec-big.wait { background: #f1f5f9; color: #475569; } .ec-big.out { background: #fee2e2; color: #991b1b; }
+  .ec-line { font-size: 0.9rem; margin-top: 7px; color: #1f2937; line-height: 1.35; }
+  .ec-whybtn { background: none; border: none; color: #2563eb; font-size: 0.78rem; font-weight: 700; padding: 6px 0 2px; cursor: pointer; }
+  .ec-whybox { font-size: 0.78rem; color: #64748b; line-height: 1.45; margin-top: 2px; } .ec-whybox.hidden { display: none; }
   .mc-card.mc-pop { position: fixed; left: 50%; right: auto; transform: translateX(-50%); width: calc(100% - 24px); box-sizing: border-box; top: 72px; z-index: 5000; max-width: 560px; margin: 0; box-shadow: 0 10px 30px rgba(0,0,0,.28); }
   .mc-note { margin-top: 6px; font-size: 0.7rem; font-weight: 700; color: var(--muted); }
   .mc-card { padding: 9px 14px; }
@@ -1776,7 +1782,7 @@
       <div id="sensex-expiry-tag" class="expiry-tag"></div>
     </div>
   </div>
-  <div class="ps-row"><p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin:0;">Loading prices...</p><button type="button" class="mc-dotbtn" id="mc-dot" aria-label="Global markets: tap for details" title="Global markets — tap for details"><span class="mc-gl">Global</span><i class="mc-bigdot none"></i></button></div>
+  <p id="price-status" style="text-align:center; color:var(--muted); font-size:0.85rem; margin:0;">Loading prices...</p>
 
   <!-- Google Finance links, one per index, in their own row well below the tiles above so
        there's no overlap with the tile's own tap-to-open-chart area. -->
@@ -1824,13 +1830,6 @@
   </div>
 </div>
 
-<!-- MARKET CONTEXT (Build B, 2026-11-04): 2 short lines — global tally + event/big-move flag. Display only. -->
-<div class="card mc-card mc-pop hidden" id="mc-card" style="grid-column: 1 / -1;">
-  <div class="mc-l1" id="mc-l1"></div>
-  <div class="mc-nums" id="mc-nums"></div>
-  <div class="mc-l2 hidden" id="mc-l2"></div>
-  <div class="mc-note">Information only — the Entry check decides entries. Tap outside to close.</div>
-</div>
 
 <!-- PICK MY LEAD (Build F, 2026-11-05): OPTIONAL — option-chain screenshot → best strikes on the strong side. Admin only. -->
 <div class="card pk-card hidden" id="pk-card" style="grid-column: 1 / -1;">
@@ -2501,14 +2500,15 @@
         badgeEl.className = "badge";
         badgeEl.style.background = isCE ? "var(--green-soft)" : "var(--red-soft)";
         badgeEl.style.color = isCE ? "var(--green)" : "var(--red)";
-        badgeEl.textContent = `${label}${icon}`;
+        badgeEl.textContent = direction;
 
         // FEATURE (2026-09-03): signal duration, shown as a small muted line under the badge —
         // "held Xm" so admin can see conviction at a glance instead of guessing. `duration` is a
         // count of consecutive 5-min candles (5m interval), so minutes = *5.
         const durationEl = document.getElementById(durationElIds[elId]);
-        if (durationEl) durationEl.textContent = duration > 0 ? `held ${duration * 5}m` : '';
+        if (durationEl) durationEl.textContent = '';
 
+        try { ecTileBadges(); } catch (e2) { /* Entry check not ready yet */ }
         currentDirection[elId] = direction;
         currentStrength[elId] = strength;
         currentZoneLevel[elId] = line;
@@ -2574,17 +2574,18 @@
     if (hi == null || lo == null || !isFinite(hi) || !isFinite(lo) || !signal) return null;
     const idx = []; cs.forEach((c, i) => { if (done[i]) idx.push(i); });
     if (idx.length < EC_HOLD_N) return null;
-    const w = idx.slice(-EC_HOLD_N), mid = (hi + lo) / 2, tol = mid * 0.0002;
+    const w = idx.slice(-EC_HOLD_N), mid = (hi + lo) / 2, tol = Math.max(mid * 0.0002, (hi - lo) * 0.15), cush = (hi - lo) * 0.10; // small cushions: 10% of the range width under the middle, 15% for a pullback in the lows
     const cl = w.map(i => cs[i].close);
     const ce = signal === 'CE';
-    if (!(ce ? cl.every(x => x > mid) : cl.every(x => x < mid))) return null;
+    const lvl = ce ? mid - cush : mid + cush;
+    if (!(ce ? cl.every(x => x > lvl) : cl.every(x => x < lvl))) return null;
     const tr = w.slice(-6).map(i => ts[i]); const want = ce ? 1 : -1;
     if (!tr.every(x => x === want)) return null;
     const ch = [cl.slice(0, 3), cl.slice(3, 6), cl.slice(6, 9)];
     const ext = ch.map(a => ce ? Math.min.apply(null, a) : Math.max.apply(null, a));
     const ok = ce ? (ext[1] >= ext[0] - tol && ext[2] >= ext[1] - tol) : (ext[1] <= ext[0] + tol && ext[2] <= ext[1] + tol);
     if (!ok) return null;
-    return { dir: signal, mins: EC_HOLD_N * 5, mid, floor: ext[2] };
+    return { dir: signal, mins: EC_HOLD_N * 5, mid, lvl, floor: ext[2] };
   }
   // "Today's side": which side is the ONLY one worth trading today. Information only — never blocks, never alerts.
   // CE day = Supertrend CE on every reading since 10:00, price above yesterday's close AND above the range middle, week CE (PE day = mirror).
@@ -2753,6 +2754,40 @@
   // ---- render the Entry check card ----
   // which index is on the live chart right now (null = none selected)
   function ecSelZone() { try { return lastSpotKey ? spotIndexMeta[lastSpotKey].zoneEl : null; } catch (e) { return null; } }
+  // ---- ONE clear status per index (Build Z): 🟢/🔴 FULL SIZE (Go) · 🟡 SMALL SIZE (early / first close / holding) · ⚪ WAIT · ⛔ STAY OUT ----
+  const ecWhyOpen = {};
+  function ecAct(st) {
+    if (!st) return null;
+    const D = (d) => d === 'CE' ? '🟢 CE' : '🔴 PE', pe = (d) => d === 'PE' ? ' pe' : ' ce';
+    const small = (d, line) => ({ cls: 'start', dir: d, head: D(d) + ' · SMALL SIZE', line, tile: D(d) + ' SMALL' });
+    const k = st.key;
+    if (k === 'go') return { cls: 'full' + pe(st.dir), dir: st.dir, head: D(st.dir) + ' · FULL SIZE', line: st.text + (st.sub ? ' ' + st.sub : '') + (st.fast ? ' Fast move. Don\'t chase, wait for a small dip.' : ''), tile: D(st.dir) + ' FULL' };
+    if (k === 'early') return small(st.dir, st.text);
+    if (k === 'confirm') return small(st.dir, 'First close ' + (st.dir === 'CE' ? 'above' : 'below') + ' the morning range. One more close makes it a Go.');
+    if (k === 'whipsaw') return { cls: 'out', head: '⛔ STAY OUT', line: st.text + (st.sub ? ' ' + st.sub : ''), tile: '⛔ STAY OUT' };
+    if (k === 'chop') return { cls: 'out', head: '⛔ STAY OUT', line: 'Choppy. The trend keeps flipping. Skip it.', tile: '⛔ STAY OUT' };
+    if (k === 'late') return { cls: 'out', head: '⛔ STAY OUT', line: st.text, tile: '⛔ STAY OUT' };
+    if (st.hold && (k === 'inside' || k === 'notrade' || k === 'fake' || k === 'mismatch')) {
+      const ce = st.hold.dir === 'CE';
+      return small(st.hold.dir, st.hold.dir + ' is holding ' + (ce ? 'above ' : 'below ') + ecN(st.hold.lvl) + '. Buy ' + (ce ? 'dips' : 'PE on bounces') + ' only. Not a Go yet.');
+    }
+    if (k === 'notrade') return { cls: 'out', head: '⛔ STAY OUT', line: 'No trade today. Nothing closed outside the morning range by 1 pm.', tile: '⛔ STAY OUT' };
+    let line = st.text;
+    if (k === 'inside' && st.side && st.side.side) line = st.side.side + ' day. Don\'t buy ' + (st.side.side === 'CE' ? 'PE' : 'CE') + ' today. Wait for a dip or a Go.';
+    return { cls: 'wait', head: '⚪ WAIT', line, tile: '⚪ WAIT' };
+  }
+  function ecTileBadges() {
+    try {
+      EC_ZONES.forEach(z => {
+        const el = document.getElementById(badgeIds[z]); if (!el) return;
+        const st = ecStatus[z], a = st && !st.exp ? ecAct(st) : null;
+        if (!a) return;
+        const sty = { 'full ce': ['var(--green-soft)', 'var(--green)'], 'full pe': ['var(--red-soft)', 'var(--red)'], start: ['#fef9c3', '#854d0e'], wait: ['#f1f5f9', '#475569'], out: ['var(--red-soft)', 'var(--red)'] }[a.cls] || ['#f1f5f9', '#475569'];
+        el.textContent = a.tile; el.style.background = sty[0]; el.style.color = sty[1];
+      });
+    } catch (e) { /* cosmetic */ }
+  }
+  document.addEventListener('click', (e) => { try { const b = e.target && e.target.closest && e.target.closest('[data-ec-why]'); if (!b) return; const z = b.getAttribute('data-ec-why'); ecWhyOpen[z] = !ecWhyOpen[z]; ecRender(); } catch (er) { /* cosmetic */ } });
   function ecRender() {
     const body = document.getElementById('ec-body'); if (!body) return;
     const fake = ecFakeLoad().items;
@@ -2766,20 +2801,18 @@
         const line = x.quiet ? 'EXPIRY · Quiet. Waiting for a move.' : 'EXPIRY · Moving ' + x.dir + ': ' + (x.pts > 0 ? '+' : '−') + Math.abs(x.pts) + ' pts in 15 min';
         return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span><span class="ec-st exp ${x.quiet ? 'wait' : (up ? 'go' : 'bad')}"><i class="mc-dot ${x.quiet ? 'none' : (up ? 'ce' : 'pe') + ' pulse'}"></i>${line}</span></div></div>`;
       }
-      const icoCls = !st ? 'ic-wait' : ({ go: st.dir === 'PE' ? 'ic-pe' : 'ic-ce', early: 'ic-hot', chop: 'ic-chop', mismatch: 'ic-mix', fake: 'ic-fake', notrade: 'ic-stop' }[st.key] || 'ic-wait');
-      const top = st ? `<span class="ec-st ${st.cls}" title="${st.long.replace(/"/g, '')}"><span class="ec-ico ${icoCls}">${st.ico}</span>${st.text}</span>${st.tag ? ' <span class="ec-tag">' + st.tag + '</span>' : ''}` : `<span class="ec-st wait"><span class="ec-ico ic-wait">${ecMarketHours() ? '⏳' : '😴'}</span>${ecMarketHours() ? 'Loading…' : 'Market closed.'}</span>`;
-      const bits = [];
-      if (st && st.sub) bits.push('<b style="color:#8a5a00">' + st.sub + '</b>');
-      if (st && st.gap && Math.abs(st.gap.pct) >= 0.5) bits.push('<b>Gap ' + (st.gap.pct > 0 ? 'up ' : 'down ') + Math.abs(st.gap.pct).toFixed(1) + '% from yesterday</b>');
-      if (st && st.eHi != null && st.forming) bits.push('Early lines ' + ecN(st.eLo) + '–' + ecN(st.eHi) + ' (first 15 min) · price ' + st.ePos + (st.ePos === 'inside' ? '' : ' · small size only'));
-      if (st && st.rangeTxt && !(st.forming && st.eHi != null)) bits.push('Range ' + st.rangeTxt);
-      if (w) bits.push('5d ' + f(w.d5) + (w.m1 != null ? ' · 1m ' + f(w.m1) : '') + (w.dir ? ' · ' + w.dir + ' week' : ''));
-      const fl = (fake[elId] || []), nowMs = Date.now(), recentFl = fl.filter(x => nowMs - x.at <= 30 * 60000 && !(st && st.signal && x.dir === st.signal && nowMs - x.at > 5 * 60000)), last = recentFl[recentFl.length - 1];
-      const fk = last ? `<div class="ec-fake">↩️ Fake flip${last.dir ? ' ' + last.dir : ''} at ${new Date(last.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} — went back in ${last.mins || 0} min</div>` : '';
-      const sd = (st && st.side && !st.exp && st.key !== 'forming' && st.key !== 'late') ? (st.side.side ? '<div class="ec-sub"><b style="color:' + (st.side.side === 'CE' ? '#15803d' : '#b91c1c') + '">' + (st.side.side === 'CE' ? '📈 CE day. PE not advised today.' : '📉 PE day. CE not advised today.') + '</b> <span style="opacity:.8">Supertrend ' + st.side.side + ' since 10:00, ' + (st.side.side === 'CE' ? 'above' : 'below') + ' yesterday\'s close and the range middle, ' + st.side.side + ' week.</span></div>' : '<div class="ec-sub" style="opacity:.75">No clear side today. Follow the Entry check.</div>') : '';
-      const hd = (st && st.hold && !st.exp && ['inside', 'notrade', 'fake', 'mismatch'].indexOf(st.key) >= 0) ? '<div class="ec-sub"><b style="color:' + (st.hold.dir === 'CE' ? '#15803d' : '#b91c1c') + '">' + (st.hold.dir === 'CE' ? '📈 CE holding' : '📉 PE holding') + ' for ' + st.hold.mins + ' min (' + (st.hold.dir === 'CE' ? 'above' : 'below') + ' the range middle ' + ecN(st.hold.mid) + ', ' + (st.hold.dir === 'CE' ? 'higher lows' : 'lower highs') + '). Not a Go. Small size, ' + (st.hold.dir === 'CE' ? 'buy dips only' : 'buy PE on bounces only') + '.</b></div>' : '';
-      const wt = st && st.watch ? '<div class="ec-sub"><b style="color:#b45309">👁 ' + st.watch + '</b></div>' : '';
-      return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span>${top}</div>${bits.length ? '<div class="ec-sub">' + bits.join(' · ') + '</div>' : ''}${sd}${wt}${hd}${fk}</div>`;
+      const act = ecAct(st);
+      if (!act) return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span><span class="ec-st wait"><span class="ec-ico ic-wait">${ecMarketHours() ? '⏳' : '😴'}</span>${ecMarketHours() ? 'Loading…' : 'Market closed.'}</span></div></div>`;
+      const why = [];
+      if (st.eHi != null && st.forming) why.push('First 15 minutes range: ' + ecN(st.eLo) + '–' + ecN(st.eHi) + ' · price is ' + st.ePos + (st.ePos === 'inside' ? '' : ' · small size only') + '.');
+      else if (st.rangeTxt) why.push('Morning range (9:15–10:30): ' + st.rangeTxt + '.');
+      if (st.signal) why.push('Trend is ' + st.signal + (w && w.dir ? ' · the week is ' + w.dir : '') + '.');
+      if (st.sub) why.push(st.sub);
+      if (st.watch) why.push(st.watch);
+      if (st.gap && Math.abs(st.gap.pct) >= 0.5) why.push('Opened ' + (st.gap.pct > 0 ? 'up ' : 'down ') + Math.abs(st.gap.pct).toFixed(1) + '% from yesterday.');
+      if (st.side) why.push(st.side.side ? 'Today looks like a ' + st.side.side + ' day.' : 'No clear side today.');
+      const open = !!ecWhyOpen[elId];
+      return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span></div><div class="ec-big ${act.cls}">${act.head}</div><div class="ec-line">${act.line}</div><button type="button" class="ec-whybtn" data-ec-why="${elId}">${open ? 'Hide details' : 'Why?'}</button><div class="ec-whybox${open ? '' : ' hidden'}">${why.map(x => '<div>' + x + '</div>').join('')}</div></div>`;
     }).join('');
     try { // when the candles behind this card were last fetched (turns amber if the feed is late)
       const ue = document.getElementById('ec-upd'), dd = selZ ? ecData[selZ] : null;
@@ -2788,15 +2821,8 @@
         else ue.textContent = '';
       }
     } catch (e) { /* cosmetic */ }
-    const wk = document.getElementById('ec-week');
-    if (wk) {
-      const dirs = EC_ZONES.map(z => ecWeek[z] && ecWeek[z].dir).filter(Boolean), have = EC_ZONES.filter(z => ecWeek[z]).length;
-      const ce = dirs.filter(d => d === 'CE').length, pe = dirs.filter(d => d === 'PE').length;
-      if (!have) { wk.textContent = ''; wk.className = 'ec-week'; }
-      else if (ce >= 2) { wk.textContent = 'Trend week: CE bias (' + ce + ' of ' + have + ')'; wk.className = 'ec-week ce'; }
-      else if (pe >= 2) { wk.textContent = 'Trend week: PE bias (' + pe + ' of ' + have + ')'; wk.className = 'ec-week pe'; }
-      else { wk.textContent = 'No clear weekly trend'; wk.className = 'ec-week mix'; }
-    }
+    const wk = document.getElementById('ec-week'); if (wk) { wk.textContent = ''; wk.className = 'ec-week'; }
+    ecTileBadges();
   }
   async function ecTick() {
     if (ecMarketHours()) await Promise.all(EC_ZONES.map(ecFetchCandles));
@@ -2829,7 +2855,6 @@
         else if (st.key === 'confirm') parts.push('👀 first close outside — wait for one more');
         else if (st.key === 'mismatch') parts.push('🚦 mixed signals');
       }
-      if (mcState && mcState.lean) parts.push(mcState.lean === dir ? '🌍 world says ' + dir : '⚠️ world says ' + mcState.lean);
       return parts.join(' · ');
     } catch (e) { return ''; }
   }
@@ -2981,7 +3006,6 @@
       if (st.dir && st.dir !== ty && st.dir !== st.signal && (st.key === 'go' || st.key === 'mismatch' || st.key === 'early')) L.push('🚦 ' + idx + ' is moving ' + st.dir + '. You picked ' + ty + '.');
     }
     if (w && w.dir && w.dir !== ty) L.push('⚠️ Against the week (' + w.dir + '). You picked ' + ty + '.');
-    try { if (mcState && mcState.lean && mcState.lean !== ty) L.push('🌍 World says ' + mcState.lean + '. You picked ' + ty + '.'); } catch (e) { /* context is optional */ }
     if (!L.length && st && st.key === 'early' && st.dir === ty) return { html: '🔥 Strong ' + ty + ' (early). Smaller size.', good: true };
     if (!L.length && st && st.key === 'go' && st.dir === ty) return { html: (ty === 'CE' ? '🚀' : '🪂') + ' ' + idx + ' ' + ty + ': go, since ' + st.since + '.', good: true };
     return { html: L.slice(0, 3).join('<br>'), good: false };
@@ -3337,7 +3361,6 @@
     } else { res.head = st.ico + ' ' + st.text + ' No pick now.'; return res; }
     res.side = side; res.cls = res.notes.some(n => /Careful|old|break|decay/.test(n)) ? 'care' : 'ok';
     try {
-      if (mcState && mcState.lean) res.notes.push(mcState.lean === side ? '🌍 World says ' + side + '.' : '⚠️ World says ' + mcState.lean + ' (other way).');
       const ev = mcState && (mcState.evl || []).find(e => e.bias && e.bias.side);
       if (ev) res.notes.push('📅 ' + ev.label + ': ' + (ev.bias.strong ? 'Strong ' : 'Bias ') + ev.bias.side + '.');
     } catch (e) { /* optional */ }
@@ -3794,6 +3817,7 @@
     } catch (e) { /* nudge is best-effort */ }
   }
   async function mcTick() {
+    return; // Global markets feature removed (Build Z): it misled more than it helped
     try {
       if (!mcWindow()) { mcRender(); return; }
       await Promise.all(MC_ITEMS.map(mcFetchOne));
@@ -8301,9 +8325,9 @@
     if (zoneLevel == null || !direction) {
       levelLine = `<span style="color:var(--muted);">Flip level: — (no live signal yet)</span>`;
     } else if (direction === "PE") {
-      levelLine = `<span style="color:var(--green);">🟢 Flips to CE above: ${zoneLevel.toLocaleString('en-IN')}</span>`;
+      levelLine = `<span style="color:var(--green);">🟢 Trend turns CE above: ${zoneLevel.toLocaleString('en-IN')}</span>`;
     } else {
-      levelLine = `<span style="color:var(--red);">🔴 Flips to PE below: ${zoneLevel.toLocaleString('en-IN')}</span>`;
+      levelLine = `<span style="color:var(--red);">🔴 Trend turns PE below: ${zoneLevel.toLocaleString('en-IN')}</span>`;
     }
 
     // Animated flip badge — shows for 60s after a flip on this index
@@ -8316,8 +8340,7 @@
     resultEl.innerHTML =
       `${flipBadge}⏰ ${timeStr} IST<br>` +
       `📍 ${meta.label}: ${spot.toLocaleString('en-IN')}<br>` +
-      `${levelLine}<br>` +
-      `Zone: ${zoneLine}`;
+      `${levelLine}`;
   }
 
   document.getElementById('spot-set-btn').addEventListener('click', () => {
