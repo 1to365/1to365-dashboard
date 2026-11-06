@@ -2615,10 +2615,10 @@
       return out;
     }
     if (out.dir && out.dir === signal && !confirmed) { out.key = 'confirm'; out.cls = 'wait'; out.ico = '👀'; out.text = 'First close ' + (out.dir === 'CE' ? 'above' : 'below') + ' the range. Wait for one more.'; out.long = 'One candle closed outside the opening range (' + out.dir + '). Go needs two closes in a row — wait for the next candle.'; return out; }
-    const watchTxt = (bk) => { if (!signal || signal === bk || hi == null || lo == null) return ''; return (bk ? bk + ' break failed. ' : '') + 'Signal now ' + signal + ' — not a Go yet. Go ' + signal + ' needs 2 closes ' + (signal === 'CE' ? 'above ' + ecN(hi) : 'below ' + ecN(lo)) + '.'; };
+    const watchTxt = (bk) => { if (!signal || signal === bk || hi == null || lo == null) return ''; return 'Signal now ' + signal + ' — not a Go yet. Go ' + signal + ' needs 2 closes ' + (signal === 'CE' ? 'above ' + ecN(hi) : 'below ' + ecN(lo)) + '.'; };
     if (out.dir && signal) { out.key = 'mismatch'; out.cls = 'warn'; out.ico = '🚦'; out.text = 'Mixed signals. Wait.'; out.long = 'Price and signal disagree — wait.'; try { out.watch = everBroke ? watchTxt('') : ''; } catch (e) { out.watch = ''; } return out; }
-    if (everBroke) { out.key = 'fake'; out.cls = 'warn'; out.ico = '🎭'; out.text = 'Fake move. Wait.';
-      try { for (let j = lastI; j >= 0; j--) { if (done[j] && ecIstMins(cs[j].time) >= EC_RANGE_END && sideAt(cs[j]) !== 0) { const bk = sideAt(cs[j]) === 1 ? 'CE' : 'PE'; out.sub = 'Broke ' + bk + ' at ' + ecHm(ecIstMins(cs[j].time) + 5) + ', then closed back inside.'; out.text = 'Fake move ' + bk + ' → ' + (signal && signal !== bk ? signal : 'inside') + '. Wait.'; out.watch = watchTxt(bk); break; } } } catch (e) { /* wording only */ } out.long = 'Price broke the range but closed back inside — treat the break as fake.'; return out; }
+    if (everBroke) { out.key = 'fake'; out.cls = 'warn'; out.ico = '🎭'; out.text = 'Break failed. Wait.';
+      try { for (let j = lastI; j >= 0; j--) { if (done[j] && ecIstMins(cs[j].time) >= EC_RANGE_END && sideAt(cs[j]) !== 0) { const bk = sideAt(cs[j]) === 1 ? 'CE' : 'PE'; out.sub = 'Broke ' + bk + ' at ' + ecHm(ecIstMins(cs[j].time) + 5) + ', then closed back inside.'; out.text = bk + ' break failed. ' + (signal && signal !== bk ? 'Signal now ' + signal : 'Back inside the range') + '. Wait.'; out.watch = watchTxt(bk); break; } } } catch (e) { /* wording only */ } out.long = 'Price broke the range but closed back inside — treat the break as fake.'; return out; }
     if (nowMin >= EC_NO_TRADE_FROM) { out.key = 'notrade'; out.cls = 'bad'; out.ico = '⛔'; out.text = 'No trade today.'; out.long = 'No candle has closed outside the opening range by 1:00 pm.'; return out; }
     out.key = 'inside'; out.cls = 'wait'; out.ico = '🧘'; out.text = 'Wait. No clear move yet.'; out.long = 'Price is still inside the opening range — wait for a close outside it.';
     return out;
@@ -2776,7 +2776,7 @@
         if (st.exp && !st.exp.quiet) parts.push('🪂 Expiry: moving ' + st.exp.dir);
         else if (st.key === 'forming') parts.push('⏳ market is settling');
         else if (st.key === 'inside') parts.push('🧘 no clear move yet');
-        else if (st.key === 'fake') parts.push('🎭 fake move');
+        else if (st.key === 'fake') parts.push('🎭 break failed');
         else if (st.key === 'chop') parts.push('🌀 choppy');
         else if (st.key === 'whipsaw') parts.push('🌀 choppy day — skip');
         else if (st.key === 'notrade') parts.push('⛔ no clear move today');
@@ -2929,7 +2929,7 @@
       else if (st.key === 'whipsaw') L.push('🌀 ' + idx + ': choppy day (' + st.fails + ' Go signals failed). Skip it.');
       else if (st.key === 'forming') L.push('⏳ ' + idx + ': market is settling. Wait.');
       else if (st.key === 'inside') L.push('🧘 ' + idx + ': no clear move yet. Wait.');
-      else if (st.key === 'fake') L.push('🎭 ' + idx + ': fake move. Wait.');
+      else if (st.key === 'fake') L.push('🎭 ' + idx + ': break failed. Wait.');
       else if (st.key === 'notrade') L.push('⛔ No trade in ' + idx + ' today.');
       else if (st.key === 'late') L.push('🌙 Too late for new entries.');
       if (st.signal && st.signal !== ty && st.key !== 'forming') L.push('🚦 Signal says ' + st.signal + ' now. You picked ' + ty + '.');
