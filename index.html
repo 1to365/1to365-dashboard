@@ -2628,6 +2628,7 @@
     const dn = cs.filter((c, i) => done[i]);
     try { out.exp = ecExpiry(elId, dn); } catch (e) { out.exp = null; }
     try { const pc = Number(d.prevClose); if (pc > 0 && cs.length) { out.gap = { pct: (cs[0].close / pc - 1) * 100, open: cs[0].close, prev: pc }; } } catch (e) { out.gap = null; }
+    try { const wk0 = ecWeek[elId], pc0 = Number(d.prevClose), lc0 = dn.length ? dn[dn.length - 1].close : null; out.tlock = (wk0 && wk0.dir && pc0 > 0 && lc0 != null) ? ((wk0.dir === 'CE' && lc0 > pc0) ? { side: 'CE' } : (wk0.dir === 'PE' && lc0 < pc0 ? { side: 'PE' } : null)) : null; } catch (e) { out.tlock = null; } // TREND LOCK: the week/month trend is on one side and price is on that side of yesterday's close
     if (forming || nR < 2) {
       try { const er0 = ecEarlyRange(cs, done, nowMin); if (er0 && dn.length) { out.eHi = er0.hi; out.eLo = er0.lo; const lc = dn[dn.length - 1].close; out.ePos = lc > er0.hi ? 'above' : (lc < er0.lo ? 'below' : 'inside'); } } catch (e) { /* optional */ }
       let er = null; try { er = ecEarly(cs, done, nowMin, signal, flips); } catch (e) { er = null; }
@@ -2761,6 +2762,11 @@
     const D = (d) => d === 'CE' ? '🟢 CE' : '🔴 PE', pe = (d) => d === 'PE' ? ' pe' : ' ce';
     const small = (d, line) => ({ cls: 'start', dir: d, head: D(d) + ' · SMALL SIZE', line, tile: D(d) + ' SMALL' });
     const k = st.key;
+    const lk = st.tlock && st.tlock.side;
+    if (lk && k !== 'whipsaw' && k !== 'chop' && k !== 'late') {
+      const od = (k === 'go' || k === 'early' || k === 'confirm') ? st.dir : (st.hold ? st.hold.dir : st.signal);
+      if (od && od !== lk) return { cls: 'wait', head: '⚪ WAIT', line: od + ' flip against the ' + lk + ' trend. Usually a pullback. Skip it. Wait for ' + lk + ' to turn green again.', tile: '⚪ WAIT', locked: true };
+    }
     if (k === 'go') return { cls: 'full' + pe(st.dir), dir: st.dir, head: D(st.dir) + ' · FULL SIZE', line: st.text + (st.sub ? ' ' + st.sub : '') + (st.fast ? ' Fast move. Don\'t chase, wait for a small dip.' : ''), tile: D(st.dir) + ' FULL' };
     if (k === 'early') return small(st.dir, st.text);
     if (k === 'confirm') return small(st.dir, 'First close ' + (st.dir === 'CE' ? 'above' : 'below') + ' the morning range. One more close makes it a Go.');
@@ -2810,6 +2816,7 @@
       if (st.sub) why.push(st.sub);
       if (st.watch) why.push(st.watch);
       if (st.gap && Math.abs(st.gap.pct) >= 0.5) why.push('Opened ' + (st.gap.pct > 0 ? 'up ' : 'down ') + Math.abs(st.gap.pct).toFixed(1) + '% from yesterday.');
+      if (st.tlock) why.push('Trend lock: the week is ' + st.tlock.side + ' and price is ' + (st.tlock.side === 'CE' ? 'above' : 'below') + ' yesterday\'s close, so ' + (st.tlock.side === 'CE' ? 'PE' : 'CE') + ' flips are usually pullbacks.');
       if (st.side) why.push(st.side.side ? 'Today looks like a ' + st.side.side + ' day.' : 'No clear side today.');
       const open = !!ecWhyOpen[elId];
       return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span></div><div class="ec-big ${act.cls}">${act.head}</div><div class="ec-line">${act.line}</div><button type="button" class="ec-whybtn" data-ec-why="${elId}">${open ? 'Hide details' : 'Why?'}</button><div class="ec-whybox${open ? '' : ' hidden'}">${why.map(x => '<div>' + x + '</div>').join('')}</div></div>`;
@@ -2831,6 +2838,7 @@
     try { ecGoAlerts(); } catch (e) { /* alerts must never break the refresh */ }
     try { opBackToCost(); } catch (e) { /* alert is optional */ }
     try { opTimeReview(); } catch (e) { /* reminder is optional */ }
+    try { opAgainstWatch(); } catch (e) { /* warning is optional */ }
     try { opXPlanAll(); } catch (e) { /* cosmetic */ }
     try { if (typeof opQWarn === 'function') opQWarn(); } catch (e) { /* form not open */ }
     try { if (typeof opQPermit === 'function') opQPermit(); } catch (e) { /* form not open */ }
@@ -2871,7 +2879,7 @@
     for (let i = alertHistory.length - 1; i >= 0; i--) { const a = alertHistory[i]; if (!a.isTimeWindow && !a.isGo) { alertHistory.splice(i, 1); dirty = true; } }
     EC_ZONES.forEach(z => {
       const st = ecStatus[z]; if (!st) return;
-      const live = (st.key === 'go' || st.key === 'early') && st.dir;
+      const live = (st.key === 'go' || st.key === 'early') && st.dir && !(st.tlock && st.tlock.side !== st.dir); // a flip against the multi-day trend is not an alert
       const nm = alertIndexNames[z];
       if (!live) {
         for (let i = alertHistory.length - 1; i >= 0; i--) { if (alertHistory[i].isGo && alertHistory[i].index === nm) { alertHistory.splice(i, 1); dirty = true; } }
@@ -2987,7 +2995,8 @@
   function ecWarnHtml(idx, ty) {
     const zone = EC_IDX_ZONE[idx]; if (!zone || !ty) return { html: '', good: false };
     const st = ecStatus[zone], w = ecWeek[zone], L = [];
-    if (st && !st.exp && st.side && st.side.side && st.side.side !== ty) L.push('🛑 Today is a ' + st.side.side + ' day. ' + ty + ' is against the signal, the range and the week.');
+    if (st && !st.exp && st.tlock && st.tlock.side !== ty) L.push('🛑 The week is ' + st.tlock.side + ' and price is ' + (st.tlock.side === 'CE' ? 'above' : 'below') + ' yesterday\'s close. ' + ty + ' flips here are usually pullbacks.');
+    else if (st && !st.exp && st.side && st.side.side && st.side.side !== ty) L.push('🛑 Today is a ' + st.side.side + ' day. ' + ty + ' is against the signal, the range and the week.');
     if (st && st.exp) {
       if (!st.exp.quiet && st.exp.dir !== ty) L.push('🚦 Expiry: ' + idx + ' is moving ' + st.exp.dir + '. You picked ' + ty + '.');
       else if (!st.exp.quiet) return { html: (ty === 'CE' ? '🚀' : '🪂') + ' Expiry: ' + idx + ' is moving ' + ty + '.', good: true };
@@ -5878,6 +5887,7 @@
         if (spot != null) { const dist = pe ? line - spot : spot - line; t += dist > 0 ? ' · now ' + ecN(spot) + ' (' + Math.round(dist).toLocaleString('en-IN') + ' pts away)' : '<br><span class="xw">⚠️ ' + m.idx + ' is ' + (pe ? 'above ' : 'below ') + ecN(line) + ' now (' + ecN(spot) + '). If the 5-min candle closes here, exit.</span>'; }
         bits.push(t);
       }
+      try { if (st && (st.key === 'go' || st.key === 'early') && st.dir === m.ty && p.cmp != null && p.buy != null && p.cmp > p.buy) bits.unshift('🏆 In profit and the Go is still on. Hold. Do not exit early. Leave when the Go ends or price closes back inside the range.'); } catch (e) { /* optional */ }
       const et = opEntryTs(p);
       if (et) { const at = et + OP_REVIEW_MIN * 60000, hm = new Date(at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }); bits.push(Date.now() < at ? '⏱ Review at ' + hm + ': not in profit by then → exit.' : '<span class="xw">⏱ ' + OP_REVIEW_MIN + '+ minutes in. Not in profit? Exit.</span>'); }
       return bits.join('<br>');
@@ -5885,6 +5895,38 @@
   }
   function opXPlanAll() {
     try { opListEl.querySelectorAll('.op-pos').forEach(el => { const p = opState.positions.find(x => x.id === el.getAttribute('data-id')); const xe = el.querySelector('[data-o="xplan"]'); if (p && xe) xe.innerHTML = opXPlanHtml(p); }); } catch (e) { /* cosmetic */ }
+  }
+  // ---- "Against the market" watch (Build AB): an open position that fights the market gets a loud, repeating warning ----
+  // Fires when the Entry check says Go/Early the OTHER way, or (while the position is in loss) the multi-day trend lock is the other way.
+  // Repeats every 20 min until the position is closed or the market turns back. Display + Telegram only — never touches your positions.
+  const OP_AGAINST_EVERY_MIN = 20;
+  function opAgainstWatch() {
+    try {
+      if (typeof opAllowed === 'function' && !opAllowed()) return;
+      if (!ecMarketHours()) return;
+      let o = null; try { o = JSON.parse(localStorage.getItem('signa365_against') || 'null'); } catch (e) { o = null; }
+      if (!o || o.day !== todayIstKey()) o = { day: todayIstKey(), at: {} };
+      let ch = false; const live = {};
+      (opState.positions || []).forEach(p => {
+        if (!/^ONGOING$/i.test(p.status)) return;
+        const m = opParseLabel(p.label); if (!m || !m.idx || !m.ty) return;
+        const z = EC_IDX_ZONE[m.idx], st = z ? ecStatus[z] : null; if (!st || st.exp) return;
+        const goAgainst = (st.key === 'go' || st.key === 'early') && st.dir && st.dir !== m.ty;
+        const inLoss = p.cmp != null && p.buy != null && p.cmp < p.buy;
+        const lockAgainst = !!(st.tlock && st.tlock.side !== m.ty && inLoss);
+        const key = 'against_' + p.id;
+        if (!goAgainst && !lockAgainst) { if (ecWarns[key]) { delete ecWarns[key]; ecWarnRender(); } if (o.at[p.id]) { delete o.at[p.id]; ch = true; } return; }
+        live[p.id] = true;
+        const now = Date.now(); if (o.at[p.id] && now - o.at[p.id] < OP_AGAINST_EVERY_MIN * 60000) return;
+        o.at[p.id] = now; ch = true;
+        const t = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+        const why = goAgainst ? m.idx + ' is ' + (st.key === 'early' ? 'moving strongly ' : 'in a Go ') + st.dir + (st.since ? ' since ' + st.since : '') + '.' : 'The week is ' + st.tlock.side + ' and price is ' + (st.tlock.side === 'CE' ? 'above' : 'below') + ' yesterday\'s close.';
+        ecWarns[key] = { html: '🚪 ' + opEsc(p.label) + ' is against the market<small>' + opEsc(why) + ' Exit it. Do not wait for it to come back. · ' + t + '</small>' };
+        ecWarnRender(); playBeep(600);
+        if (currentRole === 'admin') sendTelegramText('🚪 ' + p.label + ' is against the market\n' + why + '\nExit it. Do not wait for it to come back.');
+      });
+      if (ch) localStorage.setItem('signa365_against', JSON.stringify(o));
+    } catch (e) { /* warning is best-effort */ }
   }
   // one banner (+ beep, + Telegram for the admin) when a position is 30 minutes old: the reminder to check it
   function opTimeReview() {
@@ -6048,6 +6090,7 @@
     else if ((st.key === 'go' || st.key === 'early') && st.dir === ty) add(true, (st.key === 'early' ? 'Strong ' : 'Go ') + ty + (st.since ? ' since ' + st.since : ''));
     else if ((st.key === 'go' || st.key === 'early') && st.dir) add(false, 'Go is ' + st.dir + ', you picked ' + ty);
     else add(false, (st.text || 'No Go yet').replace(/\.$/, '') + ' — no Go ' + ty);
+    if (st && !st.exp && st.tlock && st.tlock.side !== ty) add(false, 'Trend lock: week is ' + st.tlock.side + ', ' + ty + ' is against it');
     const qty = opNum(opQQtyEl.value), buy = opNum(opQBuyEl.value), mx = opQMaxNow(buy);
     if (mx != null && qty != null && qty > 0) add(qty <= mx, qty <= mx ? 'Qty ' + qty + ' is within your max (' + mx.toLocaleString('en-IN') + ')' : 'Qty ' + qty + ' is above your max (' + mx.toLocaleString('en-IN') + ')');
     else if (mx === 0) add(false, 'Loss limit is used up for today');
