@@ -2586,6 +2586,19 @@
     if (!ok) return null;
     return { dir: signal, mins: EC_HOLD_N * 5, mid, floor: ext[2] };
   }
+  // "Today's side": which side is the ONLY one worth trading today. Information only — never blocks, never alerts.
+  // CE day = Supertrend CE on every reading since 10:00, price above yesterday's close AND above the range middle, week CE (PE day = mirror).
+  function ecDaySide(cs, ts, done, hi, lo, prevClose, wk) {
+    if (hi == null || lo == null || !isFinite(hi) || !isFinite(lo)) return null;
+    const idx = []; cs.forEach((c, i) => { if (done[i]) idx.push(i); }); if (!idx.length) return null;
+    const mid = (hi + lo) / 2, last = cs[idx[idx.length - 1]].close, pc = Number(prevClose);
+    const tr = []; idx.forEach(i => { if (ecIstMins(cs[i].time) >= 600 && ts[i] != null) tr.push(ts[i]); });
+    if (tr.length < 6 || !(pc > 0)) return { side: null };
+    const up = tr.every(x => x === 1), dn = tr.every(x => x === -1);
+    if (up && last > pc && last > mid && wk && wk.dir === 'CE') return { side: 'CE' };
+    if (dn && last < pc && last < mid && wk && wk.dir === 'PE') return { side: 'PE' };
+    return { side: null };
+  }
   function ecCompute(elId) {
     const d = ecData[elId];
     if (!d || !d.candles.length || !ecMarketHours()) return null;
@@ -2631,6 +2644,7 @@
     const w = ecWeek[elId], counter = !!(out.dir && w && w.dir && w.dir !== out.dir);
     if (nowMin >= EC_LAST_ENTRY) { out.key = 'late'; out.cls = 'wait'; out.ico = '🌙'; out.text = 'Too late for new entries.'; out.long = 'No new entries after 3:00 pm.'; return out; }
     try { out.hold = ecHolding(cs, ts, done, hi, lo, signal); } catch (e) { out.hold = null; }
+    try { out.side = ecDaySide(cs, ts, done, hi, lo, d.prevClose, ecWeek[elId]); } catch (e) { out.side = null; }
     try { out.fails = ecFailedGos(cs, ts, done, hi, lo); } catch (e) { out.fails = 0; }
     if (out.fails >= EC_WHIP_FAILS) { out.key = 'whipsaw'; out.cls = 'warn'; out.ico = '🌀'; out.text = 'Choppy day. Skip.'; out.sub = out.fails + ' Go signals failed today.'; out.long = out.fails + ' Go signals have already failed today — a whipsaw day. No new entries for the rest of today.'; return out; }
     if (flips >= EC_CHOP_FLIPS) { out.key = 'chop'; out.cls = 'warn'; out.ico = '🌀'; out.text = 'Choppy. Skip it.'; out.long = flips + ' flips in the last hour — treat as a choppy day, do not trade flips.'; return out; }
@@ -2762,9 +2776,10 @@
       if (w) bits.push('5d ' + f(w.d5) + (w.m1 != null ? ' · 1m ' + f(w.m1) : '') + (w.dir ? ' · ' + w.dir + ' week' : ''));
       const fl = (fake[elId] || []), nowMs = Date.now(), recentFl = fl.filter(x => nowMs - x.at <= 30 * 60000 && !(st && st.signal && x.dir === st.signal && nowMs - x.at > 5 * 60000)), last = recentFl[recentFl.length - 1];
       const fk = last ? `<div class="ec-fake">↩️ Fake flip${last.dir ? ' ' + last.dir : ''} at ${new Date(last.at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} — went back in ${last.mins || 0} min</div>` : '';
+      const sd = (st && st.side && !st.exp && st.key !== 'forming' && st.key !== 'late') ? (st.side.side ? '<div class="ec-sub"><b style="color:' + (st.side.side === 'CE' ? '#15803d' : '#b91c1c') + '">' + (st.side.side === 'CE' ? '📈 CE day. PE not advised today.' : '📉 PE day. CE not advised today.') + '</b> <span style="opacity:.8">Supertrend ' + st.side.side + ' since 10:00, ' + (st.side.side === 'CE' ? 'above' : 'below') + ' yesterday\'s close and the range middle, ' + st.side.side + ' week.</span></div>' : '<div class="ec-sub" style="opacity:.75">No clear side today. Follow the Entry check.</div>') : '';
       const hd = (st && st.hold && !st.exp && ['inside', 'notrade', 'fake', 'mismatch'].indexOf(st.key) >= 0) ? '<div class="ec-sub"><b style="color:' + (st.hold.dir === 'CE' ? '#15803d' : '#b91c1c') + '">' + (st.hold.dir === 'CE' ? '📈 CE holding' : '📉 PE holding') + ' for ' + st.hold.mins + ' min (' + (st.hold.dir === 'CE' ? 'above' : 'below') + ' the range middle ' + ecN(st.hold.mid) + ', ' + (st.hold.dir === 'CE' ? 'higher lows' : 'lower highs') + '). Not a Go. Small size, ' + (st.hold.dir === 'CE' ? 'buy dips only' : 'buy PE on bounces only') + '.</b></div>' : '';
       const wt = st && st.watch ? '<div class="ec-sub"><b style="color:#b45309">👁 ' + st.watch + '</b></div>' : '';
-      return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span>${top}</div>${bits.length ? '<div class="ec-sub">' + bits.join(' · ') + '</div>' : ''}${wt}${hd}${fk}</div>`;
+      return `<div class="ec-row"><div class="ec-top"><span class="ec-idx ec-i-${pfx}">${nm}</span>${top}</div>${bits.length ? '<div class="ec-sub">' + bits.join(' · ') + '</div>' : ''}${sd}${wt}${hd}${fk}</div>`;
     }).join('');
     try { // when the candles behind this card were last fetched (turns amber if the feed is late)
       const ue = document.getElementById('ec-upd'), dd = selZ ? ecData[selZ] : null;
@@ -2947,6 +2962,7 @@
   function ecWarnHtml(idx, ty) {
     const zone = EC_IDX_ZONE[idx]; if (!zone || !ty) return { html: '', good: false };
     const st = ecStatus[zone], w = ecWeek[zone], L = [];
+    if (st && !st.exp && st.side && st.side.side && st.side.side !== ty) L.push('🛑 Today is a ' + st.side.side + ' day. ' + ty + ' is against the signal, the range and the week.');
     if (st && st.exp) {
       if (!st.exp.quiet && st.exp.dir !== ty) L.push('🚦 Expiry: ' + idx + ' is moving ' + st.exp.dir + '. You picked ' + ty + '.');
       else if (!st.exp.quiet) return { html: (ty === 'CE' ? '🚀' : '🪂') + ' Expiry: ' + idx + ' is moving ' + ty + '.', good: true };
